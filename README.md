@@ -1,4 +1,4 @@
-# CS 346 Group Project
+# CS 346 Group Project - Team 101-12
 
 
 ## Team Members
@@ -11,9 +11,9 @@ Name: Tracy Hua   Email: t2hua@uwaterloo.ca 
 Name: Mengdie Wu  Email: m283wu@uwaterloo.ca
 
 ## Wiki
-https://git.uwaterloo.ca/m283wu/cs-346-group-project/-/wikis/home
+This is our Wiki https://git.uwaterloo.ca/m283wu/cs-346-group-project/-/wikis/home.
 
-Team contract: https://git.uwaterloo.ca/m283wu/cs-346-group-project/-/wikis/Team-Contract
+Our https://git.uwaterloo.ca/m283wu/cs-346-group-project/-/wikis/Team-Contract includes details on how we will work together.
 
 ## Project 
 Name:
