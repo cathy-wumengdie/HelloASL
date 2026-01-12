@@ -15,3 +15,7 @@ https://git.uwaterloo.ca/m283wu/cs-346-group-project/-/wikis/home
 
 Team contract: https://git.uwaterloo.ca/m283wu/cs-346-group-project/-/wikis/Team-Contract
 
+## Project 
+Name:
+
+Description: (1-2 sentence description)
