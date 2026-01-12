@@ -1,6 +1,11 @@
 # CS 346 Group Project
 
 
+## Team Members
+
+
+## Wiki
+https://git.uwaterloo.ca/m283wu/cs-346-group-project/-/wikis/home
 
 ## Getting started
 
