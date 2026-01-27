@@ -18,3 +18,5 @@ This is our Wiki https://git.uwaterloo.ca/m283wu/cs-346-group-project/-/wikis/ho
 Our https://git.uwaterloo.ca/m283wu/cs-346-group-project/-/wikis/Team-Contract includes details on how we will work together.
 
 The https://git.uwaterloo.ca/m283wu/cs-346-group-project/-/wikis/Project-Proposal describes our project idea and anticipated features.
+
+Here is the Google Slides for the proposal demo: https://docs.google.com/presentation/d/1wN8WxDuG5yCRu82fRb60s6wirQLYocrv_Bhgd4zqA00/edit?usp=sharing
