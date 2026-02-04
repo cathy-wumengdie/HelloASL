@@ -7,8 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -16,10 +15,20 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import ca.uwaterloo.helloasl.ui.components.ClickableSection
+import ca.uwaterloo.helloasl.ui.components.HelloASLCard
 
 @Composable
 fun ProfileScreen(
     state: ProfileState,
+    onSettings: () -> Unit,
+    onWordsLearned: () -> Unit,
+    onStarredSigns: () -> Unit,
+    onSetLearningGoals: () -> Unit,
+    onAccount: () -> Unit,
+    onLicense: () -> Unit,
+    onSignOut: () -> Unit,
 ) {
     Column(
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())
@@ -30,7 +39,69 @@ fun ProfileScreen(
         )
 
         Column(modifier = Modifier.padding(16.dp)) {
-
+            HelloASLCard(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = "Learning Progress",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.titleLarge
+                )
+                Spacer(Modifier.height(16.dp))
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    ClickableSection(
+                        onClick = onWordsLearned,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        NumberedCircleBadge(state.wordsLearned)
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            "Words Learned",
+                            color = MaterialTheme.colorScheme.onSurface,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
+                    ClickableSection(
+                        onClick = onStarredSigns,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        NumberedCircleBadge(state.starredSigns)
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            "Starred Signs",
+                            color = MaterialTheme.colorScheme.onSurface,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
+                }
+            }
+            Spacer(Modifier.height(16.dp))
+            HelloASLCard(modifier = Modifier.fillMaxWidth()) {
+                ClickableSection(onClick = onSetLearningGoals, modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.Start) {
+                    Text(
+                        "Set Learning Goals",
+                        color = MaterialTheme.colorScheme.onSurface,
+                        style = MaterialTheme.typography.titleLarge
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text("Learn ${state.goalsPerDay} minutes per day", style = MaterialTheme.typography.titleMedium)
+                    Spacer(Modifier.height(8.dp))
+                    Text("Learn ${state.goalsPerWeek} days per week", style = MaterialTheme.typography.titleMedium)
+                }
+            }
+            Spacer(Modifier.height(16.dp))
+            HelloASLCard(modifier = Modifier.fillMaxWidth()) {
+                TextButton(onClick = onAccount) {
+                    Text("Account", style = MaterialTheme.typography.titleMedium)
+                }
+                Spacer(Modifier.height(16.dp))
+                TextButton(onClick = onLicense) {
+                    Text("License", style = MaterialTheme.typography.titleMedium)
+                }
+                Spacer(Modifier.height(16.dp))
+                TextButton(onClick = onSignOut) {
+                    Text("Sign out", style = MaterialTheme.typography.titleMedium)
+                }
+                Spacer(Modifier.height(16.dp))
+            }
         }
     }
 }
@@ -60,7 +131,7 @@ fun ProfileHeader(name: String, avatarText: String) {
                 moveTo(0f, height - waveHeight)
 
                 // Big smooth curve to the right
-                quadraticBezierTo(
+                quadraticTo(
                     width * 0.5f, height,
                     width, height - waveHeight * 0.6f
                 )
@@ -101,6 +172,31 @@ fun ProfileHeader(name: String, avatarText: String) {
                 text = name,
                 style = MaterialTheme.typography.headlineSmall,
                 color = MaterialTheme.colorScheme.onBackground
+            )
+        }
+    }
+}
+
+@Composable
+fun NumberedCircleBadge(
+    number: Int,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier.size(64.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.surface, shape = CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = number.toString(),
+                color = Color.White,
+                fontSize = 30.sp
             )
         }
     }
