@@ -1,11 +1,11 @@
 *.iml
-.kotlin
+HelloASL/.kotlin
 .gradle
 **/build/
 xcuserdata
 !src/**/build/
 local.properties
-.idea
+.idea/
 .DS_Store
 captures
 .externalNativeBuild
