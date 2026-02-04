@@ -1,33 +1,15 @@
 package ca.uwaterloo.helloasl
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import ca.uwaterloo.helloasl.ui.theme.HelloASLTheme
-import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.School
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Translate
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBarItemDefaults
-import androidx.compose.material3.Surface
-import androidx.compose.material3.TopAppBarDefaults
-import ca.uwaterloo.helloasl.ui.screens.home.HomeScreen
-import ca.uwaterloo.helloasl.ui.screens.home.HomeViewModel
-import ca.uwaterloo.helloasl.ui.screens.profile.ProfileScreen
-import ca.uwaterloo.helloasl.ui.screens.profile.ProfileViewModel
+import androidx.compose.material.icons.filled.*
+import ca.uwaterloo.helloasl.ui.screens.home.*
+import ca.uwaterloo.helloasl.ui.screens.profile.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -177,6 +159,34 @@ fun App() {
                     MainTab.PROFILE -> {
                         ProfileScreen(
                             state = profileVm.state,
+                            onSettings = {
+                                profileVm.onSettings()
+                                // later: navigate to settings screen
+                            },
+                            onWordsLearned = {
+                                profileVm.onWordsLearned()
+                                // later: navigate to words learned screen
+                            },
+                            onStarredSigns = {
+                                profileVm.onStarredSigns()
+                                // later: navigate to starredsigns screen
+                            },
+                            onSetLearningGoals = {
+                                profileVm.onSetLearningGoals()
+                                // later: navigate to set learning goal screen
+                            },
+                            onAccount = {
+                                profileVm.onAccount()
+                                // later: navigate to account screen
+                            },
+                            onLicense = {
+                                profileVm.onLicense()
+                                // later: navigate to license screen
+                            },
+                            onSignOut = {
+                                profileVm.onSignOut()
+                                // later: navigate to login screen
+                            }
                         )
                     }
                 }

@@ -14,14 +14,16 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun HelloASLCard(
     modifier: Modifier = Modifier,
-    content: @Composable ColumnScope.() -> Unit
+    cardColor: Color = MaterialTheme.colorScheme.surfaceContainer,
+    content: @Composable ColumnScope.() -> Unit,
+
 ) {
     Card(
         modifier = modifier,
         shape = RoundedCornerShape(18.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer
+            containerColor = cardColor
         ),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
     ) {

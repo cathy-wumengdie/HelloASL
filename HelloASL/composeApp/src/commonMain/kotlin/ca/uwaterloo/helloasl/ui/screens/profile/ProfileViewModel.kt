@@ -8,11 +8,11 @@ class ProfileViewModel {
     var state by mutableStateOf(ProfileState())
         private set
 
-    fun onContinueLearning() { }
-    fun onDayStreak() { }
-    fun onDailyGoals() { }
-    fun onLearnAsl() { }
-    fun onTakeQuiz() { }
-    fun onTranslate() { }
-    fun onNotifications() { }
+    fun onSettings() { }
+    fun onWordsLearned() { }
+    fun onStarredSigns() { }
+    fun onSetLearningGoals() { }
+    fun onAccount() { }
+    fun onLicense() { }
+    fun onSignOut() { }
 }
