@@ -9,6 +9,7 @@ import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import ca.uwaterloo.helloasl.ui.screens.home.*
+import ca.uwaterloo.helloasl.ui.screens.learning.LearningEntry
 import ca.uwaterloo.helloasl.ui.screens.profile.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -60,7 +61,9 @@ fun App() {
                             )
                         )
                     }
-                    MainTab.LEARNING -> {}
+                    MainTab.LEARNING -> {
+                        LearningEntry()
+                    }
                     MainTab.TRANSLATE -> {}
                     MainTab.PROFILE -> {
                         TopAppBar(
@@ -154,7 +157,9 @@ fun App() {
                         )
                     }
 
-                    MainTab.LEARNING -> {}
+                    MainTab.LEARNING -> {
+                        LearningEntry()
+                    }
                     MainTab.TRANSLATE -> {}
                     MainTab.PROFILE -> {
                         ProfileScreen(
