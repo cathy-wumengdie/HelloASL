@@ -62,7 +62,22 @@ fun App() {
                         )
                     }
                     MainTab.LEARNING -> {
-                        LearningEntry()
+                        TopAppBar(
+                            title = { Text("Learn ASL") },
+                            actions = {
+                                IconButton(onClick = { /* notification page */ }) {
+                                    Icon(Icons.Filled.Notifications, contentDescription = "Notifications")
+                                }
+                                IconButton(onClick = { /* settings page */ }) {
+                                    Icon(Icons.Filled.Settings, contentDescription = "Settings")
+                                }
+                            },
+                            colors = TopAppBarDefaults.topAppBarColors(
+                                containerColor = selectedColor,
+                                titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                                actionIconContentColor = MaterialTheme.colorScheme.onPrimary
+                            )
+                        )
                     }
                     MainTab.TRANSLATE -> {}
                     MainTab.PROFILE -> {

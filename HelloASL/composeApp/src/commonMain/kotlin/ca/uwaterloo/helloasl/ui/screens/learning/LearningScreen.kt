@@ -1,6 +1,7 @@
 package ca.uwaterloo.helloasl.ui.screens.learning
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -10,6 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import ca.uwaterloo.helloasl.ui.components.ClickableSection
 import ca.uwaterloo.helloasl.ui.components.HelloASLCard
@@ -33,7 +35,7 @@ fun LearningScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         // Starred / Signs
-        HelloASLCard(cardColor = cardBg) {
+        HelloASLCard(cardColor = cardBg, elevationDp = 0.dp) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 HelloPill(
                     title = "Starred",
@@ -55,7 +57,7 @@ fun LearningScreen(
         }
 
         // Alphabet
-        HelloASLCard(cardColor = cardBg) {
+        HelloASLCard(cardColor = cardBg, elevationDp = 0.dp) {
             Text("Alphabet", style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(10.dp))
 
@@ -85,7 +87,7 @@ fun LearningScreen(
         }
 
         // Greetings
-        HelloASLCard(cardColor = cardBg) {
+        HelloASLCard(cardColor = cardBg, elevationDp = 0.dp) {
             Text("Greetings", style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(10.dp))
 
@@ -156,3 +158,4 @@ private fun AlphabetRow(
         }
     }
 }
+
