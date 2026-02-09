@@ -10,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import ca.uwaterloo.helloasl.ui.screens.home.*
 import ca.uwaterloo.helloasl.ui.screens.profile.*
+import ca.uwaterloo.helloasl.ui.screens.translate.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -17,6 +18,7 @@ import ca.uwaterloo.helloasl.ui.screens.profile.*
 fun App() {
     HelloASLTheme {
         val homeVm = remember { HomeViewModel() }
+        val translateVm = remember {TranslateViewModel()}
         val profileVm = remember { ProfileViewModel() }
         var selectedTab by remember { mutableStateOf(MainTab.HOME) }
         val selectedColor = when (selectedTab) {
@@ -39,7 +41,7 @@ fun App() {
             MainTab.TRANSLATE -> MaterialTheme.colorScheme.tertiaryContainer
             MainTab.PROFILE -> MaterialTheme.colorScheme.surfaceVariant
         }
-        Scaffold(
+        Scaffold(  // Top + Main Content + Bottom
             topBar = {
                 when (selectedTab) {
                     MainTab.HOME -> {
@@ -61,7 +63,18 @@ fun App() {
                         )
                     }
                     MainTab.LEARNING -> {}
-                    MainTab.TRANSLATE -> {}
+                    MainTab.TRANSLATE -> {
+                        TopAppBar(
+                            title = { Text("Translate ASL")},
+                            actions = {/*fill in later*/},
+                            // think: what do we need for action, a toggle button to change between ASL -> Eng & Eng -> ASL?
+                            colors = TopAppBarDefaults.topAppBarColors(
+                                containerColor = selectedColor,
+                                titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                                actionIconContentColor = MaterialTheme.colorScheme.onPrimary
+                            )
+                        )
+                    }
                     MainTab.PROFILE -> {
                         TopAppBar(
                             title = { Text("Profile") },
@@ -88,12 +101,7 @@ fun App() {
                     NavigationBarItem(
                         selected = (selectedTab == MainTab.HOME),
                         onClick = { selectedTab = MainTab.HOME },
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Filled.Home,
-                                contentDescription = "Home"
-                            )
-                        },
+                        icon = { Icon(imageVector = Icons.Filled.Home, contentDescription = "Home") },
                         colors = navBarIconColors
                     );
                     NavigationBarItem(
@@ -155,7 +163,17 @@ fun App() {
                     }
 
                     MainTab.LEARNING -> {}
-                    MainTab.TRANSLATE -> {}
+
+                    MainTab.TRANSLATE -> {
+                        TranslateScreen(
+                            state = translateVm.state,
+                            onSwitchMode = translateVm::onSwitchMode,
+                            onSearch = translateVm::onSearch,
+                            onSelectHistoryItem = translateVm::onSelectHistoryItem,
+                            onStartCamera = translateVm::onStartCamera
+                        )
+                    }
+
                     MainTab.PROFILE -> {
                         ProfileScreen(
                             state = profileVm.state,
