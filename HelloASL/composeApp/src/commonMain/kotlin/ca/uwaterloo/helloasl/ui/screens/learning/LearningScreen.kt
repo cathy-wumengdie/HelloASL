@@ -1,9 +1,12 @@
 package ca.uwaterloo.helloasl.ui.screens.learning
 
+import android.graphics.Color
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Check
@@ -31,26 +34,22 @@ fun LearningScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(pageBg)
+            .verticalScroll(rememberScrollState())
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         // Starred / Signs
         HelloASLCard(cardColor = cardBg, elevationDp = 0.dp) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                HelloPill(
-                    title = "Starred",
-                    subtitle = "Review saved signs",
-                    value = state.starredCount.toString(),
-                    bg = innerBg,
+                StarredPill(
+                    value = state.starredCount,
                     onClick = onOpenStarred,
-                    modifier = Modifier.weight(1f)
-                )
-                HelloPill(
-                    title = "Signs",
-                    subtitle = "",
-                    value = state.signsCount.toString(),
                     bg = innerBg,
-                    onClick = { },
+                    modifier = Modifier.weight(3f)
+                )
+                SignsPill(
+                    value = state.signsCount,
+                    bg = innerBg,
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -61,29 +60,35 @@ fun LearningScreen(
             Text("Alphabet", style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(10.dp))
 
-            AlphabetRow(
-                label = "A–G",
-                left = { Icon(Icons.Filled.Check, contentDescription = null) },
-                enabled = true,
-                bg = innerBg,
-                onClick = { onOpenLesson("Alphabet: A–G") }
-            )
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                AlphabetCenterItem(
+                    label = "A–G",
+                    leftIcon = { Icon(Icons.Filled.Check, contentDescription = null) },
+                    enabled = true,
+                    bg = innerBg,
+                    onClick = { onOpenLesson("Alphabet: A–G") }
+                )
 
-            AlphabetRow(
-                label = "H–P",
-                left = { Text(state.alphabetScore.toString(), style = MaterialTheme.typography.labelMedium) },
-                enabled = state.alphabetHPUnlocked,
-                bg = innerBg,
-                onClick = { onOpenLesson("Alphabet: H–P") }
-            )
+                AlphabetCenterItem(
+                    label = "H–P",
+                    leftIcon = { Text(state.alphabetScore.toString(), style = MaterialTheme.typography.labelMedium) },
+                    enabled = state.alphabetHPUnlocked,
+                    bg = innerBg,
+                    onClick = { onOpenLesson("Alphabet: H–P") }
+                )
 
-            AlphabetRow(
-                label = "Q–Z",
-                left = { Icon(Icons.Filled.Lock, contentDescription = null) },
-                enabled = !state.alphabetQZLocked,
-                bg = innerBg,
-                onClick = { onOpenLesson("Alphabet: Q–Z") }
-            )
+                AlphabetCenterItem(
+                    label = "Q–Z",
+                    leftIcon = { Icon(Icons.Filled.Lock, contentDescription = null) },
+                    enabled = !state.alphabetQZLocked,
+                    bg = innerBg,
+                    onClick = { onOpenLesson("Alphabet: Q–Z") }
+                )
+            }
         }
 
         // Greetings
@@ -130,6 +135,55 @@ private fun HelloPill(
         }
     }
 }
+@Composable
+private fun StarredPill(
+    value: Int,
+    onClick: () -> Unit,
+    bg: androidx.compose.ui.graphics.Color,
+    modifier: Modifier = Modifier
+) {
+    val shape = RoundedCornerShape(14.dp)
+    ClickableSection(
+        onClick = onClick,
+        modifier = modifier
+            .clip(shape)
+            .background(bg),
+        shape = shape,
+        padding = PaddingValues(12.dp),
+        horizontalAlignment = Alignment.Start
+    ) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Column {
+                Text("Starred", style = MaterialTheme.typography.titleSmall)
+                Text("Review saved signs", style = MaterialTheme.typography.bodySmall)
+            }
+//            Text(value.toString(), style = MaterialTheme.typography.titleMedium)
+        }
+    }
+}
+@Composable
+private fun SignsPill(
+    value: Int,
+    bg: androidx.compose.ui.graphics.Color,
+    modifier: Modifier = Modifier
+) {
+    val shape = RoundedCornerShape(14.dp)
+    Box(
+        modifier = modifier
+            .clip(shape)
+            .background(bg)
+            .padding(12.dp)
+    ) {
+        // 你图里是右对齐数字+“Signs”
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.End
+        ) {
+            Text(value.toString(), style = MaterialTheme.typography.titleMedium)
+//            Text("Signs", style = MaterialTheme.typography.titleSmall)
+        }
+    }
+}
 
 @Composable
 private fun AlphabetRow(
@@ -155,6 +209,41 @@ private fun AlphabetRow(
                 Text(label)
                 if (right != null) right()
             }
+        }
+    }
+}
+
+@Composable
+private fun AlphabetCenterItem(
+    label: String,
+    leftIcon: @Composable () -> Unit,
+    enabled: Boolean,
+    bg: androidx.compose.ui.graphics.Color,
+    onClick: () -> Unit
+) {
+    val shape = RoundedCornerShape(20.dp)
+
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(
+            modifier = Modifier.size(36.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            leftIcon()
+        }
+
+
+        ClickableSection(
+            onClick = onClick,
+            enabled = enabled,
+            modifier = Modifier
+                .width(140.dp)
+                .clip(shape)
+                .background(bg),
+            shape = shape,
+            padding = PaddingValues(horizontal = 14.dp, vertical = 10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(label)
         }
     }
 }
