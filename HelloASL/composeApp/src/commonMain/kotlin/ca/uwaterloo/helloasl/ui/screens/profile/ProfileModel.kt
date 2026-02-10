@@ -1,6 +1,6 @@
 package ca.uwaterloo.helloasl.ui.screens.profile
 
-data class ProfileState(
+data class ProfileModel(
     val userName: String = "Yanjin",
     val avatarText: String = "Y",
     val wordsLearned: Int = 40,
