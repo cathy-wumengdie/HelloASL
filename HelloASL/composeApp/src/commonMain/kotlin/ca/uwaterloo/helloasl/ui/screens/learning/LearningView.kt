@@ -36,10 +36,10 @@ fun LearningView(
         }
     }
 
-    // 最小可用：统一浅青
     val pageBg = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.28f)
     val cardBg = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.55f)
     val innerBg = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.40f)
+    val transparent = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0f)
 
     Column(
         modifier = Modifier
@@ -60,7 +60,7 @@ fun LearningView(
                 )
                 SignsPill(
                     value = state.signsCount,
-                    bg = innerBg,
+                    bg = transparent,
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -120,33 +120,6 @@ fun LearningView(
 }
 
 @Composable
-private fun HelloPill(
-    title: String,
-    subtitle: String,
-    value: String,
-    bg: androidx.compose.ui.graphics.Color,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    ClickableSection(
-        onClick = onClick,
-        modifier = modifier,
-        shape = RoundedCornerShape(14.dp),
-        padding = PaddingValues(12.dp),
-        horizontalAlignment = Alignment.Start
-    ) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Column {
-                Text(title, style = MaterialTheme.typography.titleSmall)
-                if (subtitle.isNotBlank()) {
-                    Text(subtitle, style = MaterialTheme.typography.bodySmall)
-                }
-            }
-            Text(value, style = MaterialTheme.typography.titleMedium)
-        }
-    }
-}
-@Composable
 private fun StarredPill(
     value: Int,
     onClick: () -> Unit,
@@ -185,7 +158,6 @@ private fun SignsPill(
             .background(bg)
             .padding(12.dp)
     ) {
-        // 你图里是右对齐数字+“Signs”
         Column(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.End

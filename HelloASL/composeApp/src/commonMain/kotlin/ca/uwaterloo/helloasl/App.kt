@@ -13,6 +13,7 @@ import ca.uwaterloo.helloasl.ui.screens.home.HomeRoute
 import ca.uwaterloo.helloasl.ui.screens.home.HomeViewModel
 import ca.uwaterloo.helloasl.ui.screens.translate.*
 import ca.uwaterloo.helloasl.ui.screens.learning.LearningEntry
+import ca.uwaterloo.helloasl.ui.screens.learning.LearningRoute
 import ca.uwaterloo.helloasl.ui.screens.learning.LearningViewModel
 import ca.uwaterloo.helloasl.ui.screens.learning.LessonViewModel
 import ca.uwaterloo.helloasl.ui.screens.profile.ProfileRoute
@@ -228,10 +229,4 @@ fun App() {
 
 enum class MainTab {
     HOME, LEARNING, TRANSLATE, PROFILE
-}
-
-enum class LearningRoute {
-    LEARNING_HOME,
-    LESSON,
-    STARRED
 }

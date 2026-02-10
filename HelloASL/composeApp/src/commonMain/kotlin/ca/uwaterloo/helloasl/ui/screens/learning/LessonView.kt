@@ -43,7 +43,7 @@ fun LessonView(
         HelloASLCard(
             modifier = Modifier.fillMaxWidth(),
             cardColor = cardBg,
-            elevationDp = 0.dp // 建议：避免厚阴影
+            elevationDp = 0.dp
         ) {
             Box(
                 modifier = Modifier
