@@ -8,18 +8,19 @@ import ca.uwaterloo.helloasl.ui.theme.HelloASLTheme
 import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
-import ca.uwaterloo.helloasl.ui.screens.home.*
-import ca.uwaterloo.helloasl.ui.screens.learning.LearningEntry
-import ca.uwaterloo.helloasl.ui.screens.profile.*
+import androidx.compose.runtime.saveable.rememberSaveable
+import ca.uwaterloo.helloasl.ui.screens.translate.*
+import ca.uwaterloo.helloasl.ui.screens.home.HomeView
+import ca.uwaterloo.helloasl.ui.screens.profile.ProfileView
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 @Preview
 fun App() {
     HelloASLTheme {
-        val homeVm = remember { HomeViewModel() }
-        val profileVm = remember { ProfileViewModel() }
-        var selectedTab by remember { mutableStateOf(MainTab.HOME) }
+        val translateVm = remember { TranslateViewModel() }
+
+        var selectedTab by rememberSaveable { mutableStateOf(MainTab.HOME) }
         val selectedColor = when (selectedTab) {
             MainTab.HOME -> MaterialTheme.colorScheme.primary
             MainTab.LEARNING -> MaterialTheme.colorScheme.secondary
@@ -40,7 +41,7 @@ fun App() {
             MainTab.TRANSLATE -> MaterialTheme.colorScheme.tertiaryContainer
             MainTab.PROFILE -> MaterialTheme.colorScheme.surfaceVariant
         }
-        Scaffold(
+        Scaffold(  // Top + Main Content + Bottom
             topBar = {
                 when (selectedTab) {
                     MainTab.HOME -> {
@@ -61,17 +62,13 @@ fun App() {
                             )
                         )
                     }
-                    MainTab.LEARNING -> {
+
+                    MainTab.LEARNING -> {}
+                    MainTab.TRANSLATE -> {
                         TopAppBar(
-                            title = { Text("Learn ASL") },
-                            actions = {
-                                IconButton(onClick = { /* notification page */ }) {
-                                    Icon(Icons.Filled.Notifications, contentDescription = "Notifications")
-                                }
-                                IconButton(onClick = { /* settings page */ }) {
-                                    Icon(Icons.Filled.Settings, contentDescription = "Settings")
-                                }
-                            },
+                            title = { Text("Translate ASL") },
+                            actions = {/*fill in later*/ },
+                            // think: what do we need for action, a toggle button to change between ASL -> Eng & Eng -> ASL?
                             colors = TopAppBarDefaults.topAppBarColors(
                                 containerColor = selectedColor,
                                 titleContentColor = MaterialTheme.colorScheme.onPrimary,
@@ -79,7 +76,7 @@ fun App() {
                             )
                         )
                     }
-                    MainTab.TRANSLATE -> {}
+
                     MainTab.PROFILE -> {
                         TopAppBar(
                             title = { Text("Profile") },
@@ -106,12 +103,7 @@ fun App() {
                     NavigationBarItem(
                         selected = (selectedTab == MainTab.HOME),
                         onClick = { selectedTab = MainTab.HOME },
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Filled.Home,
-                                contentDescription = "Home"
-                            )
-                        },
+                        icon = { Icon(imageVector = Icons.Filled.Home, contentDescription = "Home") },
                         colors = navBarIconColors
                     );
                     NavigationBarItem(
@@ -142,73 +134,36 @@ fun App() {
                 color = MaterialTheme.colorScheme.background
             ) {
                 when (selectedTab) {
-                    MainTab.HOME -> {
-                        HomeScreen(
-                            state = homeVm.state,
-                            onContinueLearning = {
-                                homeVm.onContinueLearning()
-                                selectedTab = MainTab.LEARNING
-                            },
-                            onDayStreak = {
-                                homeVm.onDayStreak()
-                                // later: navigate to streak details screen
-                            },
-                            onDailyGoals = {
-                                homeVm.onDailyGoals()
-                                // later: navigate to goals screen
-                            },
-                            onLearnAsl = {
-                                homeVm.onLearnAsl()
-                                selectedTab = MainTab.LEARNING
-                            },
-                            onTakeQuiz = {
-                                homeVm.onTakeQuiz()
-                                // later: navigate to quiz screen
-                            },
-                            onTranslate = {
-                                homeVm.onTranslate()
-                                selectedTab = MainTab.TRANSLATE
-                            }
+                    MainTab.HOME -> HomeView(
+                        onDayStreak = { /* later: open streak screen */ },
+                        onDailyGoals = { /* later: open goals screen */ },
+                        onLearning = { selectedTab = MainTab.LEARNING },
+                        onTakeQuiz = { /* later: navigate to quiz */ },
+                        onTranslate = { selectedTab = MainTab.TRANSLATE },
+                        onNotifications = { /* later: open notifications */ }
+                    )
+
+                    MainTab.LEARNING -> {}
+
+                    MainTab.TRANSLATE -> {
+                        TranslateScreen(
+                            state = translateVm.state,
+                            onSwitchMode = translateVm::onSwitchMode,
+                            onSearch = translateVm::onSearch,
+                            onSelectHistoryItem = translateVm::onSelectHistoryItem,
+                            onStartCamera = translateVm::onStartCamera
                         )
                     }
 
-                    MainTab.LEARNING -> {
-                        LearningEntry()
-                    }
-                    MainTab.TRANSLATE -> {}
-                    MainTab.PROFILE -> {
-                        ProfileScreen(
-                            state = profileVm.state,
-                            onSettings = {
-                                profileVm.onSettings()
-                                // later: navigate to settings screen
-                            },
-                            onWordsLearned = {
-                                profileVm.onWordsLearned()
-                                // later: navigate to words learned screen
-                            },
-                            onStarredSigns = {
-                                profileVm.onStarredSigns()
-                                // later: navigate to starredsigns screen
-                            },
-                            onSetLearningGoals = {
-                                profileVm.onSetLearningGoals()
-                                // later: navigate to set learning goal screen
-                            },
-                            onAccount = {
-                                profileVm.onAccount()
-                                // later: navigate to account screen
-                            },
-                            onLicense = {
-                                profileVm.onLicense()
-                                // later: navigate to license screen
-                            },
-                            onSignOut = {
-                                profileVm.onSignOut()
-                                // later: navigate to login screen
-                            }
-                        )
-                    }
+                    MainTab.PROFILE -> ProfileView(
+                        onSettings = { },
+                        onWordsLearned = { },
+                        onStarredSigns = { },
+                        onSetLearningGoals = { },
+                        onAccount = { },
+                        onLicense = { },
+                        onSignOut = { /* go to sign in screen */}
+                    )
                 }
             }
         }
