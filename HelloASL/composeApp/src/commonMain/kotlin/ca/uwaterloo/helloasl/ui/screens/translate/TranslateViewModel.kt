@@ -5,14 +5,18 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 
 class TranslateViewModel {
-    var state by mutableStateOf(TranslateState())
+    var state by mutableStateOf(TranslateModel())
         private set
 
     fun onSwitchMode(mode: TranslateMode) {
         state = state.copy(mode = mode)
     }
 
+    fun onQueryChange(newQuery: String) {
+        state = state.copy(query = newQuery)
+    }
+
     fun onSearch() { }
-    fun onSelectHistoryItem() { }
+    fun onSelectHistoryItem(word: String) { }
     fun onStartCamera() { }
 }
