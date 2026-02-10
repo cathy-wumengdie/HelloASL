@@ -103,19 +103,19 @@ fun App() {
                         onClick = { selectedTab = MainTab.HOME },
                         icon = { Icon(imageVector = Icons.Filled.Home, contentDescription = "Home") },
                         colors = navBarIconColors
-                    );
+                    )
                     NavigationBarItem(
                         selected = (selectedTab == MainTab.LEARNING),
                         onClick = { selectedTab = MainTab.LEARNING },
                         icon = { Icon(imageVector = Icons.Filled.School, contentDescription = "Learning") },
                         colors = navBarIconColors
-                    );
+                    )
                     NavigationBarItem(
                         selected = (selectedTab == MainTab.TRANSLATE),
                         onClick = { selectedTab = MainTab.TRANSLATE },
                         icon = { Icon(imageVector = Icons.Filled.Translate, contentDescription = "Translate") },
                         colors = navBarIconColors
-                    );
+                    )
                     NavigationBarItem(
                         selected = (selectedTab == MainTab.PROFILE),
                         onClick = { selectedTab = MainTab.PROFILE },
@@ -164,15 +164,7 @@ fun App() {
 
                     MainTab.LEARNING -> {}
 
-                    MainTab.TRANSLATE -> {
-                        TranslateScreen(
-                            state = translateVm.state,
-                            onSwitchMode = translateVm::onSwitchMode,
-                            onSearch = translateVm::onSearch,
-                            onSelectHistoryItem = translateVm::onSelectHistoryItem,
-                            onStartCamera = translateVm::onStartCamera
-                        )
-                    }
+                    MainTab.TRANSLATE -> { TranslateScreen(translateVm) }
 
                     MainTab.PROFILE -> {
                         ProfileScreen(
@@ -187,7 +179,7 @@ fun App() {
                             },
                             onStarredSigns = {
                                 profileVm.onStarredSigns()
-                                // later: navigate to starredsigns screen
+                                // later: navigate to starred signs screen
                             },
                             onSetLearningGoals = {
                                 profileVm.onSetLearningGoals()
@@ -203,7 +195,7 @@ fun App() {
                             },
                             onSignOut = {
                                 profileVm.onSignOut()
-                                // later: navigate to login screen
+                                // later: navigate to log in screen
                             }
                         )
                     }

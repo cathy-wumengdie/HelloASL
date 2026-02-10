@@ -2,7 +2,7 @@ package ca.uwaterloo.helloasl.ui.screens.translate
 
 enum class TranslateMode { EN_TO_ASL, ASL_TO_EN }
 
-data class TranslateState(
+data class TranslateUiState(
     val mode: TranslateMode = TranslateMode.EN_TO_ASL,
 
     // English -> ASL
