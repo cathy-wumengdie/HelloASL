@@ -5,7 +5,3 @@ data class StarItem(
     val label: String,
     val imageRes: String? = null
 )
-
-data class StarState(
-    val items: List<StarItem> = emptyList()
-)

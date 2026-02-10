@@ -1,4 +1,4 @@
-package ca.uwaterloo.helloasl.ui.screens.auth.signup
+package ca.uwaterloo.helloasl.ui.screens.auth.login
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -7,16 +7,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import ca.uwaterloo.helloasl.ui.components.HelloASLCard
 import ca.uwaterloo.helloasl.ui.components.ClickableSection
+import ca.uwaterloo.helloasl.ui.components.HelloASLCard
 
 @Composable
-fun SignupScreen(
-    viewModel: SignupViewModel,
-    onBackToLogin: () -> Unit,
-    onSignupSuccess: () -> Unit
+fun LoginView(
+    onNavigateToSignup: () -> Unit,
+    onLoginSuccess: () -> Unit
 ) {
-    val state by viewModel.state
+    val viewModel = remember { LoginViewModel() }
+    val state = viewModel.uiState.value
 
     Column(
         modifier = Modifier
@@ -28,7 +28,7 @@ fun SignupScreen(
         Spacer(Modifier.height(48.dp))
 
         Text(
-            text = "Create Account",
+            text = "Welcome to HelloASL",
             style = MaterialTheme.typography.headlineMedium
         )
 
@@ -52,22 +52,14 @@ fun SignupScreen(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                OutlinedTextField(
-                    value = state.confirmPassword,
-                    onValueChange = viewModel::onConfirmPasswordChange,
-                    label = { Text("Confirm Password") },
-                    visualTransformation = PasswordVisualTransformation(),
-                    modifier = Modifier.fillMaxWidth()
-                )
-
                 Button(
                     onClick = {
-                        viewModel.onCreateAccount()
-                        onSignupSuccess()
+                        viewModel.onSignIn(onLoginSuccess)
                     },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !state.isLoading
                 ) {
-                    Text("Create Account")
+                    Text("Sign In")
                 }
 
                 state.errorMessage?.let {
@@ -82,11 +74,9 @@ fun SignupScreen(
 
         Spacer(Modifier.height(16.dp))
 
-        ClickableSection(
-            onClick = onBackToLogin
-        ) {
+        ClickableSection(onClick = onNavigateToSignup) {
             Text(
-                text = "Back to Sign In",
+                text = "Create Account",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.secondary
             )

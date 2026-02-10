@@ -9,6 +9,7 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -16,36 +17,30 @@ import ca.uwaterloo.helloasl.ui.components.HelloASLCard
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun StarScreen(
-    state: StarState,
+fun StarView(
     onBack: () -> Unit,
     onNotifications: () -> Unit = {},
     onSettings: () -> Unit = {}
 ) {
+    // ✅ Desktop-safe ViewModel creation
+    val viewModel = remember { StarViewModel() }
+    val state = viewModel.uiState.value
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Starred") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(
-                            Icons.Filled.ArrowBack,
-                            contentDescription = "Back"
-                        )
+                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
                 actions = {
                     IconButton(onClick = onNotifications) {
-                        Icon(
-                            Icons.Filled.Notifications,
-                            contentDescription = "Notifications"
-                        )
+                        Icon(Icons.Filled.Notifications, contentDescription = "Notifications")
                     }
                     IconButton(onClick = onSettings) {
-                        Icon(
-                            Icons.Filled.Settings,
-                            contentDescription = "Settings"
-                        )
+                        Icon(Icons.Filled.Settings, contentDescription = "Settings")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -74,7 +69,7 @@ fun StarScreen(
                 )
             }
 
-            // Empty cards
+            // Empty placeholder cards
             items(3) {
                 HelloASLCard(
                     cardColor = MaterialTheme.colorScheme.secondaryContainer
@@ -107,7 +102,6 @@ private fun StarItemCard(
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
 
-            // Images place holder
             Surface(
                 modifier = Modifier.size(64.dp),
                 shape = MaterialTheme.shapes.medium,
