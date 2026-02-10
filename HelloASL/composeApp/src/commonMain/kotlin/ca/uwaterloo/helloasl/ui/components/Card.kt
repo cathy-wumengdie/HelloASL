@@ -9,19 +9,21 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 @Composable
 fun HelloASLCard(
     modifier: Modifier = Modifier,
     cardColor: Color = MaterialTheme.colorScheme.surfaceContainer,
+    elevationDp: Dp = 2.dp,
     content: @Composable ColumnScope.() -> Unit,
 
 ) {
     Card(
         modifier = modifier,
         shape = RoundedCornerShape(18.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        elevation = CardDefaults.cardElevation(elevationDp),
         colors = CardDefaults.cardColors(
             containerColor = cardColor
         ),
