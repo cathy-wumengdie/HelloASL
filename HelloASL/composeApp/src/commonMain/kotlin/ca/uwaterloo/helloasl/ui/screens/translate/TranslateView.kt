@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
@@ -24,15 +25,12 @@ Translation tab:
     - A Card (always visible) at the top with 2 buttons, used for toggling the translation mode
 */
 @Composable
-fun TranslateScreen(
+fun TranslateView(
     // Parameters
-    state: TranslateState,
-    onSwitchMode: (TranslateMode) -> Unit,
-    // Does nothing, for now..
-    onSearch: () -> Unit,
-    onSelectHistoryItem: () -> Unit,
-    onStartCamera: () -> Unit
-) {  // General layout of the Translate tab
+    vm: TranslateViewModel = remember { TranslateViewModel() }
+) {
+    val state = vm.state
+    // General layout of the Translate tab
     Column (
         modifier = Modifier
             .fillMaxSize()
@@ -65,7 +63,7 @@ fun TranslateScreen(
                 IconButton(
                     onClick = {
                         val next = if (leftSelected) TranslateMode.ASL_TO_EN else TranslateMode.EN_TO_ASL
-                        onSwitchMode(next)
+                        vm.onSwitchMode(next)
                     }
                 ) {
                     Icon(
@@ -89,12 +87,13 @@ fun TranslateScreen(
         when (state.mode) {
             TranslateMode.EN_TO_ASL -> EnToAslUI(
                 state = state,
-                onSearch = onSearch,
-                onSelectHistoryItem = onSelectHistoryItem
+                onSearch = vm::onSearch,
+                onSelectHistoryItem = vm::onSelectHistoryItem,
+                onQueryChange = vm::onQueryChange
             )
             TranslateMode.ASL_TO_EN -> AslToEnUI(
                 state = state,
-                onStartCamera = onStartCamera
+                onStartCamera = vm::onStartCamera
             )
         }
     }
@@ -129,19 +128,20 @@ private fun DirectionLabel(
 
 @Composable
 private fun EnToAslUI (
-    state: TranslateState,
+    state: TranslateModel,
     onSearch: () -> Unit,
-    onSelectHistoryItem: () -> Unit
+    onSelectHistoryItem: (String) -> Unit,
+    onQueryChange: (String) -> Unit
 ) {
     Column(Modifier.fillMaxWidth()) {
 
         /* ---------- Text field (for searching English words) ---------- */
         TextField(
-            value = "",
+            value = state.query,
             shape = RoundedCornerShape(25.dp),
             modifier = Modifier.fillMaxWidth(0.95f).align(Alignment.CenterHorizontally),
             placeholder = {Text(state.queryHint)},
-            onValueChange = {},  // Comment: fill in later..
+            onValueChange = onQueryChange,
             trailingIcon = {
                 IconButton(onClick = onSearch){
                     Icon(Icons.Filled.Search, contentDescription = "Search")
@@ -185,7 +185,7 @@ private fun EnToAslUI (
                 // Show the list of words that the user had searched
                 state.searchHistory.forEach { word ->
                     ClickableSection(
-                        onClick = {} // worry about this later ;)
+                        onClick = { onSelectHistoryItem(word) } // worry about this later ;)
                     ) {Text(word)}
                     Spacer(Modifier.height(6.dp))
                 }
@@ -197,7 +197,7 @@ private fun EnToAslUI (
 
 @Composable
 private fun AslToEnUI (
-    state: TranslateState,
+    state: TranslateModel,
     onStartCamera: () -> Unit
 ) {
     /* ---------- Card (video recording) ---------- */
@@ -234,7 +234,7 @@ private fun AslToEnUI (
 
     Spacer(Modifier.height(16.dp))
 
-    /* ---------- Card (displaying recoginized text from recording) ---------- */
+    /* ---------- Card (displaying recognized text from recording) ---------- */
     HelloASLCard(modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp)) {
             Text("Recognized Text", style = MaterialTheme.typography.titleMedium)
