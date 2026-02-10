@@ -3,7 +3,6 @@ package ca.uwaterloo.helloasl.ui.screens.home
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -20,7 +19,7 @@ enum class HomeDestination {
 
 data class HomeNavEvent(val dest: HomeDestination)
 
-class HomeViewModel : ViewModel() {
+class HomeViewModel {
     var state by mutableStateOf(HomeModel())
         private set
 

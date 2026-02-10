@@ -3,26 +3,26 @@ package ca.uwaterloo.helloasl
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import ca.uwaterloo.helloasl.ui.theme.HelloASLTheme
 import androidx.compose.material3.*
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import ca.uwaterloo.helloasl.ui.screens.home.HomeRoute
 import ca.uwaterloo.helloasl.ui.screens.translate.*
-import ca.uwaterloo.helloasl.ui.screens.home.HomeView
 import ca.uwaterloo.helloasl.ui.screens.learning.LearningEntry
 import ca.uwaterloo.helloasl.ui.screens.learning.LearningViewModel
 import ca.uwaterloo.helloasl.ui.screens.learning.LessonViewModel
 import ca.uwaterloo.helloasl.ui.screens.profile.ProfileView
+import ca.uwaterloo.helloasl.ui.screens.profile.ProfileViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-@Preview
 fun App() {
     HelloASLTheme {
         val translateVm = remember { TranslateViewModel() }
+        val profileVm = remember { ProfileViewModel() }
 
         // Learning VMs & State hoisting
         val learningVm = remember { LearningViewModel() }
@@ -183,13 +183,13 @@ fun App() {
                 color = MaterialTheme.colorScheme.background
             ) {
                 when (selectedTab) {
-                    MainTab.HOME -> HomeView(
-                        onDayStreak = { /* later: open streak screen */ },
-                        onDailyGoals = { /* later: open goals screen */ },
+                    MainTab.HOME -> HomeRoute(
+                        onDayStreak = { /* later */ },
+                        onDailyGoals = { /* later */ },
                         onLearning = { selectedTab = MainTab.LEARNING },
-                        onTakeQuiz = { /* later: navigate to quiz */ },
+                        onTakeQuiz = { /* later */ },
                         onTranslate = { selectedTab = MainTab.TRANSLATE },
-                        onNotifications = { /* later: open notifications */ }
+                        onNotifications = { /* later */ }
                     )
 
                     MainTab.LEARNING -> {
@@ -213,7 +213,8 @@ fun App() {
                         onSetLearningGoals = { },
                         onAccount = { },
                         onLicense = { },
-                        onSignOut = { /* go to sign in screen */}
+                        onSignOut = { /* go to sign in screen */},
+                        vm = profileVm,
                     )
                 }
             }
