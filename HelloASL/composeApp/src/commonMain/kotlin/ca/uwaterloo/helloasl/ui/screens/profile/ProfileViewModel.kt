@@ -34,21 +34,27 @@ class ProfileViewModel {
     fun onSettings() {
         _navEvents.tryEmit(ProfileNavEvent(ProfileDestination.SETTINGS))
     }
+
     fun onWordsLearned() {
         _navEvents.tryEmit(ProfileNavEvent(ProfileDestination.WORDS_LEARNED))
     }
+
     fun onStarredSigns() {
         _navEvents.tryEmit(ProfileNavEvent(ProfileDestination.STARRED_SIGNS))
     }
+
     fun onSetLearningGoals() {
         _navEvents.tryEmit(ProfileNavEvent(ProfileDestination.SET_LEARNING_GOALS))
     }
+
     fun onAccount() {
         _navEvents.tryEmit(ProfileNavEvent(ProfileDestination.ACCOUNT))
     }
+
     fun onLicense() {
         _navEvents.tryEmit(ProfileNavEvent(ProfileDestination.LICENSE))
     }
+
     fun onSignOut() {
         _navEvents.tryEmit(ProfileNavEvent(ProfileDestination.SIGN_IN))
     }

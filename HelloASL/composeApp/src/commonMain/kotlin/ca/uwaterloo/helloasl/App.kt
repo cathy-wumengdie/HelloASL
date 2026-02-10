@@ -10,17 +10,19 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import ca.uwaterloo.helloasl.ui.screens.home.HomeRoute
+import ca.uwaterloo.helloasl.ui.screens.home.HomeViewModel
 import ca.uwaterloo.helloasl.ui.screens.translate.*
 import ca.uwaterloo.helloasl.ui.screens.learning.LearningEntry
 import ca.uwaterloo.helloasl.ui.screens.learning.LearningViewModel
 import ca.uwaterloo.helloasl.ui.screens.learning.LessonViewModel
-import ca.uwaterloo.helloasl.ui.screens.profile.ProfileView
+import ca.uwaterloo.helloasl.ui.screens.profile.ProfileRoute
 import ca.uwaterloo.helloasl.ui.screens.profile.ProfileViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun App() {
     HelloASLTheme {
+        val homeVm = remember { HomeViewModel() }
         val translateVm = remember { TranslateViewModel() }
         val profileVm = remember { ProfileViewModel() }
 
@@ -113,6 +115,7 @@ fun App() {
                             )
                         )
                     }
+
                     MainTab.TRANSLATE -> {
                         TopAppBar(
                             title = { Text("Translate ASL") },
@@ -184,6 +187,7 @@ fun App() {
             ) {
                 when (selectedTab) {
                     MainTab.HOME -> HomeRoute(
+                        vm = homeVm,
                         onDayStreak = { /* later */ },
                         onDailyGoals = { /* later */ },
                         onLearning = { selectedTab = MainTab.LEARNING },
@@ -206,15 +210,15 @@ fun App() {
                         TranslateView (vm = translateVm)
                     }
 
-                    MainTab.PROFILE -> ProfileView(
-                        onSettings = { },
-                        onWordsLearned = { },
-                        onStarredSigns = { },
-                        onSetLearningGoals = { },
-                        onAccount = { },
-                        onLicense = { },
-                        onSignOut = { /* go to sign in screen */},
+                    MainTab.PROFILE -> ProfileRoute(
                         vm = profileVm,
+                        onSettings = { /* later */ },
+                        onWordsLearned = { /* later */ },
+                        onStarredSigns = { /* later */ },
+                        onSetLearningGoals = { /* later */ },
+                        onAccount = { /* later */ },
+                        onLicense = { /* later */ },
+                        onSignOut = { /* later */ }
                     )
                 }
             }

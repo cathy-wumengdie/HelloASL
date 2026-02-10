@@ -9,7 +9,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -19,34 +18,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import ca.uwaterloo.helloasl.ui.components.ClickableSection
 import ca.uwaterloo.helloasl.ui.components.HelloASLCard
-import kotlinx.coroutines.flow.collectLatest
 
 @Composable
-fun ProfileView(
-    onSettings: () -> Unit,
-    onWordsLearned: () -> Unit,
-    onStarredSigns: () -> Unit,
-    onSetLearningGoals: () -> Unit,
-    onAccount: () -> Unit,
-    onLicense: () -> Unit,
-    onSignOut: () -> Unit,
-    vm: ProfileViewModel,
-) {
+fun ProfileView(vm: ProfileViewModel) {
     val state = vm.state
-
-    LaunchedEffect(vm) {
-        vm.navEvents.collectLatest { event ->
-            when (event.dest) {
-                ProfileDestination.SETTINGS -> onSettings()
-                ProfileDestination.WORDS_LEARNED -> onWordsLearned()
-                ProfileDestination.STARRED_SIGNS -> onStarredSigns()
-                ProfileDestination.SET_LEARNING_GOALS -> onSetLearningGoals()
-                ProfileDestination.ACCOUNT -> onAccount()
-                ProfileDestination.LICENSE -> onLicense()
-                ProfileDestination.SIGN_IN -> onSignOut()
-            }
-        }
-    }
 
     Column(
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())
@@ -93,7 +68,11 @@ fun ProfileView(
             }
             Spacer(Modifier.height(16.dp))
             HelloASLCard(modifier = Modifier.fillMaxWidth()) {
-                ClickableSection(onClick = vm::onSetLearningGoals, modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.Start) {
+                ClickableSection(
+                    onClick = vm::onSetLearningGoals,
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.Start
+                ) {
                     Text(
                         "Set Learning Goals",
                         color = MaterialTheme.colorScheme.onSurface,
@@ -175,7 +154,7 @@ fun ProfileHeader(name: String, avatarText: String) {
                         color = MaterialTheme.colorScheme.tertiary,
                         shape = CircleShape
                     )
-                    .border(3.dp, Color.White.copy(alpha = 0.9f), CircleShape),
+                    .border(3.dp, MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.9f), CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -213,7 +192,7 @@ fun NumberedCircleBadge(
         ) {
             Text(
                 text = number.toString(),
-                color = Color.White,
+                color = MaterialTheme.colorScheme.onPrimary,
                 fontSize = 30.sp
             )
         }
