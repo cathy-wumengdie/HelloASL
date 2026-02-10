@@ -207,13 +207,7 @@ fun App() {
                     }
 
                     MainTab.TRANSLATE -> {
-                        TranslateScreen(
-                            state = translateVm.state,
-                            onSwitchMode = translateVm::onSwitchMode,
-                            onSearch = translateVm::onSearch,
-                            onSelectHistoryItem = translateVm::onSelectHistoryItem,
-                            onStartCamera = translateVm::onStartCamera
-                        )
+                        TranslateView (vm = translateVm)
                     }
 
                     MainTab.PROFILE -> ProfileRoute(
