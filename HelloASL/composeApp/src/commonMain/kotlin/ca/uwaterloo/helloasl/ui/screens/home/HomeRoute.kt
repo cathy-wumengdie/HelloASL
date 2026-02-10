@@ -3,10 +3,12 @@ package ca.uwaterloo.helloasl.ui.screens.home
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import ca.uwaterloo.helloasl.ui.screens.profile.ProfileViewModel
 import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 fun HomeRoute(
+    vm: HomeViewModel,
     onDayStreak: () -> Unit,
     onDailyGoals: () -> Unit,
     onLearning: () -> Unit,
@@ -14,8 +16,6 @@ fun HomeRoute(
     onTranslate: () -> Unit,
     onNotifications: () -> Unit,
 ) {
-    val vm = remember { HomeViewModel() }
-
     LaunchedEffect(vm) {
         vm.navEvents.collectLatest { event ->
             when (event.dest) {
