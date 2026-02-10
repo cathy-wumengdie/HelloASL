@@ -5,7 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 
 class TranslateViewModel {
-    var state by mutableStateOf(TranslateUiState())
+    var state by mutableStateOf(TranslateModel())
         private set
 
     fun onSwitchMode(mode: TranslateMode) {

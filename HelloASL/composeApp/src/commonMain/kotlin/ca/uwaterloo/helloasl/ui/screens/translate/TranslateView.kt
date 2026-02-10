@@ -128,7 +128,7 @@ private fun DirectionLabel(
 
 @Composable
 private fun EnToAslUI (
-    state: TranslateUiState,
+    state: TranslateModel,
     onSearch: () -> Unit,
     onSelectHistoryItem: (String) -> Unit,
     onQueryChange: (String) -> Unit
@@ -197,7 +197,7 @@ private fun EnToAslUI (
 
 @Composable
 private fun AslToEnUI (
-    state: TranslateUiState,
+    state: TranslateModel,
     onStartCamera: () -> Unit
 ) {
     /* ---------- Card (video recording) ---------- */
