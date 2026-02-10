@@ -17,7 +17,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import ca.uwaterloo.helloasl.ui.components.ClickableSection
 import ca.uwaterloo.helloasl.ui.components.HelloASLCard
 import kotlinx.coroutines.flow.collectLatest
@@ -31,7 +30,7 @@ fun ProfileView(
     onAccount: () -> Unit,
     onLicense: () -> Unit,
     onSignOut: () -> Unit,
-    vm: ProfileViewModel = viewModel(),
+    vm: ProfileViewModel,
 ) {
     val state = vm.state
 

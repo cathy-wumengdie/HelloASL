@@ -11,7 +11,6 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.flow.collectLatest
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -24,7 +23,7 @@ import ca.uwaterloo.helloasl.ui.components.HelloASLCard
 fun LearningView(
     onOpenLesson: (title: String) -> Unit,
     onOpenStarred: () -> Unit,
-    vm: LearningViewModel = viewModel()
+    vm: LearningViewModel
 ) {
     val state = vm.state
 

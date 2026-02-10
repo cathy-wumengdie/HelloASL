@@ -3,7 +3,6 @@ package ca.uwaterloo.helloasl.ui.screens.profile
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -21,7 +20,7 @@ enum class ProfileDestination {
 
 data class ProfileNavEvent(val dest: ProfileDestination)
 
-class ProfileViewModel: ViewModel() {
+class ProfileViewModel {
     var state by mutableStateOf(ProfileModel())
         private set
 
