@@ -107,7 +107,7 @@ private fun StarItemCard(
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
 
-            // Images
+            // Images place holder
             Surface(
                 modifier = Modifier.size(64.dp),
                 shape = MaterialTheme.shapes.medium,
