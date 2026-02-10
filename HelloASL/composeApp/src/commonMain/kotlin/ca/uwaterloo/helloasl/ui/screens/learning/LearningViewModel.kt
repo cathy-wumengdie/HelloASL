@@ -1,6 +1,5 @@
 package ca.uwaterloo.helloasl.ui.screens.learning
 
-import androidx.lifecycle.ViewModel
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -16,7 +15,7 @@ enum class LearningDestination {
 
 data class LearningNavEvent(val dest: LearningDestination, val data: Any? = null)
 
-class LearningViewModel : ViewModel() {
+class LearningViewModel {
     var state by mutableStateOf(LearningModel())
         private set
 

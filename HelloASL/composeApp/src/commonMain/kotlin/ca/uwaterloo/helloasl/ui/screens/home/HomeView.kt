@@ -11,34 +11,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import ca.uwaterloo.helloasl.ui.components.HelloASLCard
 import kotlinx.coroutines.flow.collectLatest
 
 @Composable
-fun HomeView(
-    onDayStreak: () -> Unit,
-    onDailyGoals: () -> Unit,
-    onLearning: () -> Unit,
-    onTakeQuiz: () -> Unit,
-    onTranslate: () -> Unit,
-    onNotifications: () -> Unit,
-    vm: HomeViewModel = viewModel()
-) {
+fun HomeView(vm: HomeViewModel) {
     val state = vm.state
-
-    LaunchedEffect(vm) {
-        vm.navEvents.collectLatest { event ->
-            when (event.dest) {
-                HomeDestination.LEARNING -> onLearning()
-                HomeDestination.TRANSLATE -> onTranslate()
-                HomeDestination.QUIZ -> onTakeQuiz()
-                HomeDestination.DAY_STREAK -> onDayStreak()
-                HomeDestination.DAILY_GOALS -> onDailyGoals()
-                HomeDestination.NOTIFICATIONS -> onNotifications()
-            }
-        }
-    }
 
     Column(
         modifier = Modifier
