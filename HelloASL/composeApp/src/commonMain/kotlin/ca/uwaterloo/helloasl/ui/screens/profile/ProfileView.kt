@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -16,12 +17,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import ca.uwaterloo.helloasl.ui.components.ClickableSection
 import ca.uwaterloo.helloasl.ui.components.HelloASLCard
+import kotlinx.coroutines.flow.collectLatest
 
 @Composable
-fun ProfileScreen(
-    state: ProfileState,
+fun ProfileView(
     onSettings: () -> Unit,
     onWordsLearned: () -> Unit,
     onStarredSigns: () -> Unit,
@@ -29,7 +31,24 @@ fun ProfileScreen(
     onAccount: () -> Unit,
     onLicense: () -> Unit,
     onSignOut: () -> Unit,
+    vm: ProfileViewModel = viewModel(),
 ) {
+    val state = vm.state
+
+    LaunchedEffect(vm) {
+        vm.navEvents.collectLatest { event ->
+            when (event.dest) {
+                ProfileDestination.SETTINGS -> onSettings()
+                ProfileDestination.WORDS_LEARNED -> onWordsLearned()
+                ProfileDestination.STARRED_SIGNS -> onStarredSigns()
+                ProfileDestination.SET_LEARNING_GOALS -> onSetLearningGoals()
+                ProfileDestination.ACCOUNT -> onAccount()
+                ProfileDestination.LICENSE -> onLicense()
+                ProfileDestination.SIGN_IN -> onSignOut()
+            }
+        }
+    }
+
     Column(
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())
     ) {
@@ -48,7 +67,7 @@ fun ProfileScreen(
                 Spacer(Modifier.height(16.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     ClickableSection(
-                        onClick = onWordsLearned,
+                        onClick = vm::onWordsLearned,
                         modifier = Modifier.weight(1f)
                     ) {
                         NumberedCircleBadge(state.wordsLearned)
@@ -60,7 +79,7 @@ fun ProfileScreen(
                         )
                     }
                     ClickableSection(
-                        onClick = onStarredSigns,
+                        onClick = vm::onStarredSigns,
                         modifier = Modifier.weight(1f)
                     ) {
                         NumberedCircleBadge(state.starredSigns)
@@ -75,7 +94,7 @@ fun ProfileScreen(
             }
             Spacer(Modifier.height(16.dp))
             HelloASLCard(modifier = Modifier.fillMaxWidth()) {
-                ClickableSection(onClick = onSetLearningGoals, modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.Start) {
+                ClickableSection(onClick = vm::onSetLearningGoals, modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.Start) {
                     Text(
                         "Set Learning Goals",
                         color = MaterialTheme.colorScheme.onSurface,
@@ -89,15 +108,15 @@ fun ProfileScreen(
             }
             Spacer(Modifier.height(16.dp))
             HelloASLCard(modifier = Modifier.fillMaxWidth()) {
-                TextButton(onClick = onAccount) {
+                TextButton(onClick = vm::onAccount) {
                     Text("Account", style = MaterialTheme.typography.titleMedium)
                 }
                 Spacer(Modifier.height(16.dp))
-                TextButton(onClick = onLicense) {
+                TextButton(onClick = vm::onLicense) {
                     Text("License", style = MaterialTheme.typography.titleMedium)
                 }
                 Spacer(Modifier.height(16.dp))
-                TextButton(onClick = onSignOut) {
+                TextButton(onClick = vm::onSignOut) {
                     Text("Sign out", style = MaterialTheme.typography.titleMedium)
                 }
                 Spacer(Modifier.height(16.dp))
