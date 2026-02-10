@@ -6,21 +6,31 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import ca.uwaterloo.helloasl.ui.theme.HelloASLTheme
 import androidx.compose.material3.*
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
-import ca.uwaterloo.helloasl.ui.screens.home.*
-import ca.uwaterloo.helloasl.ui.screens.profile.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import ca.uwaterloo.helloasl.ui.screens.translate.*
+import ca.uwaterloo.helloasl.ui.screens.home.HomeView
+import ca.uwaterloo.helloasl.ui.screens.learning.LearningEntry
+import ca.uwaterloo.helloasl.ui.screens.learning.LearningViewModel
+import ca.uwaterloo.helloasl.ui.screens.learning.LessonViewModel
+import ca.uwaterloo.helloasl.ui.screens.profile.ProfileView
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 @Preview
 fun App() {
     HelloASLTheme {
-        val homeVm = remember { HomeViewModel() }
-        val translateVm = remember {TranslateViewModel()}
-        val profileVm = remember { ProfileViewModel() }
-        var selectedTab by remember { mutableStateOf(MainTab.HOME) }
+        val translateVm = remember { TranslateViewModel() }
+
+        // Learning VMs & State hoisting
+        val learningVm = remember { LearningViewModel() }
+        val lessonVm = remember { LessonViewModel() }
+        var learningRoute by rememberSaveable { mutableStateOf(LearningRoute.LEARNING_HOME) }
+        var lessonTitle by rememberSaveable { mutableStateOf("") }
+
+        var selectedTab by rememberSaveable { mutableStateOf(MainTab.HOME) }
         val selectedColor = when (selectedTab) {
             MainTab.HOME -> MaterialTheme.colorScheme.primary
             MainTab.LEARNING -> MaterialTheme.colorScheme.secondary
@@ -62,11 +72,51 @@ fun App() {
                             )
                         )
                     }
-                    MainTab.LEARNING -> {}
+
+                    MainTab.LEARNING -> {
+                        TopAppBar(
+                            title = {
+                                Text(
+                                    when (learningRoute) {
+                                        LearningRoute.LEARNING_HOME -> "Learning"
+                                        LearningRoute.LESSON -> lessonTitle
+                                        LearningRoute.STARRED -> "Starred Signs"
+                                    }
+                                )
+                            },
+                            navigationIcon = {
+                                if (learningRoute != LearningRoute.LEARNING_HOME) {
+                                    IconButton(onClick = { learningRoute = LearningRoute.LEARNING_HOME }) {
+                                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                                    }
+                                }
+                            },
+                            actions = {
+                                IconButton(onClick = { /* notification page */ }) {
+                                    Icon(
+                                        Icons.Filled.Notifications,
+                                        contentDescription = "Notifications"
+                                    )
+                                }
+                                IconButton(onClick = { /* settings page */ }) {
+                                    Icon(
+                                        Icons.Filled.Settings,
+                                        contentDescription = "Settings"
+                                    )
+                                }
+                            },
+                            colors = TopAppBarDefaults.topAppBarColors(
+                                containerColor = selectedColor,
+                                titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                                actionIconContentColor = MaterialTheme.colorScheme.onPrimary,
+                                navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
+                            )
+                        )
+                    }
                     MainTab.TRANSLATE -> {
                         TopAppBar(
-                            title = { Text("Translate ASL")},
-                            actions = {/*fill in later*/},
+                            title = { Text("Translate ASL") },
+                            actions = {/*fill in later*/ },
                             // think: what do we need for action, a toggle button to change between ASL -> Eng & Eng -> ASL?
                             colors = TopAppBarDefaults.topAppBarColors(
                                 containerColor = selectedColor,
@@ -75,6 +125,7 @@ fun App() {
                             )
                         )
                     }
+
                     MainTab.PROFILE -> {
                         TopAppBar(
                             title = { Text("Profile") },
@@ -132,73 +183,38 @@ fun App() {
                 color = MaterialTheme.colorScheme.background
             ) {
                 when (selectedTab) {
-                    MainTab.HOME -> {
-                        HomeScreen(
-                            state = homeVm.state,
-                            onContinueLearning = {
-                                homeVm.onContinueLearning()
-                                selectedTab = MainTab.LEARNING
-                            },
-                            onDayStreak = {
-                                homeVm.onDayStreak()
-                                // later: navigate to streak details screen
-                            },
-                            onDailyGoals = {
-                                homeVm.onDailyGoals()
-                                // later: navigate to goals screen
-                            },
-                            onLearnAsl = {
-                                homeVm.onLearnAsl()
-                                selectedTab = MainTab.LEARNING
-                            },
-                            onTakeQuiz = {
-                                homeVm.onTakeQuiz()
-                                // later: navigate to quiz screen
-                            },
-                            onTranslate = {
-                                homeVm.onTranslate()
-                                selectedTab = MainTab.TRANSLATE
-                            }
+                    MainTab.HOME -> HomeView(
+                        onDayStreak = { /* later: open streak screen */ },
+                        onDailyGoals = { /* later: open goals screen */ },
+                        onLearning = { selectedTab = MainTab.LEARNING },
+                        onTakeQuiz = { /* later: navigate to quiz */ },
+                        onTranslate = { selectedTab = MainTab.TRANSLATE },
+                        onNotifications = { /* later: open notifications */ }
+                    )
+
+                    MainTab.LEARNING -> {
+                        LearningEntry(
+                            vm = learningVm,
+                            lessonVm = lessonVm,
+                            route = learningRoute,
+                            onNavigate = { learningRoute = it },
+                            onUpdateLessonTitle = { lessonTitle = it }
                         )
                     }
 
-                    MainTab.LEARNING -> {}
-
-                    MainTab.TRANSLATE -> { TranslateScreen(translateVm) }
-
-                    MainTab.PROFILE -> {
-                        ProfileScreen(
-                            state = profileVm.state,
-                            onSettings = {
-                                profileVm.onSettings()
-                                // later: navigate to settings screen
-                            },
-                            onWordsLearned = {
-                                profileVm.onWordsLearned()
-                                // later: navigate to words learned screen
-                            },
-                            onStarredSigns = {
-                                profileVm.onStarredSigns()
-                                // later: navigate to starred signs screen
-                            },
-                            onSetLearningGoals = {
-                                profileVm.onSetLearningGoals()
-                                // later: navigate to set learning goal screen
-                            },
-                            onAccount = {
-                                profileVm.onAccount()
-                                // later: navigate to account screen
-                            },
-                            onLicense = {
-                                profileVm.onLicense()
-                                // later: navigate to license screen
-                            },
-                            onSignOut = {
-                                profileVm.onSignOut()
-                                // later: navigate to log in screen
-                            }
-                        )
+                    MainTab.TRANSLATE -> {
+                        TranslateView (vm = translateVm)
                     }
+
+                    MainTab.PROFILE -> ProfileView(
+                        onSettings = { },
+                        onWordsLearned = { },
+                        onStarredSigns = { },
+                        onSetLearningGoals = { },
+                        onAccount = { },
+                        onLicense = { },
+                        onSignOut = { /* go to sign in screen */}
+                    )
                 }
             }
         }
@@ -207,4 +223,10 @@ fun App() {
 
 enum class MainTab {
     HOME, LEARNING, TRANSLATE, PROFILE
+}
+
+enum class LearningRoute {
+    LEARNING_HOME,
+    LESSON,
+    STARRED
 }

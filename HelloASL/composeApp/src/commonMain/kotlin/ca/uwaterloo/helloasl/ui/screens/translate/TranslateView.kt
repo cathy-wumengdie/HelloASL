@@ -25,7 +25,7 @@ Translation tab:
     - A Card (always visible) at the top with 2 buttons, used for toggling the translation mode
 */
 @Composable
-fun TranslateScreen(
+fun TranslateView(
     // Parameters
     vm: TranslateViewModel = remember { TranslateViewModel() }
 ) {
