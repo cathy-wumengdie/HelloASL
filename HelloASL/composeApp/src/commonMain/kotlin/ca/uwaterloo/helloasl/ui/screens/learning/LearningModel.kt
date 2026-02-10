@@ -1,6 +1,6 @@
 package ca.uwaterloo.helloasl.ui.screens.learning
 
-data class LearningState(
+data class LearningModel(
     val starredCount: Int = 12,
     val signsCount: Int = 12,
     val alphabetScore: Int = 90,

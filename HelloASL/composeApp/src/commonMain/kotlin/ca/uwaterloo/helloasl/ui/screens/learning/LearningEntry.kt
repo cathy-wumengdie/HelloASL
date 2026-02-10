@@ -1,29 +1,38 @@
 package ca.uwaterloo.helloasl.ui.screens.learning
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import ca.uwaterloo.helloasl.LearningRoute
 
 @Composable
-fun LearningEntry() {
-    val vm = remember { LearningViewModel() }
-    val lessonVm = remember { LessonViewModel() }
-
-    var route by remember { mutableStateOf("learning") }
-    var lessonTitle by remember { mutableStateOf("Alphabet: H–P") }
-
+fun LearningEntry(
+    vm: LearningViewModel,
+    lessonVm: LessonViewModel,
+    route: LearningRoute,
+    onNavigate: (LearningRoute) -> Unit,
+    onUpdateLessonTitle: (String) -> Unit
+) {
     when (route) {
-        "learning" -> LearningScreen(
-            state = vm.state,
-            onOpenStarred = { vm.onOpenStarred() /* TODO */ },
+        LearningRoute.LEARNING_HOME -> LearningView(
+            vm = vm,
+            onOpenStarred = {
+                // 修复：这里直接请求导航，不要再调用 vm.onOpenStarred() 否则会死循环
+                onNavigate(LearningRoute.STARRED)
+            },
             onOpenLesson = { title ->
-                vm.onOpenAlphabet(title)
-                lessonTitle = title
-                lessonVm.state = lessonVm.state.copy(title = title) // 如果你把 state 设为 private set，这行去掉即可
-                route = "lesson"
+                onUpdateLessonTitle(title)
+                lessonVm.state = lessonVm.state.copy(title = title)
+                onNavigate(LearningRoute.LESSON)
             }
         )
-        "lesson" -> LessonScreen(
-            state = lessonVm.state.copy(title = lessonTitle),
-            onBack = { route = "learning" }
+        LearningRoute.LESSON -> LessonView(
+            state = lessonVm.state,
+            onBack = { onNavigate(LearningRoute.LEARNING_HOME) }
         )
+        LearningRoute.STARRED -> {
+             // 临时占位
+             Box { Text("Starred") }
+        }
     }
 }

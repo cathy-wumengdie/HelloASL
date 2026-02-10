@@ -5,7 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 
 class LessonViewModel {
-    var state by mutableStateOf(LessonState())
+    var state by mutableStateOf(LessonModel())
         public set
 
     fun onChoose(option: String) { }

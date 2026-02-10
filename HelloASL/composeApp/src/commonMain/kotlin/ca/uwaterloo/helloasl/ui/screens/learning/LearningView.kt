@@ -1,8 +1,6 @@
 package ca.uwaterloo.helloasl.ui.screens.learning
 
-import android.graphics.Color
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -12,6 +10,9 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.flow.collectLatest
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -20,11 +21,22 @@ import ca.uwaterloo.helloasl.ui.components.ClickableSection
 import ca.uwaterloo.helloasl.ui.components.HelloASLCard
 
 @Composable
-fun LearningScreen(
-    state: LearningState,
+fun LearningView(
     onOpenLesson: (title: String) -> Unit,
     onOpenStarred: () -> Unit,
+    vm: LearningViewModel = viewModel()
 ) {
+    val state = vm.state
+
+    LaunchedEffect(vm) {
+        vm.navEvents.collectLatest { event ->
+            when (event.dest) {
+                LearningDestination.LESSON -> onOpenLesson(event.data as String)
+                LearningDestination.STARRED -> onOpenStarred()
+            }
+        }
+    }
+
     // 最小可用：统一浅青
     val pageBg = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.28f)
     val cardBg = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.55f)
@@ -43,7 +55,7 @@ fun LearningScreen(
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 StarredPill(
                     value = state.starredCount,
-                    onClick = onOpenStarred,
+                    onClick = vm::onOpenStarred,
                     bg = innerBg,
                     modifier = Modifier.weight(3f)
                 )
@@ -70,7 +82,7 @@ fun LearningScreen(
                     leftIcon = { Icon(Icons.Filled.Check, contentDescription = null) },
                     enabled = true,
                     bg = innerBg,
-                    onClick = { onOpenLesson("Alphabet: A–G") }
+                    onClick = { vm.onOpenAlphabet("Alphabet: A–G") }
                 )
 
                 AlphabetCenterItem(
@@ -78,7 +90,7 @@ fun LearningScreen(
                     leftIcon = { Text(state.alphabetScore.toString(), style = MaterialTheme.typography.labelMedium) },
                     enabled = state.alphabetHPUnlocked,
                     bg = innerBg,
-                    onClick = { onOpenLesson("Alphabet: H–P") }
+                    onClick = { vm.onOpenAlphabet("Alphabet: H–P") }
                 )
 
                 AlphabetCenterItem(
@@ -86,7 +98,7 @@ fun LearningScreen(
                     leftIcon = { Icon(Icons.Filled.Lock, contentDescription = null) },
                     enabled = !state.alphabetQZLocked,
                     bg = innerBg,
-                    onClick = { onOpenLesson("Alphabet: Q–Z") }
+                    onClick = { vm.onOpenAlphabet("Alphabet: Q–Z") }
                 )
             }
         }
@@ -102,7 +114,7 @@ fun LearningScreen(
                 enabled = !state.greetingsHelloLocked,
                 bg = innerBg,
                 right = { Icon(Icons.Filled.Lock, contentDescription = null) },
-                onClick = { onOpenLesson("Greetings: Hello") }
+                onClick = { vm.onOpenGreetings("Greetings: Hello") }
             )
         }
     }
@@ -247,4 +259,3 @@ private fun AlphabetCenterItem(
         }
     }
 }
-

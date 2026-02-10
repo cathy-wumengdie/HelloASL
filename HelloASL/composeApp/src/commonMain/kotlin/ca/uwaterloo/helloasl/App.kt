@@ -6,11 +6,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import ca.uwaterloo.helloasl.ui.theme.HelloASLTheme
 import androidx.compose.material3.*
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import ca.uwaterloo.helloasl.ui.screens.translate.*
 import ca.uwaterloo.helloasl.ui.screens.home.HomeView
+import ca.uwaterloo.helloasl.ui.screens.learning.LearningEntry
+import ca.uwaterloo.helloasl.ui.screens.learning.LearningEntry
+import ca.uwaterloo.helloasl.ui.screens.learning.LearningViewModel
+import ca.uwaterloo.helloasl.ui.screens.learning.LessonViewModel
 import ca.uwaterloo.helloasl.ui.screens.profile.ProfileView
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -19,6 +24,12 @@ import ca.uwaterloo.helloasl.ui.screens.profile.ProfileView
 fun App() {
     HelloASLTheme {
         val translateVm = remember { TranslateViewModel() }
+
+        // Learning VMs & State hoisting
+        val learningVm = remember { LearningViewModel() }
+        val lessonVm = remember { LessonViewModel() }
+        var learningRoute by rememberSaveable { mutableStateOf(LearningRoute.LEARNING_HOME) }
+        var lessonTitle by rememberSaveable { mutableStateOf("") }
 
         var selectedTab by rememberSaveable { mutableStateOf(MainTab.HOME) }
         val selectedColor = when (selectedTab) {
@@ -63,7 +74,46 @@ fun App() {
                         )
                     }
 
-                    MainTab.LEARNING -> {}
+                    MainTab.LEARNING -> {
+                        TopAppBar(
+                            title = {
+                                Text(
+                                    when (learningRoute) {
+                                        LearningRoute.LEARNING_HOME -> "Learning"
+                                        LearningRoute.LESSON -> lessonTitle
+                                        LearningRoute.STARRED -> "Starred Signs"
+                                    }
+                                )
+                            },
+                            navigationIcon = {
+                                if (learningRoute != LearningRoute.LEARNING_HOME) {
+                                    IconButton(onClick = { learningRoute = LearningRoute.LEARNING_HOME }) {
+                                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                                    }
+                                }
+                            },
+                            actions = {
+                                IconButton(onClick = { /* notification page */ }) {
+                                    Icon(
+                                        Icons.Filled.Notifications,
+                                        contentDescription = "Notifications"
+                                    )
+                                }
+                                IconButton(onClick = { /* settings page */ }) {
+                                    Icon(
+                                        Icons.Filled.Settings,
+                                        contentDescription = "Settings"
+                                    )
+                                }
+                            },
+                            colors = TopAppBarDefaults.topAppBarColors(
+                                containerColor = selectedColor,
+                                titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                                actionIconContentColor = MaterialTheme.colorScheme.onPrimary,
+                                navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
+                            )
+                        )
+                    }
                     MainTab.TRANSLATE -> {
                         TopAppBar(
                             title = { Text("Translate ASL") },
@@ -105,19 +155,19 @@ fun App() {
                         onClick = { selectedTab = MainTab.HOME },
                         icon = { Icon(imageVector = Icons.Filled.Home, contentDescription = "Home") },
                         colors = navBarIconColors
-                    );
+                    )
                     NavigationBarItem(
                         selected = (selectedTab == MainTab.LEARNING),
                         onClick = { selectedTab = MainTab.LEARNING },
                         icon = { Icon(imageVector = Icons.Filled.School, contentDescription = "Learning") },
                         colors = navBarIconColors
-                    );
+                    )
                     NavigationBarItem(
                         selected = (selectedTab == MainTab.TRANSLATE),
                         onClick = { selectedTab = MainTab.TRANSLATE },
                         icon = { Icon(imageVector = Icons.Filled.Translate, contentDescription = "Translate") },
                         colors = navBarIconColors
-                    );
+                    )
                     NavigationBarItem(
                         selected = (selectedTab == MainTab.PROFILE),
                         onClick = { selectedTab = MainTab.PROFILE },
@@ -143,7 +193,15 @@ fun App() {
                         onNotifications = { /* later: open notifications */ }
                     )
 
-                    MainTab.LEARNING -> {}
+                    MainTab.LEARNING -> {
+                        LearningEntry(
+                            vm = learningVm,
+                            lessonVm = lessonVm,
+                            route = learningRoute,
+                            onNavigate = { learningRoute = it },
+                            onUpdateLessonTitle = { lessonTitle = it }
+                        )
+                    }
 
                     MainTab.TRANSLATE -> {
                         TranslateScreen(
@@ -172,4 +230,10 @@ fun App() {
 
 enum class MainTab {
     HOME, LEARNING, TRANSLATE, PROFILE
+}
+
+enum class LearningRoute {
+    LEARNING_HOME,
+    LESSON,
+    STARRED
 }
