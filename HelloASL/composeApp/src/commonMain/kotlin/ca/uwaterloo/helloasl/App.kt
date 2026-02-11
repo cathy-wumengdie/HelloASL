@@ -199,7 +199,8 @@ fun App() {
                             },
                             colors = TopAppBarDefaults.topAppBarColors(
                                 containerColor = MaterialTheme.colorScheme.secondary,
-                                titleContentColor = MaterialTheme.colorScheme.onPrimary
+                                titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                                navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
                             )
                         )
                     }
@@ -282,7 +283,7 @@ fun App() {
                         onSetLearningGoals = { /* later */ },
                         onAccount = { /* later */ },
                         onLicense = { /* later */ },
-                        onSignOut = { /* later */ }
+                        onSignOut = { isLoggedIn = false }
                     )
 
                     MainTab.STAR -> {

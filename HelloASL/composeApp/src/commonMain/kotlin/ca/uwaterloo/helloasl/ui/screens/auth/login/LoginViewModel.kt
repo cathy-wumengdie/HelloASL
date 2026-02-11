@@ -4,7 +4,7 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 
 data class LoginUiState(
-    val email: String = "test@email.com",   // ✅ hard-coded test data
+    val email: String = "yanjin@email.com",   // ✅ hard-coded test data
     val password: String = "123456",
     val isLoading: Boolean = false,
     val errorMessage: String? = null
