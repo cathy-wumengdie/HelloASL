@@ -12,10 +12,10 @@ import ca.uwaterloo.helloasl.ui.components.HelloASLCard
 
 @Composable
 fun LoginView(
+    viewModel:LoginViewModel,
     onNavigateToSignup: () -> Unit,
     onLoginSuccess: () -> Unit
 ) {
-    val viewModel = remember { LoginViewModel() }
     val state = viewModel.uiState.value
 
     Column(

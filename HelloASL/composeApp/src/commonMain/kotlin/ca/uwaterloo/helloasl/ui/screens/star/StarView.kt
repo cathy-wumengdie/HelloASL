@@ -18,74 +18,35 @@ import ca.uwaterloo.helloasl.ui.components.HelloASLCard
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StarView(
-    onBack: () -> Unit,
-    onNotifications: () -> Unit = {},
-    onSettings: () -> Unit = {}
+    viewModel: StarViewModel
 ) {
-    // ✅ Desktop-safe ViewModel creation
-    val viewModel = remember { StarViewModel() }
     val state = viewModel.uiState.value
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Starred") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
-                actions = {
-                    IconButton(onClick = onNotifications) {
-                        Icon(Icons.Filled.Notifications, contentDescription = "Notifications")
-                    }
-                    IconButton(onClick = onSettings) {
-                        Icon(Icons.Filled.Settings, contentDescription = "Settings")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                    actionIconContentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                )
-            )
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(top = 16.dp, start = 16.dp, end = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+
+        items(state.items) { item ->
+            StarItemCard(label = item.label)
         }
-    ) { padding ->
 
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-
-            item { Spacer(Modifier.height(8.dp)) }
-
-            items(state.items) { item ->
-                StarItemCard(
-                    label = item.label
+        items(3) {
+            HelloASLCard(
+                cardColor = MaterialTheme.colorScheme.secondaryContainer
+            ) {
+                Spacer(
+                    modifier = Modifier
+                        .height(80.dp)
+                        .fillMaxWidth()
                 )
             }
-
-            // Empty placeholder cards
-            items(3) {
-                HelloASLCard(
-                    cardColor = MaterialTheme.colorScheme.secondaryContainer
-                ) {
-                    Spacer(
-                        modifier = Modifier
-                            .height(80.dp)
-                            .fillMaxWidth()
-                    )
-                }
-            }
-
-            item { Spacer(Modifier.height(16.dp)) }
         }
     }
 }
+
 
 @Composable
 private fun StarItemCard(

@@ -18,11 +18,23 @@ import ca.uwaterloo.helloasl.ui.screens.learning.LearningViewModel
 import ca.uwaterloo.helloasl.ui.screens.learning.LessonViewModel
 import ca.uwaterloo.helloasl.ui.screens.profile.ProfileRoute
 import ca.uwaterloo.helloasl.ui.screens.profile.ProfileViewModel
+import ca.uwaterloo.helloasl.ui.screens.auth.login.*
+import ca.uwaterloo.helloasl.ui.screens.auth.signup.*
+import ca.uwaterloo.helloasl.ui.screens.star.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun App() {
     HelloASLTheme {
+        var authRoute by rememberSaveable { mutableStateOf(AuthRoute.LOGIN) }
+        var isLoggedIn by rememberSaveable { mutableStateOf(false) }
+
+        val loginVm = remember { LoginViewModel() }
+        val signupVm = remember { SignupViewModel() }
+        val starVm = remember { StarViewModel() }
+        var previousTab by rememberSaveable { mutableStateOf(MainTab.LEARNING) }
+
+
         val homeVm = remember { HomeViewModel() }
         val translateVm = remember { TranslateViewModel() }
         val profileVm = remember { ProfileViewModel() }
@@ -39,6 +51,7 @@ fun App() {
             MainTab.LEARNING -> MaterialTheme.colorScheme.secondary
             MainTab.TRANSLATE -> MaterialTheme.colorScheme.tertiary
             MainTab.PROFILE -> MaterialTheme.colorScheme.surface
+            MainTab.STAR -> MaterialTheme.colorScheme.secondary
         }
         val unselectedColor = MaterialTheme.colorScheme.onSurfaceVariant
         val navBarIconColors = NavigationBarItemDefaults.colors(
@@ -53,7 +66,29 @@ fun App() {
             MainTab.LEARNING -> MaterialTheme.colorScheme.secondaryContainer
             MainTab.TRANSLATE -> MaterialTheme.colorScheme.tertiaryContainer
             MainTab.PROFILE -> MaterialTheme.colorScheme.surfaceVariant
+            MainTab.STAR -> MaterialTheme.colorScheme.secondaryContainer
         }
+
+        if (!isLoggedIn) {
+            when (authRoute) {
+                AuthRoute.LOGIN -> {
+                    LoginView(
+                        viewModel = loginVm,
+                        onNavigateToSignup = { authRoute = AuthRoute.SIGNUP },
+                        onLoginSuccess = { isLoggedIn = true }
+                    )
+                }
+
+                AuthRoute.SIGNUP -> {
+                    SignupView(
+                        viewModel = signupVm,
+                        onBackToLogin = { authRoute = AuthRoute.LOGIN },
+                        onSignupSuccess = { isLoggedIn = true }
+                    )
+                }
+            }
+        } else {
+
         Scaffold(  // Top + Main Content + Bottom
             topBar = {
                 when (selectedTab) {
@@ -83,7 +118,7 @@ fun App() {
                                     when (learningRoute) {
                                         LearningRoute.LEARNING_HOME -> "Learning"
                                         LearningRoute.LESSON -> lessonTitle
-                                        LearningRoute.STARRED -> "Starred Signs"
+                                        //LearningRoute.STARRED -> "Starred Signs"
                                     }
                                 )
                             },
@@ -148,6 +183,27 @@ fun App() {
                             )
                         )
                     }
+
+                    MainTab.STAR -> {
+                        TopAppBar(
+                            title = { Text("Starred Signs") },
+                            navigationIcon = {
+                                IconButton(onClick = {
+                                    selectedTab = previousTab
+                                }) {
+                                    Icon(
+                                        Icons.AutoMirrored.Filled.ArrowBack,
+                                        contentDescription = "Back"
+                                    )
+                                }
+                            },
+                            colors = TopAppBarDefaults.topAppBarColors(
+                                containerColor = MaterialTheme.colorScheme.secondary,
+                                titleContentColor = MaterialTheme.colorScheme.onPrimary
+                            )
+                        )
+                    }
+
                 }
 
             },
@@ -203,7 +259,11 @@ fun App() {
                             lessonVm = lessonVm,
                             route = learningRoute,
                             onNavigate = { learningRoute = it },
-                            onUpdateLessonTitle = { lessonTitle = it }
+                            onUpdateLessonTitle = { lessonTitle = it },
+                            onOpenStarred = {
+                                previousTab = selectedTab
+                                selectedTab = MainTab.STAR
+                            }
                         )
                     }
 
@@ -215,18 +275,33 @@ fun App() {
                         vm = profileVm,
                         onSettings = { /* later */ },
                         onWordsLearned = { /* later */ },
-                        onStarredSigns = { /* later */ },
+                        onStarredSigns = {
+                            previousTab = selectedTab
+                            selectedTab = MainTab.STAR
+                        },
                         onSetLearningGoals = { /* later */ },
                         onAccount = { /* later */ },
                         onLicense = { /* later */ },
                         onSignOut = { /* later */ }
                     )
+
+                    MainTab.STAR -> {
+                        StarView(
+                            viewModel = starVm
+                        )
+                    }
+
                 }
             }
         }
+            }
     }
 }
 
 enum class MainTab {
-    HOME, LEARNING, TRANSLATE, PROFILE
+    HOME, LEARNING, TRANSLATE, PROFILE, STAR
+}
+
+enum class AuthRoute {
+    LOGIN, SIGNUP
 }
