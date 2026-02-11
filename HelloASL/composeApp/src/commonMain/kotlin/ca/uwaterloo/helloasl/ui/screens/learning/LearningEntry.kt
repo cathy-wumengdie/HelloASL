@@ -26,8 +26,7 @@ fun LearningEntry(
             }
         )
         LearningRoute.LESSON -> LessonView(
-            state = lessonVm.state,
-            onBack = { onNavigate(LearningRoute.LEARNING_HOME) }
+            state = lessonVm.state
         )
     }
 }

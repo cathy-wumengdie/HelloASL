@@ -51,18 +51,19 @@ fun LearningView(
     ) {
         // Starred / Signs
         HelloASLCard(cardColor = cardBg, elevationDp = 0.dp) {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                StarredPill(
-                    value = state.starredCount,
+
+                ClickableSection(
                     onClick = vm::onOpenStarred,
-                    bg = innerBg,
-                    modifier = Modifier.weight(3f)
-                )
-                SignsPill(
-                    value = state.signsCount,
-                    bg = transparent,
-                    modifier = Modifier.weight(1f)
-                )
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.Start
+                ) {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Column {
+                            Text("Starred", style = MaterialTheme.typography.titleSmall)
+                            Text("Review saved signs", style = MaterialTheme.typography.bodySmall)
+                        }
+                        Text((state.starredCount).toString())
+                }
             }
         }
 
@@ -115,55 +116,6 @@ fun LearningView(
                 right = { Icon(Icons.Filled.Lock, contentDescription = null) },
                 onClick = { vm.onOpenGreetings("Greetings: Hello") }
             )
-        }
-    }
-}
-
-@Composable
-private fun StarredPill(
-    value: Int,
-    onClick: () -> Unit,
-    bg: androidx.compose.ui.graphics.Color,
-    modifier: Modifier = Modifier
-) {
-    val shape = RoundedCornerShape(14.dp)
-    ClickableSection(
-        onClick = onClick,
-        modifier = modifier
-            .clip(shape)
-            .background(bg),
-        shape = shape,
-        padding = PaddingValues(12.dp),
-        horizontalAlignment = Alignment.Start
-    ) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Column {
-                Text("Starred", style = MaterialTheme.typography.titleSmall)
-                Text("Review saved signs", style = MaterialTheme.typography.bodySmall)
-            }
-//            Text(value.toString(), style = MaterialTheme.typography.titleMedium)
-        }
-    }
-}
-@Composable
-private fun SignsPill(
-    value: Int,
-    bg: androidx.compose.ui.graphics.Color,
-    modifier: Modifier = Modifier
-) {
-    val shape = RoundedCornerShape(14.dp)
-    Box(
-        modifier = modifier
-            .clip(shape)
-            .background(bg)
-            .padding(12.dp)
-    ) {
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.End
-        ) {
-            Text(value.toString(), style = MaterialTheme.typography.titleMedium)
-//            Text("Signs", style = MaterialTheme.typography.titleSmall)
         }
     }
 }
