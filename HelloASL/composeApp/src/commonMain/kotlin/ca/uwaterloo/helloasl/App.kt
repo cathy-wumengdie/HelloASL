@@ -102,6 +102,12 @@ fun App() {
                                         contentDescription = "Notifications"
                                     )
                                 }
+                                IconButton(onClick = { /* settings page */ }) {
+                                    Icon(
+                                        Icons.Filled.Settings,
+                                        contentDescription = "Settings"
+                                    )
+                                }
                             },
                             colors = TopAppBarDefaults.topAppBarColors(
                                 containerColor = selectedColor,
@@ -155,7 +161,20 @@ fun App() {
                     MainTab.TRANSLATE -> {
                         TopAppBar(
                             title = { Text("Translate ASL") },
-                            actions = {/*fill in later*/ },
+                            actions = {
+                                IconButton(onClick = { /* notification page */ }) {
+                                    Icon(
+                                        Icons.Filled.Notifications,
+                                        contentDescription = "Notifications"
+                                    )
+                                }
+                                IconButton(onClick = { /* settings page */ }) {
+                                    Icon(
+                                        Icons.Filled.Settings,
+                                        contentDescription = "Settings"
+                                    )
+                                }
+                            },
                             // think: what do we need for action, a toggle button to change between ASL -> Eng & Eng -> ASL?
                             colors = TopAppBarDefaults.topAppBarColors(
                                 containerColor = selectedColor,
@@ -169,6 +188,12 @@ fun App() {
                         TopAppBar(
                             title = { Text("Profile") },
                             actions = {
+                                IconButton(onClick = { /* notification page */ }) {
+                                    Icon(
+                                        Icons.Filled.Notifications,
+                                        contentDescription = "Notifications"
+                                    )
+                                }
                                 IconButton(onClick = { /* settings page */ }) {
                                     Icon(
                                         Icons.Filled.Settings,
