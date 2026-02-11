@@ -16,8 +16,7 @@ import ca.uwaterloo.helloasl.ui.components.HelloASLCard
 
 @Composable
 fun LessonView(
-    state: LessonModel,
-    onBack: () -> Unit
+    state: LessonModel
 ) {
     val pageBg = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.22f)
     val cardBg = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.40f)
@@ -31,12 +30,6 @@ fun LessonView(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        TextButton(
-            onClick = onBack,
-            contentPadding = PaddingValues(0.dp)
-        ) {
-            Text("< Back", color = MaterialTheme.colorScheme.onBackground)
-        }
 
         Text(state.title, style = MaterialTheme.typography.titleMedium)
 
