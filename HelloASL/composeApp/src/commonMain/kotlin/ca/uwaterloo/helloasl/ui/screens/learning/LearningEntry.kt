@@ -10,13 +10,14 @@ fun LearningEntry(
     lessonVm: LessonViewModel,
     route: LearningRoute,
     onNavigate: (LearningRoute) -> Unit,
-    onUpdateLessonTitle: (String) -> Unit
+    onUpdateLessonTitle: (String) -> Unit,
+    onOpenStarred: () -> Unit
 ) {
     when (route) {
         LearningRoute.LEARNING_HOME -> LearningView(
             vm = vm,
             onOpenStarred = {
-                onNavigate(LearningRoute.STARRED)
+                onOpenStarred()
             },
             onOpenLesson = { title ->
                 onUpdateLessonTitle(title)
@@ -28,15 +29,10 @@ fun LearningEntry(
             state = lessonVm.state,
             onBack = { onNavigate(LearningRoute.LEARNING_HOME) }
         )
-        LearningRoute.STARRED -> {
-             // temp
-             Box { Text("Starred") }
-        }
     }
 }
 
 enum class LearningRoute {
     LEARNING_HOME,
-    LESSON,
-    STARRED
+    LESSON
 }
