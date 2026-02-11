@@ -4,7 +4,7 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 
 data class SignupUiState(
-    val email: String = "test@email.com",   // ✅ test data
+    val email: String = "test@email.com",
     val password: String = "",
     val confirmPassword: String = "",
     val errorMessage: String? = null
