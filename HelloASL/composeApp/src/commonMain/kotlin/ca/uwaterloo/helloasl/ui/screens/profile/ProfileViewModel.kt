@@ -3,16 +3,17 @@ package ca.uwaterloo.helloasl.ui.screens.profile
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import ca.uwaterloo.helloasl.domain.Model
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlin.String
 
 enum class ProfileDestination {
     SETTINGS,
     WORDS_LEARNED,
     STARRED_SIGNS,
-    SET_LEARNING_GOALS,
     ACCOUNT,
     LICENSE,
     SIGN_IN
@@ -20,9 +21,31 @@ enum class ProfileDestination {
 
 data class ProfileNavEvent(val dest: ProfileDestination)
 
-class ProfileViewModel {
-    var state by mutableStateOf(ProfileModel())
+class ProfileViewModel ( private val model: Model) {
+    var state by mutableStateOf(buildState())
         private set
+
+    private fun buildState(): ProfileUiState {
+        val user = model.getUser()
+        val profile = model.getUserProfile()
+        return ProfileUiState(
+            userName = user.name,
+            avatarText = user.avatarText,
+            wordsLearned = profile.wordsLearned,
+            starredSigns = profile.starredSigns,
+            learningGoalPerDay = profile.learningGoalPerDay,
+            learningGoalPerWeek = profile.learningGoalPerWeek
+        )
+    }
+
+    fun refresh() {
+        state = buildState()
+    }
+
+    fun onSaveLearningGoals(minutesPerDay: Int, daysPerWeek: Int) {
+        model.setLearningGoals(minutesPerDay, daysPerWeek)
+        refresh()
+    }
 
     private val _navEvents = MutableSharedFlow<ProfileNavEvent>(
         replay = 0,
@@ -41,10 +64,6 @@ class ProfileViewModel {
 
     fun onStarredSigns() {
         _navEvents.tryEmit(ProfileNavEvent(ProfileDestination.STARRED_SIGNS))
-    }
-
-    fun onSetLearningGoals() {
-        _navEvents.tryEmit(ProfileNavEvent(ProfileDestination.SET_LEARNING_GOALS))
     }
 
     fun onAccount() {

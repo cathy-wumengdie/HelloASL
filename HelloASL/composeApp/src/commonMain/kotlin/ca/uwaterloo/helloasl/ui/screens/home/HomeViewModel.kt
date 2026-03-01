@@ -3,10 +3,12 @@ package ca.uwaterloo.helloasl.ui.screens.home
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import ca.uwaterloo.helloasl.domain.Model
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlin.String
 
 enum class HomeDestination {
     LEARNING,
@@ -19,9 +21,27 @@ enum class HomeDestination {
 
 data class HomeNavEvent(val dest: HomeDestination)
 
-class HomeViewModel {
-    var state by mutableStateOf(HomeModel())
+class HomeViewModel(private val model: Model) {
+    var state by mutableStateOf(buildState())
         private set
+
+    private fun buildState(): HomeUiState {
+        val user = model.getUser()
+        val profile = model.getUserProfile()
+        return HomeUiState(
+            userName = user.name,
+            moduleTitle = "Module ${profile.learningProgress.module}: Greetings",            /*change after learning class completed*/
+            totalLessonsInModule = 3,                       /*change after learning class completed*/
+            lessonsCompleted = profile.learningProgress.lesson,
+            streakDays = profile.streakDays,
+            dailyGoalsDone = 2,                             /*learning tracker*/
+            dailyGoalsTotal = profile.learningGoalPerDay
+        )
+    }
+
+    fun refresh() {
+        state = buildState()
+    }
 
     private val _navEvents = MutableSharedFlow<HomeNavEvent>(
         replay = 0,
