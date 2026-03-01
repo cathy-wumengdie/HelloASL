@@ -38,6 +38,13 @@ fun SignupView(
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
 
                 OutlinedTextField(
+                    value = state.name,
+                    onValueChange = viewModel::onNameChange,
+                    label = { Text("Name") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                OutlinedTextField(
                     value = state.email,
                     onValueChange = viewModel::onEmailChange,
                     label = { Text("Email") },

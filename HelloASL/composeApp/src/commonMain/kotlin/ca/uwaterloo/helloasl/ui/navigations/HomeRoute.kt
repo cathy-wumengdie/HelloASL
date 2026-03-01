@@ -1,9 +1,10 @@
-package ca.uwaterloo.helloasl.ui.screens.home
+package ca.uwaterloo.helloasl.ui.navigations
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
-import ca.uwaterloo.helloasl.ui.screens.profile.ProfileViewModel
+import ca.uwaterloo.helloasl.ui.screens.home.HomeDestination
+import ca.uwaterloo.helloasl.ui.screens.home.HomeView
+import ca.uwaterloo.helloasl.ui.screens.home.HomeViewModel
 import kotlinx.coroutines.flow.collectLatest
 
 @Composable

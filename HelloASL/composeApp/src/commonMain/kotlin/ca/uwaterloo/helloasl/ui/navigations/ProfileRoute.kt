@@ -1,7 +1,10 @@
-package ca.uwaterloo.helloasl.ui.screens.profile
+package ca.uwaterloo.helloasl.ui.navigations
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import ca.uwaterloo.helloasl.ui.screens.profile.ProfileDestination
+import ca.uwaterloo.helloasl.ui.screens.profile.ProfileView
+import ca.uwaterloo.helloasl.ui.screens.profile.ProfileViewModel
 import kotlinx.coroutines.flow.collectLatest
 
 @Composable
@@ -10,7 +13,6 @@ fun ProfileRoute(
     onSettings: () -> Unit,
     onWordsLearned: () -> Unit,
     onStarredSigns: () -> Unit,
-    onSetLearningGoals: () -> Unit,
     onAccount: () -> Unit,
     onLicense: () -> Unit,
     onSignOut: () -> Unit
@@ -21,7 +23,6 @@ fun ProfileRoute(
                 ProfileDestination.SETTINGS -> onSettings()
                 ProfileDestination.WORDS_LEARNED -> onWordsLearned()
                 ProfileDestination.STARRED_SIGNS -> onStarredSigns()
-                ProfileDestination.SET_LEARNING_GOALS -> onSetLearningGoals()
                 ProfileDestination.ACCOUNT -> onAccount()
                 ProfileDestination.LICENSE -> onLicense()
                 ProfileDestination.SIGN_IN -> onSignOut()

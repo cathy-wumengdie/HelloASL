@@ -68,7 +68,7 @@ fun HomeView(vm: HomeViewModel) {
                     Spacer(Modifier.width(8.dp))
                     TextButton(onClick = vm::onDailyGoals) {
                         Text(
-                            "${state.goalsDone} / ${state.goalsTotal} Daily Goals",
+                            "${state.dailyGoalsDone} / ${state.dailyGoalsTotal} Daily Goals",
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onBackground
                         )
