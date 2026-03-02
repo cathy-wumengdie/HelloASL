@@ -1,26 +1,31 @@
 package ca.uwaterloo.helloasl.domain
 
-import ca.uwaterloo.helloasl.data.repository.HelloASLRepository
+import ca.uwaterloo.helloasl.data.repository.AuthRepository
+import ca.uwaterloo.helloasl.data.repository.UserRepository
 import ca.uwaterloo.helloasl.domain.userModel.User
 import ca.uwaterloo.helloasl.domain.userModel.UserProfile
 
-class Model (private val repo: HelloASLRepository) {
+data class Repositories(
+    val auth: AuthRepository,
+    val user: UserRepository,
+)
+class Model (private val repos: Repositories) {
     fun getUser(): User {
-        return repo.getUser()
+        return repos.user.getUser()
     }
     fun getUserProfile(): UserProfile {
-        return repo.getUserProfile()
+        return repos.user.getUserProfile()
     }
     fun setLearningGoals(minutesPerDay: Int, daysPerWeek: Int) {
-        repo.updateLearningGoals(minutesPerDay, daysPerWeek)
+        repos.user.updateLearningGoals(minutesPerDay, daysPerWeek)
     }
     fun signup(name: String, email: String, password: String): Boolean {
-        return repo.signup(name, email, password)
+        return repos.auth.signup(name, email, password)
     }
     fun login(email: String, password: String): Boolean {
-        return repo.login(email, password)
+        return repos.auth.login(email, password)
     }
     fun logout() {
-        repo.logout()
+        repos.auth.logout()
     }
 }

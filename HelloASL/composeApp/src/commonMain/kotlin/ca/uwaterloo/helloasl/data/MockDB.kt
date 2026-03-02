@@ -7,7 +7,7 @@ import ca.uwaterloo.helloasl.domain.userModel.UserProfile
 import ca.uwaterloo.helloasl.domain.userModel.UserSession
 import java.util.Objects.hash
 
-object MockDB {
+class MockDB {
     private val users = mutableMapOf(
         1 to User(id = 1, name = "Yanjin", email = "yanjin@gmail.com")
     )
