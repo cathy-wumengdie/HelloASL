@@ -34,6 +34,11 @@ class MockDB {
         return userSession?.userId ?: throw IllegalStateException("User not logged in")
     }
 
+    // this function is only for testing if the new user id is unique
+    fun getAllUserIds(): Set<Int> {
+        return users.keys.toSet()
+    }
+
     fun getUser(): User {
         val userId = getUserId()
         return users[userId] ?: error("User not found")
@@ -59,7 +64,7 @@ class MockDB {
         // reject duplicate emails
         if (users.values.any { it.email.lowercase() == cleanEmail }) return false
 
-        val newUserId = users.size
+        val newUserId = (users.keys.maxOrNull() ?: 0) + 1
         val newUser = User(id = newUserId, name = name.trim(), email = cleanEmail)
         users[newUserId] = newUser
         credentials[newUserId] = UserCredential(newUser.id, hash(password))
