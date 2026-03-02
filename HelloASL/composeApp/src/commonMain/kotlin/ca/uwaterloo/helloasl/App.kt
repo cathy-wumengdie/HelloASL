@@ -9,9 +9,11 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import ca.uwaterloo.helloasl.data.repository.HelloASLRepository
-import ca.uwaterloo.helloasl.data.repository.MockHelloASLRepository
+import ca.uwaterloo.helloasl.data.MockDB
+import ca.uwaterloo.helloasl.data.repository.MockAuthRepository
+import ca.uwaterloo.helloasl.data.repository.MockUserRepository
 import ca.uwaterloo.helloasl.domain.Model
+import ca.uwaterloo.helloasl.domain.Repositories
 import ca.uwaterloo.helloasl.ui.navigations.HomeRoute
 import ca.uwaterloo.helloasl.ui.screens.home.HomeViewModel
 import ca.uwaterloo.helloasl.ui.screens.translate.*
@@ -29,8 +31,14 @@ import ca.uwaterloo.helloasl.ui.screens.star.*
 @Composable
 fun App() {
     HelloASLTheme {
-        val repository: HelloASLRepository = remember { MockHelloASLRepository() }
-        val model = remember { Model(repository) }
+        val repositories = remember {
+            val db = MockDB()
+            Repositories(
+                auth = MockAuthRepository(db),
+                user = MockUserRepository(db)
+            )
+        }
+        val model = remember { Model(repositories) }
 
         var authRoute by rememberSaveable { mutableStateOf(AuthRoute.LOGIN) }
         var isLoggedIn by rememberSaveable { mutableStateOf(false) }
