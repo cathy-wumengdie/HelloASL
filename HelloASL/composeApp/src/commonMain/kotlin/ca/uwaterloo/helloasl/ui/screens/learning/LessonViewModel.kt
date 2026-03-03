@@ -3,12 +3,89 @@ package ca.uwaterloo.helloasl.ui.screens.learning
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import ca.uwaterloo.helloasl.domain.Model
+import ca.uwaterloo.helloasl.domain.learning.ASLSign
 
-class LessonViewModel {
-    var state by mutableStateOf(LessonModel())
+class LessonViewModel(private val model: Model) {
+    var state by mutableStateOf(LessonUIState())
         public set
 
-    fun onChoose(option: String) { }
-    fun onSkip() { }
-    fun onStar() { }
+    private var signs: List<ASLSign> = emptyList()
+    private var currentIndex: Int = 0
+    private var lessonId: Int? = null
+    private var onLessonCompleted: ((Int) -> Unit)? = null
+
+    fun setOnLessonCompleted(listener: (Int) -> Unit) {
+        onLessonCompleted = listener
+    }
+
+    fun onChoose(option: String) {
+        val sign = signs.getOrNull(currentIndex) ?: return
+        val correct = sign.word == option
+        val isLast = currentIndex == signs.lastIndex
+        val completed = correct && isLast
+
+        if (completed) {
+            onLessonCompleted?.invoke(lessonId ?: return)
+        }
+
+        state = state.copy(
+            selected = option,
+            isCorrect = correct,
+            showNext = correct && !isLast
+        )
+    }
+
+    fun onNext() {
+        if (signs.isEmpty()) return
+        if (currentIndex < signs.lastIndex) {
+            currentIndex += 1
+            rebuildQuestion()
+        }
+    }
+
+    fun onStar() {
+        val sign = signs.getOrNull(currentIndex) ?: return
+        model.toggleStar(sign.id)
+    }
+
+    fun loadLesson(lessonId: Int) {
+        this.lessonId = lessonId
+        this.signs = model.getSignsForLesson(lessonId)
+        this.currentIndex = 0
+
+        val title = model.getLesson(lessonId)?.title ?: "Lesson"
+        state = state.copy(title = title)
+
+        rebuildQuestion()
+    }
+
+    private fun rebuildQuestion() {
+        val sign = signs.getOrNull(currentIndex)
+        if (sign == null) {
+            state = state.copy(
+                options = emptyList(),
+                videoUrl = null,
+                selected = null,
+                isCorrect = null,
+                showNext = false,
+                progress = ""
+            )
+            return
+        }
+
+        val correct = sign.word
+        val distractors = signs.map { it.word }.filter { it != correct }.shuffled().take(2)
+        val options = (distractors + correct).shuffled()
+        val progressText = "${currentIndex + 1}/${signs.size}"
+
+        state = state.copy(
+            options = options,
+            videoUrl = sign.videoUrls.firstOrNull(),
+            selected = null,
+            isCorrect = null,
+            showNext = false,
+            progress = progressText
+        )
+    }
 }

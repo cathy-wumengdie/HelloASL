@@ -12,6 +12,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import ca.uwaterloo.helloasl.data.MockDB
 import ca.uwaterloo.helloasl.data.repository.MockAuthRepository
 import ca.uwaterloo.helloasl.data.repository.MockUserRepository
+import ca.uwaterloo.helloasl.data.repository.MockLearningRepository
 import ca.uwaterloo.helloasl.domain.Model
 import ca.uwaterloo.helloasl.domain.Repositories
 import ca.uwaterloo.helloasl.ui.navigations.HomeRoute
@@ -44,7 +45,8 @@ fun App(
             val db = MockDB()
             Repositories(
                 auth = MockAuthRepository(db),
-                user = MockUserRepository(db)
+                user = MockUserRepository(db),
+                learning = MockLearningRepository(db)
             )
         }
         val model = remember { Model(repositories) }
@@ -91,8 +93,8 @@ fun App(
             val profileVm = remember { ProfileViewModel(model) }
             val starVm = remember { StarViewModel() }
             var previousTab by rememberSaveable { mutableStateOf(MainTab.LEARNING) }
-            val learningVm = remember { LearningViewModel() }
-            val lessonVm = remember { LessonViewModel() }
+            val learningVm = remember { LearningViewModel(model) }
+            val lessonVm = remember { LessonViewModel(model) }
             var learningRoute by rememberSaveable { mutableStateOf(LearningRoute.LEARNING_HOME) }
             var lessonTitle by rememberSaveable { mutableStateOf("") }
 
@@ -151,13 +153,11 @@ fun App(
                         MainTab.LEARNING -> {
                             TopAppBar(
                                 title = {
-                                    Text(
-                                        when (learningRoute) {
-                                            LearningRoute.LEARNING_HOME -> "Learning"
-                                            LearningRoute.LESSON -> lessonTitle
-                                            //LearningRoute.STARRED -> "Starred Signs"
-                                        }
-                                    )
+                                    val learningTitle = when (learningRoute) {
+                                        LearningRoute.LEARNING_HOME -> learningVm.state.modules.firstOrNull()?.title ?: "Learning"
+                                        LearningRoute.LESSON -> lessonTitle
+                                    }
+                                    Text(learningTitle)
                                 },
                                 navigationIcon = {
                                     if (learningRoute != LearningRoute.LEARNING_HOME) {

@@ -1,6 +1,9 @@
 package ca.uwaterloo.helloasl.ui.screens.learning
 
-data class LearningModel(
+import ca.uwaterloo.helloasl.domain.learning.Module
+import ca.uwaterloo.helloasl.domain.learning.Lesson
+
+data class LearningUIState(
     val starredCount: Int = 12,
     val signsCount: Int = 12,
     val alphabetScore: Int = 90,
@@ -10,4 +13,8 @@ data class LearningModel(
 
     // Greetings
     val greetingsHelloLocked: Boolean = true,
+
+    // Modules
+    val modules: List<Module> = emptyList(),
+    val lessons: List<Lesson> = emptyList(),
 )

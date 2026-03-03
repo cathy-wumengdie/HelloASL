@@ -1,0 +1,21 @@
+package ca.uwaterloo.helloasl.data.repository
+
+import ca.uwaterloo.helloasl.data.MockDB
+import ca.uwaterloo.helloasl.domain.learning.ASLSign
+import ca.uwaterloo.helloasl.domain.learning.Lesson
+import ca.uwaterloo.helloasl.domain.learning.Module
+
+class MockLearningRepository(private val db: MockDB) : LearningRepository {
+    override fun getModules(): List<Module> = db.modules
+
+    override fun getLessons(): List<Lesson> = db.lessons
+
+    override fun getLessonById(id: Int): Lesson? = db.lessons.find { it.id == id }
+
+    override fun getSignById(id: Int): ASLSign? = db.signs.find { it.id == id }
+
+    override fun getSignsByIds(ids: List<Int>): List<ASLSign> {
+        val signsMap = db.signs.associateBy { it.id }
+        return ids.mapNotNull { signsMap[it] }
+    }
+}
