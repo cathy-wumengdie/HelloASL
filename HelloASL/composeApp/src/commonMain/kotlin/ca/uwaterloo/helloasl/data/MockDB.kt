@@ -9,11 +9,15 @@ import java.util.Objects.hash
 
 class MockDB {
     private val users = mutableMapOf(
-        1 to User(id = 1, name = "Yanjin", email = "yanjin@gmail.com")
+        1 to User(id = 1, name = "Yanjin", email = "yanjin@gmail.com"),
+        2 to User(id = 2, name = "Erdo Long", email = "erdolong@gmail.com"),
+        3 to User(id = 3, name = "David", email = "david@gmail.com")
     )
 
     private val credentials = mutableMapOf(
-        1 to UserCredential(userId = 1, passwordHash = hash("1234")) // default password
+        1 to UserCredential(userId = 1, passwordHash = hash("1234")),
+        2 to UserCredential(userId = 2, passwordHash = hash("abc")),
+        3 to UserCredential(userId = 3, passwordHash = hash("abc123"))
     )
 
     var userSession: UserSession? = null
@@ -27,6 +31,24 @@ class MockDB {
             wordsLearned = 40,
             starredSigns = 12,
             streakDays = 7
+        ),
+        2 to UserProfile(
+            userId = 2,
+            learningGoalPerDay = 5,
+            learningGoalPerWeek = 2,
+            learningProgress = LearningProgress(module = 1, lesson = 2),
+            wordsLearned = 4,
+            starredSigns = 1,
+            streakDays = 1
+        ),
+        3 to UserProfile(
+            userId = 3,
+            learningGoalPerDay = 30,
+            learningGoalPerWeek = 5,
+            learningProgress = LearningProgress(module = 2, lesson = 1),
+            wordsLearned = 28,
+            starredSigns = 10,
+            streakDays = 3
         )
     )
 

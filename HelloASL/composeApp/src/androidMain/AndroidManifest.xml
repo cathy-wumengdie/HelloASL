@@ -1,6 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- Camera permission -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <!-- Camera hardware is not required. If no camera, then block ASL->English feature -->
+    <uses-feature
+            android:name="android.hardware.camera"
+            android:required="false" />
+
+    <!-- Notification permission -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <application
             android:allowBackup="true"
             android:icon="@mipmap/ic_launcher"

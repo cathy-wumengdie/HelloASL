@@ -27,11 +27,14 @@ Translation tab:
 @Composable
 fun TranslateView(
     // Parameters
-    vm: TranslateViewModel = remember { TranslateViewModel() }
+    vm: TranslateViewModel,
+    hasCameraHardware: Boolean,
+    cameraGranted: Boolean,
+    requestCameraPermission: () -> Unit,
 ) {
     val state = vm.state
     // General layout of the Translate tab
-    Column (
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
@@ -44,7 +47,8 @@ fun TranslateView(
         /* ---------- Card (for alternating translation mode) ---------- */
         // Comment: maybe change the Card (one color for each Tab) later if needed
         HelloASLCard(modifier = Modifier.fillMaxWidth()) {
-            Row(modifier = Modifier.fillMaxWidth().padding(8.dp),
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -55,7 +59,7 @@ fun TranslateView(
                 )
 
                 DirectionLabel(
-                    text = "English → ASL",
+                    text = "English -> ASL",
                     selected = leftSelected,
                     modifier = Modifier.weight(1f)
                 )
@@ -74,14 +78,12 @@ fun TranslateView(
                 }
 
                 DirectionLabel(
-                    text = "ASL → English",
+                    text = "ASL -> English",
                     selected = rightSelected,
                     modifier = Modifier.weight(1f)
                 )
             }
         }
-
-        Spacer(Modifier.height(40.dp))
 
         // Display different UI based on mode
         when (state.mode) {
@@ -91,8 +93,12 @@ fun TranslateView(
                 onSelectHistoryItem = vm::onSelectHistoryItem,
                 onQueryChange = vm::onQueryChange
             )
+
             TranslateMode.ASL_TO_EN -> AslToEnUI(
                 state = state,
+                hasCameraHardware = hasCameraHardware,
+                cameraGranted = cameraGranted,
+                onRequestCameraPermission = requestCameraPermission,
                 onStartCamera = vm::onStartCamera
             )
         }
@@ -127,12 +133,13 @@ private fun DirectionLabel(
 }
 
 @Composable
-private fun EnToAslUI (
+private fun EnToAslUI(
     state: TranslateModel,
     onSearch: () -> Unit,
     onSelectHistoryItem: (String) -> Unit,
     onQueryChange: (String) -> Unit
 ) {
+    Spacer(Modifier.height(40.dp))
     Column(Modifier.fillMaxWidth()) {
 
         /* ---------- Text field (for searching English words) ---------- */
@@ -140,10 +147,10 @@ private fun EnToAslUI (
             value = state.query,
             shape = RoundedCornerShape(25.dp),
             modifier = Modifier.fillMaxWidth(0.95f).align(Alignment.CenterHorizontally),
-            placeholder = {Text(state.queryHint)},
+            placeholder = { Text(state.queryHint) },
             onValueChange = onQueryChange,
             trailingIcon = {
-                IconButton(onClick = onSearch){
+                IconButton(onClick = onSearch) {
                     Icon(Icons.Filled.Search, contentDescription = "Search")
                 }
             }
@@ -186,7 +193,7 @@ private fun EnToAslUI (
                 state.searchHistory.forEach { word ->
                     ClickableSection(
                         onClick = { onSelectHistoryItem(word) } // worry about this later ;)
-                    ) {Text(word)}
+                    ) { Text(word) }
                     Spacer(Modifier.height(6.dp))
                 }
             }
@@ -196,10 +203,28 @@ private fun EnToAslUI (
 }
 
 @Composable
-private fun AslToEnUI (
+private fun AslToEnUI(
     state: TranslateModel,
+    hasCameraHardware: Boolean,
+    cameraGranted: Boolean,
+    onRequestCameraPermission: () -> Unit,
     onStartCamera: () -> Unit
 ) {
+    Spacer(Modifier.height(16.dp))
+    if (!hasCameraHardware) {
+        Text(
+            "This device has no camera. ASL -> English is unavailable.",
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(Modifier.height(16.dp))
+    } else if (!cameraGranted) {
+        Text(
+            "Enable camera permission to use ASL -> English translation.",
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(Modifier.height(16.dp))
+    } else Spacer(Modifier.height(40.dp))
+
     /* ---------- Card (video recording) ---------- */
     HelloASLCard(modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp)) {
@@ -225,10 +250,26 @@ private fun AslToEnUI (
 
             Spacer(Modifier.height(12.dp))
 
+            val cameraReady = hasCameraHardware && cameraGranted
             Button(
-                onClick = onStartCamera,
+                onClick = {
+                    when {
+                        !cameraGranted -> onRequestCameraPermission()
+                        else -> onStartCamera()
+                    }
+                },
+                // if no camera hardware, disable button
+                enabled = hasCameraHardware,
                 modifier = Modifier.align(Alignment.End)
-            ) { Text("Start Camera") }
+            ) {
+                Text(
+                    when {
+                        !hasCameraHardware -> "Camera Not Available"
+                        !cameraGranted -> "Enable Camera"
+                        else -> "Start Camera"
+                    }
+                )
+            }
         }
     }
 

@@ -22,6 +22,7 @@ import ca.uwaterloo.helloasl.ui.screens.learning.LearningRoute
 import ca.uwaterloo.helloasl.ui.screens.learning.LearningViewModel
 import ca.uwaterloo.helloasl.ui.screens.learning.LessonViewModel
 import ca.uwaterloo.helloasl.ui.navigations.ProfileRoute
+import ca.uwaterloo.helloasl.ui.screens.PermissionsGateScreen
 import ca.uwaterloo.helloasl.ui.screens.profile.ProfileViewModel
 import ca.uwaterloo.helloasl.ui.screens.auth.login.*
 import ca.uwaterloo.helloasl.ui.screens.auth.signup.*
@@ -29,7 +30,15 @@ import ca.uwaterloo.helloasl.ui.screens.star.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun App() {
+fun App(
+    hasCameraHardware: Boolean,
+    cameraGranted: Boolean,
+    notificationGranted: Boolean,
+    requestCameraPermission: () -> Unit,
+    requestNotificationPermission: () -> Unit,
+    hasSeenPermissionGate: Boolean,
+    onPermissionGateCompleted: () -> Unit
+) {
     HelloASLTheme {
         val repositories = remember {
             val db = MockDB()
@@ -64,6 +73,19 @@ fun App() {
                 }
             }
         } else {
+            if (!hasSeenPermissionGate) {
+                PermissionsGateScreen(
+                    hasCameraHardware = hasCameraHardware,
+                    cameraGranted = cameraGranted,
+                    notificationGranted = notificationGranted,
+                    onRequestCamera = requestCameraPermission,
+                    onRequestNotifications = requestNotificationPermission,
+                    onContinue = {
+                        onPermissionGateCompleted()
+                    }
+                )
+                return@HelloASLTheme
+            }
             val homeVm = remember { HomeViewModel(model) }
             val translateVm = remember { TranslateViewModel() }
             val profileVm = remember { ProfileViewModel(model) }
@@ -303,7 +325,12 @@ fun App() {
                         }
 
                         MainTab.TRANSLATE -> {
-                            TranslateView(vm = translateVm)
+                            TranslateView(
+                                vm = translateVm,
+                                hasCameraHardware = hasCameraHardware,
+                                cameraGranted = cameraGranted,
+                                requestCameraPermission = requestCameraPermission
+                            )
                         }
 
                         MainTab.PROFILE -> ProfileRoute(
