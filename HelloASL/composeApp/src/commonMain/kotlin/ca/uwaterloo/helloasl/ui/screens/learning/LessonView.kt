@@ -13,14 +13,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import ca.uwaterloo.helloasl.ui.components.HelloASLCard
+import ca.uwaterloo.helloasl.ui.components.SignVideoPlayer
 
 @Composable
 fun LessonView(
-    state: LessonModel
+    vm: LessonViewModel
 ) {
+    val state = vm.state
     val pageBg = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.22f)
     val cardBg = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.40f)
-    val borderCol = MaterialTheme.colorScheme.outline.copy(alpha = 0.30f)
 
     Column(
         modifier = Modifier
@@ -32,30 +33,69 @@ fun LessonView(
     ) {
 
         Text(state.title, style = MaterialTheme.typography.titleMedium)
+        if (state.progress.isNotBlank()) {
+            Text(state.progress, style = MaterialTheme.typography.bodySmall)
+        }
 
         HelloASLCard(
             modifier = Modifier.fillMaxWidth(),
             cardColor = cardBg,
             elevationDp = 0.dp
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(220.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(Icons.Filled.PlayArrow, contentDescription = null)
+            val videoUrl = state.videoUrl
+            if (videoUrl != null) {
+                SignVideoPlayer(
+                    resourcePath = videoUrl,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(220.dp)
+                )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(220.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Filled.PlayArrow, contentDescription = null)
+                }
             }
         }
 
         Text("What does this sign mean?", style = MaterialTheme.typography.titleMedium)
 
         state.options.forEach { opt ->
+            val isChosen = state.selected == opt
+            val correctChoice = state.isCorrect == true && isChosen
+            val wrongChoice = state.isCorrect == false && isChosen
             OutlinedButton(
-                onClick = { },
+                onClick = { vm.onChoose(opt) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp)
-            ) { Text(opt) }
+            ) {
+                val color = when {
+                    correctChoice -> MaterialTheme.colorScheme.primary
+                    wrongChoice -> MaterialTheme.colorScheme.primary
+                    else -> MaterialTheme.colorScheme.onSurface
+                }
+                Text(opt, color = color)
+            }
+        }
+
+        when (state.isCorrect) {
+            true -> Text("Correct!", color = MaterialTheme.colorScheme.primary)
+            false -> Text("Incorrect, try again", color = MaterialTheme.colorScheme.primary)
+            null -> {}
+        }
+
+        if (state.showNext) {
+            Button(
+                onClick = { vm.onNext() },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(24.dp)
+            ) {
+                Text("Next")
+            }
         }
     }
 }
