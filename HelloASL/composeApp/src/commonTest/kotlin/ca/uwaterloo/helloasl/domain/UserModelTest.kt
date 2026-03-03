@@ -1,11 +1,75 @@
 package ca.uwaterloo.helloasl.domain
 
+import ca.uwaterloo.helloasl.data.MockDB
+import ca.uwaterloo.helloasl.data.repository.MockAuthRepository
+import ca.uwaterloo.helloasl.data.repository.MockUserRepository
 import ca.uwaterloo.helloasl.domain.userModel.LearningProgress
 import ca.uwaterloo.helloasl.domain.userModel.User
 import ca.uwaterloo.helloasl.domain.userModel.UserProfile
 import kotlin.test.*
 
 class UserModelTest {
+    private fun makeModel(): Pair<MockDB, Model> {
+        val db = MockDB()
+        val repos = Repositories(
+            auth = MockAuthRepository(db),
+            user = MockUserRepository(db)
+        )
+        return db to Model(repos)
+    }
+
+    @Test
+    fun getUser_throws_when_not_logged_in() {
+        val (_, model) = makeModel()
+        assertFailsWith<IllegalStateException> {
+            model.getUser()
+        }
+    }
+
+    @Test
+    fun getUser_returns_logged_in_user() {
+        val (_, model) = makeModel()
+        val ok = model.login(email = "yanjin@gmail.com", password = "1234")
+        assertEquals(true, ok)
+
+        val user = model.getUser()
+        assertEquals(1, user.id)
+        assertEquals("Yanjin", user.name)
+        assertEquals("yanjin@gmail.com", user.email)
+    }
+
+    @Test
+    fun getUserProfile_returns_profile_for_logged_in_user() {
+        val (_, model) = makeModel()
+        model.login("yanjin@gmail.com", "1234")
+
+        val profile = model.getUserProfile()
+        assertEquals(1, profile.userId)
+        assertEquals(15, profile.learningGoalPerDay)
+        assertEquals(3, profile.learningGoalPerWeek)
+        assertEquals(7, profile.streakDays)
+    }
+
+    @Test
+    fun updateLearningGoals_updates_profile_values() {
+        val (_, model) = makeModel()
+        model.login("yanjin@gmail.com", "1234")
+
+        model.setLearningGoals(minutesPerDay = 20, daysPerWeek = 5)
+
+        val updated = model.getUserProfile()
+        assertEquals(20, updated.learningGoalPerDay)
+        assertEquals(5, updated.learningGoalPerWeek)
+    }
+
+    @Test
+    fun updateLearningGoals_throws_when_not_logged_in() {
+        val (_, model) = makeModel()
+        assertFailsWith<IllegalStateException> {
+            model.setLearningGoals(20, 5)
+        }
+    }
+
     @Test
     fun avatarText_single_name_returns_first_letter_uppercase() {
         val user = User(
