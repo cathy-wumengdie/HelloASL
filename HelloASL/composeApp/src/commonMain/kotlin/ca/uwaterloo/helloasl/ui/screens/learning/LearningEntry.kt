@@ -1,8 +1,6 @@
 package ca.uwaterloo.helloasl.ui.screens.learning
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 
 @Composable
 fun LearningEntry(
@@ -13,21 +11,21 @@ fun LearningEntry(
     onUpdateLessonTitle: (String) -> Unit,
     onOpenStarred: () -> Unit
 ) {
+    lessonVm.setOnLessonCompleted { completedId ->
+        vm.unlockNext(completedId)
+    }
+
     when (route) {
         LearningRoute.LEARNING_HOME -> LearningView(
             vm = vm,
-            onOpenStarred = {
-                onOpenStarred()
-            },
-            onOpenLesson = { title ->
-                onUpdateLessonTitle(title)
-                lessonVm.state = lessonVm.state.copy(title = title)
+            onOpenStarred = { onOpenStarred() },
+            onOpenLesson = { lessonId ->
+                lessonVm.loadLesson(lessonId)
+                onUpdateLessonTitle(lessonVm.state.title)
                 onNavigate(LearningRoute.LESSON)
             }
         )
-        LearningRoute.LESSON -> LessonView(
-            state = lessonVm.state
-        )
+        LearningRoute.LESSON -> LessonView(vm = lessonVm)
     }
 }
 

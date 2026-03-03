@@ -1,5 +1,8 @@
 package ca.uwaterloo.helloasl.data
 
+import ca.uwaterloo.helloasl.domain.learning.ASLSign
+import ca.uwaterloo.helloasl.domain.learning.Lesson
+import ca.uwaterloo.helloasl.domain.learning.Module
 import ca.uwaterloo.helloasl.domain.userModel.LearningProgress
 import ca.uwaterloo.helloasl.domain.userModel.User
 import ca.uwaterloo.helloasl.domain.userModel.UserCredential
@@ -18,6 +21,64 @@ class MockDB {
         1 to UserCredential(userId = 1, passwordHash = hash("1234")),
         2 to UserCredential(userId = 2, passwordHash = hash("abc")),
         3 to UserCredential(userId = 3, passwordHash = hash("abc123"))
+    )
+
+    val signs: List<ASLSign> = listOf(
+        ASLSign(
+            id = 0,
+            word = "Hello",
+            description = "Greeting",
+            videoUrls = listOf("files/video/hello.mp4"),
+            tags = setOf("basic")
+        ),
+        ASLSign(
+            id = 1,
+            word = "Thanks",
+            description = "Gratitude",
+            videoUrls = listOf("files/video/thankyou.mp4"),
+            tags = setOf("basic")
+        ),
+        ASLSign(
+            id = 2,
+            word = "Yes",
+            description = "Affirmation",
+            videoUrls = listOf("files/video/yes.mp4"),
+            tags = setOf("basic")
+        ),
+        ASLSign(
+            id = 3,
+            word = "No",
+            description = "Negation",
+            videoUrls = listOf("files/video/no.mp4"),
+            tags = setOf("basic")
+        )
+    )
+
+    val lessons: List<Lesson> = listOf(
+        Lesson(
+            id = 0,
+            title = "Basic Greetings",
+            signIds = listOf(0, 1),
+            category = "Beginner",
+            locked = false
+        ),
+        Lesson(
+            id = 1,
+            title = "Yes / No",
+            signIds = listOf(2, 3),
+            category = "Beginner",
+            locked = true
+        )
+    )
+
+    val modules: List<Module> = listOf(
+        Module(
+            id = 0,
+            title = "Unit 1: Basics",
+            lessonIds = listOf(0, 1),
+            category = "Beginner",
+            locked = false
+        )
     )
 
     var userSession: UserSession? = null
