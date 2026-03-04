@@ -1,11 +1,13 @@
 package ca.uwaterloo.helloasl.domain
 
-import ca.uwaterloo.helloasl.data.repository.AuthRepository
-import ca.uwaterloo.helloasl.data.repository.LearningRepository
-import ca.uwaterloo.helloasl.data.repository.UserRepository
-import ca.uwaterloo.helloasl.domain.learning.ASLSign
-import ca.uwaterloo.helloasl.domain.learning.Lesson
-import ca.uwaterloo.helloasl.domain.learning.Module
+import ca.uwaterloo.helloasl.data.authRepository.AuthRepository
+import ca.uwaterloo.helloasl.data.learningRepository.LearningRepository
+import ca.uwaterloo.helloasl.data.progressTrackerRepository.ProgressTrackerRepository
+import ca.uwaterloo.helloasl.data.userRepository.UserRepository
+import ca.uwaterloo.helloasl.domain.learningModel.ASLSign
+import ca.uwaterloo.helloasl.domain.learningModel.Lesson
+import ca.uwaterloo.helloasl.domain.learningModel.Module
+import ca.uwaterloo.helloasl.domain.trackingModel.ProgressSummary
 import ca.uwaterloo.helloasl.domain.userModel.User
 import ca.uwaterloo.helloasl.domain.userModel.UserProfile
 
@@ -15,6 +17,7 @@ data class Repositories(
     val auth: AuthRepository,
     val user: UserRepository,
     val learning: LearningRepository,
+    val progressTracker: ProgressTrackerRepository
 )
 
 class Model(private val repos: Repositories) {
@@ -26,7 +29,7 @@ class Model(private val repos: Repositories) {
     private fun applyLessonLocks(lesson: Lesson): Lesson =
         lesson.copy(locked = lessonLocks[lesson.id] ?: lesson.locked)
 
-    // user/auth
+    // user & auth
     fun getUser(): User = repos.user.getUser()
     fun getUserProfile(): UserProfile = repos.user.getUserProfile()
     fun setLearningGoals(minutesPerDay: Int, daysPerWeek: Int) = repos.user.updateLearningGoals(minutesPerDay, daysPerWeek)
@@ -52,4 +55,8 @@ class Model(private val repos: Repositories) {
     // quiz helpers
     fun nextIndex(current: Int, total: Int): Int = if (total <= 0) 0 else (current + 1).coerceAtMost(total - 1)
     fun prevIndex(current: Int, total: Int): Int = if (total <= 0) 0 else (current - 1).coerceAtLeast(0)
+
+    // progress tracker
+    fun getProgressSummary(): ProgressSummary = repos.progressTracker.getProgressSummary()
+    fun addLearningMinutes(minutes: Int): ProgressSummary = repos.progressTracker.addLearningMinutes(minutes)
 }

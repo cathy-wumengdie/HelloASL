@@ -1,9 +1,9 @@
-package ca.uwaterloo.helloasl.data.repository
+package ca.uwaterloo.helloasl.data.learningRepository
 
 import ca.uwaterloo.helloasl.data.MockDB
-import ca.uwaterloo.helloasl.domain.learning.ASLSign
-import ca.uwaterloo.helloasl.domain.learning.Lesson
-import ca.uwaterloo.helloasl.domain.learning.Module
+import ca.uwaterloo.helloasl.domain.learningModel.ASLSign
+import ca.uwaterloo.helloasl.domain.learningModel.Lesson
+import ca.uwaterloo.helloasl.domain.learningModel.Module
 
 class MockLearningRepository(private val db: MockDB) : LearningRepository {
     override fun getModules(): List<Module> = db.modules

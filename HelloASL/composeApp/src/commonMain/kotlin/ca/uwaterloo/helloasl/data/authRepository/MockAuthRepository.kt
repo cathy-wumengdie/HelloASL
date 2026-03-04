@@ -1,4 +1,4 @@
-package ca.uwaterloo.helloasl.data.repository
+package ca.uwaterloo.helloasl.data.authRepository
 
 import ca.uwaterloo.helloasl.data.MockDB
 

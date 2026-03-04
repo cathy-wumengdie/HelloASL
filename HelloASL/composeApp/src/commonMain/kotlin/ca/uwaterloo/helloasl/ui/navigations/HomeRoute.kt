@@ -17,6 +17,9 @@ fun HomeRoute(
     onTranslate: () -> Unit,
     onNotifications: () -> Unit,
 ) {
+    LaunchedEffect(Unit) {
+        vm.refresh()
+    }
     LaunchedEffect(vm) {
         vm.navEvents.collectLatest { event ->
             when (event.dest) {

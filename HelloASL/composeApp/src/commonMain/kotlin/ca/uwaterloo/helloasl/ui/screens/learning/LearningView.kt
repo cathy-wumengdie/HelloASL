@@ -17,7 +17,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import ca.uwaterloo.helloasl.ui.components.ClickableSection
 import ca.uwaterloo.helloasl.ui.components.HelloASLCard
-import ca.uwaterloo.helloasl.domain.learning.Lesson
+import ca.uwaterloo.helloasl.domain.learningModel.Lesson
 
 @Composable
 fun LearningView(
