@@ -4,10 +4,7 @@ import ca.uwaterloo.helloasl.data.MockDB
 import ca.uwaterloo.helloasl.data.authRepository.MockAuthRepository
 import ca.uwaterloo.helloasl.data.learningRepository.MockLearningRepository
 import ca.uwaterloo.helloasl.data.progressTrackerRepository.MockProgressTrackerRepository
-<<<<<<< HEAD
-=======
 import ca.uwaterloo.helloasl.data.translateRepository.MockTranslateRepository
->>>>>>> origin/main
 import ca.uwaterloo.helloasl.data.userRepository.MockUserRepository
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -23,10 +20,7 @@ class ModelAuthTest {
             auth = MockAuthRepository(db),
             user = MockUserRepository(db),
             learning = MockLearningRepository(db),
-<<<<<<< HEAD
-=======
             translate = MockTranslateRepository(db),
->>>>>>> origin/main
             progressTracker = MockProgressTrackerRepository(db)
         )
         return db to Model(repos)

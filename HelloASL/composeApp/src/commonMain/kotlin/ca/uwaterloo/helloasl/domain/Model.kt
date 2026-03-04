@@ -41,7 +41,7 @@ class Model(private val repos: Repositories) {
     fun getUserProfile(): UserProfile = repos.user.getUserProfile()
     fun setLearningGoals(minutesPerDay: Int, daysPerWeek: Int) = repos.user.updateLearningGoals(minutesPerDay, daysPerWeek)
 
-    private fun getNumberOfWordsLearned(): Int {
+    fun getNumberOfWordsLearned(): Int {
         val profile = getUserProfile()
         val currentModuleId = profile.learningProgress.module
         val currentLessonNumber = profile.learningProgress.lesson
