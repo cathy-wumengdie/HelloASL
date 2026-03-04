@@ -13,12 +13,4 @@ data class UserProfile (
     val learningProgress: LearningProgress,
     val wordsLearned: Int,
     val starredSigns: Int,
-) {
-    fun getNumberOfWordsLearned(): Int {
-        val module = learningProgress.module
-        val lesson = learningProgress.lesson
-
-        /* identify number of words in a lesson after DB for learning module created */
-        return 40
-    }
-}
+)

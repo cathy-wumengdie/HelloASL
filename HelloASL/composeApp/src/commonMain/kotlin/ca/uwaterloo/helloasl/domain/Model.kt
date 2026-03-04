@@ -39,6 +39,34 @@ class Model(private val repos: Repositories) {
     fun getUser(): User = repos.user.getUser()
     fun getUserProfile(): UserProfile = repos.user.getUserProfile()
     fun setLearningGoals(minutesPerDay: Int, daysPerWeek: Int) = repos.user.updateLearningGoals(minutesPerDay, daysPerWeek)
+    fun getNumberOfWordsLearned(): Int {
+        val profile = getUserProfile()
+        val currentModuleId = profile.learningProgress.module
+        val currentLessonNumber = profile.learningProgress.lesson
+        val modules = repos.learning.getModules().sortedBy { it.id }
+        val lessonsById = repos.learning.getLessons().associateBy { it.id }
+        val currentModuleIndex = modules.indexOfFirst { it.id == currentModuleId }
+        if (currentModuleIndex == -1) error("Module not found")
+
+        val learnedSignIds = mutableSetOf<Int>()
+
+        // 1) Add all signs from modules before current module
+        for (m in modules.take(currentModuleIndex)) {
+            for (lessonId in m.lessonIds) {
+                val lesson = lessonsById[lessonId] ?: continue
+                learnedSignIds.addAll(lesson.signIds)
+            }
+        }
+        // 2) Add signs from lessons before current lesson in current module
+        val currentModule = modules[currentModuleIndex]
+        val lessonsBeforeCurrent =
+            currentModule.lessonIds.take((currentLessonNumber - 1).coerceAtLeast(0))
+        for (lessonId in lessonsBeforeCurrent) {
+            val lesson = lessonsById[lessonId] ?: continue
+            learnedSignIds.addAll(lesson.signIds)
+        }
+        return learnedSignIds.size
+    }
     fun signup(name: String, email: String, password: String): Boolean = repos.auth.signup(name, email, password)
     fun login(email: String, password: String): Boolean = repos.auth.login(email, password)
     fun logout() = repos.auth.logout()
@@ -46,11 +74,24 @@ class Model(private val repos: Repositories) {
     // learning: modules / lessons / signs
     fun getModules(): List<Module> = repos.learning.getModules()
     fun getLessons(): List<Lesson> = repos.learning.getLessons().map(::applyLessonLocks)
-    fun getLesson(lessonId: Int): Lesson? = repos.learning.getLessonById(lessonId)?.let(::applyLessonLocks)
+    fun getModule(id: Int): Module = repos.learning.getModuleById(id)
+    fun getLesson(lessonId: Int): Lesson = repos.learning.getLessonById(lessonId).let(::applyLessonLocks)
     fun unlockLesson(lessonId: Int) { lessonLocks[lessonId] = false }
     fun getSignsForLesson(lessonId: Int): List<ASLSign> {
-        val lesson = repos.learning.getLessonById(lessonId) ?: return emptyList()
+        val lesson = repos.learning.getLessonById(lessonId)
         return repos.learning.getSignsByIds(lesson.signIds)
+    }
+    fun onLessonCompleted(completedLessonId: Int) {
+        // 1) advance learning progress first
+        val profile = repos.user.getUserProfile()
+        val current = profile.learningProgress
+        repos.user.updateLearningProgress(current.module, current.lesson + 1)
+
+        // 2) recompute words learned based on updated progress
+        val newWordsLearned = getNumberOfWordsLearned()
+
+        // 3) persist to profile
+        repos.user.updateWordsLearned(newWordsLearned)
     }
 
     // starred
