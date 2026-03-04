@@ -39,6 +39,11 @@ kotlin {
         commonTest.dependencies {
             implementation(libs.kotlin.test)
         }
+        androidInstrumentedTest.dependencies {
+            implementation("androidx.compose.ui:ui-test-junit4:1.7.3")
+            implementation("androidx.test.ext:junit:1.1.5")
+            implementation("androidx.test.espresso:espresso-core:3.5.1")
+        }
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutinesSwing)
