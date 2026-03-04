@@ -44,6 +44,8 @@ kotlin {
             implementation("androidx.compose.ui:ui-test-junit4:1.7.3")
             implementation("androidx.test.ext:junit:1.1.5")
             implementation("androidx.test.espresso:espresso-core:3.5.1")
+            implementation("androidx.test:runner:1.5.2")
+            implementation("androidx.test:rules:1.5.0")
         }
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)
@@ -62,6 +64,7 @@ android {
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
         versionName = "1.0"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     packaging {
         resources {
@@ -85,6 +88,7 @@ android {
 
 dependencies {
     debugImplementation(libs.compose.uiTooling)
+    debugImplementation("androidx.compose.ui:ui-test-manifest:1.7.3")
     // CameraX (Android)
     implementation("androidx.camera:camera-core:1.4.2")
     implementation("androidx.camera:camera-camera2:1.4.2")
