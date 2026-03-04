@@ -7,10 +7,9 @@ import ca.uwaterloo.helloasl.domain.starModel.StarItem
 interface UserRepository {
     fun getUser(): User
     fun getUserProfile(): UserProfile
-    fun updateLearningProgress(moduleId: Int, lessonId: Int)
+    fun updateLearningProgress(): Boolean
     fun updateLearningGoals(minutesPerDay: Int, daysPerWeek: Int)
     fun updateWordsLearned(wordsLearned: Int)
-
     fun getStarredItems(): List<StarItem>
     fun removeStar(itemId: String)
 }

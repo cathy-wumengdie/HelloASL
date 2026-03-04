@@ -14,8 +14,8 @@ class MockUserRepository(private val db: MockDB): UserRepository {
         return db.getUserProfile()
     }
 
-    override fun updateLearningProgress(moduleId: Int, lessonId: Int) {
-        db.updateLearningProgress(moduleId, lessonId)
+    override fun updateLearningProgress(): Boolean {
+        return db.updateLearningProgress()
     }
 
     override fun updateLearningGoals(minutesPerDay: Int, daysPerWeek: Int) {
