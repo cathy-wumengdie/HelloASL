@@ -13,6 +13,7 @@ import ca.uwaterloo.helloasl.data.MockDB
 import ca.uwaterloo.helloasl.data.authRepository.MockAuthRepository
 import ca.uwaterloo.helloasl.data.userRepository.MockUserRepository
 import ca.uwaterloo.helloasl.data.learningRepository.MockLearningRepository
+import ca.uwaterloo.helloasl.data.translateRepository.MockTranslateRepository
 import ca.uwaterloo.helloasl.data.progressTrackerRepository.MockProgressTrackerRepository
 import ca.uwaterloo.helloasl.domain.Model
 import ca.uwaterloo.helloasl.domain.Repositories
@@ -48,6 +49,7 @@ fun App(
                 auth = MockAuthRepository(db),
                 user = MockUserRepository(db),
                 learning = MockLearningRepository(db),
+                translate = MockTranslateRepository(db),
                 progressTracker = MockProgressTrackerRepository(db),
             )
         }
@@ -91,7 +93,7 @@ fun App(
                 return@HelloASLTheme
             }
             val homeVm = remember { HomeViewModel(model) }
-            val translateVm = remember { TranslateViewModel() }
+            val translateVm = remember { TranslateViewModel(model) }
             val profileVm = remember { ProfileViewModel(model) }
             val starVm = remember { StarViewModel() }
             var previousTab by rememberSaveable { mutableStateOf(MainTab.LEARNING) }
