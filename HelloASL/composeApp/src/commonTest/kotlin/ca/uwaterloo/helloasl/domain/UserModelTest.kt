@@ -4,9 +4,6 @@ import ca.uwaterloo.helloasl.data.MockDB
 import ca.uwaterloo.helloasl.data.authRepository.MockAuthRepository
 import ca.uwaterloo.helloasl.data.learningRepository.MockLearningRepository
 import ca.uwaterloo.helloasl.data.progressTrackerRepository.MockProgressTrackerRepository
-<<<<<<< HEAD
-import ca.uwaterloo.helloasl.data.userRepository.MockUserRepository
-=======
 import ca.uwaterloo.helloasl.data.translateRepository.MockTranslateRepository
 import ca.uwaterloo.helloasl.data.userRepository.MockUserRepository
 import ca.uwaterloo.helloasl.domain.trackingModel.DailyProgress
@@ -14,7 +11,6 @@ import ca.uwaterloo.helloasl.domain.trackingModel.ProgressSummary
 import ca.uwaterloo.helloasl.domain.trackingModel.TimeUtils.today
 import ca.uwaterloo.helloasl.domain.trackingModel.WeeklyProgress
 import ca.uwaterloo.helloasl.domain.userModel.LearningProgress
->>>>>>> origin/main
 import ca.uwaterloo.helloasl.domain.userModel.User
 import kotlin.test.*
 
@@ -25,10 +21,7 @@ class UserModelTest {
             auth = MockAuthRepository(db),
             user = MockUserRepository(db),
             learning = MockLearningRepository(db),
-<<<<<<< HEAD
-=======
             translate = MockTranslateRepository(db),
->>>>>>> origin/main
             progressTracker = MockProgressTrackerRepository(db),
         )
         return db to Model(repos)
@@ -134,7 +127,7 @@ class UserModelTest {
 
         // Put user at Module 1, Lesson 3 so finished Lesson 1 and 2
         // Should include signs from lessons 1 and 2 => 4 signs total.
-        db.updateLearningProgress(moduleId = 1, lessonId = 3)
+        db.updateLearningProgress()
         assertEquals(4, model.getNumberOfWordsLearned())
     }
 }

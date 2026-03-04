@@ -1,28 +1,53 @@
 package ca.uwaterloo.helloasl.ui.screens.profile
 
-import ca.uwaterloo.helloasl.data.repository.AuthRepository
-import ca.uwaterloo.helloasl.data.repository.UserRepository
+import ca.uwaterloo.helloasl.data.MockDB
+import ca.uwaterloo.helloasl.data.authRepository.AuthRepository
+import ca.uwaterloo.helloasl.data.learningRepository.MockLearningRepository
+import ca.uwaterloo.helloasl.data.progressTrackerRepository.MockProgressTrackerRepository
+import ca.uwaterloo.helloasl.data.translateRepository.MockTranslateRepository
+import ca.uwaterloo.helloasl.data.userRepository.UserRepository
 import ca.uwaterloo.helloasl.domain.Model
 import ca.uwaterloo.helloasl.domain.Repositories
+import ca.uwaterloo.helloasl.domain.trackingModel.DailyProgress
+import ca.uwaterloo.helloasl.domain.trackingModel.ProgressSummary
+import ca.uwaterloo.helloasl.domain.trackingModel.WeeklyProgress
 import ca.uwaterloo.helloasl.domain.userModel.LearningProgress
 import ca.uwaterloo.helloasl.domain.userModel.User
 import ca.uwaterloo.helloasl.domain.userModel.UserProfile
+import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertNotEquals
 
-/**
- * NOTE:
- * This is a "non-UI View test" in commonTest.
- * We cannot render @Composable ProfileView() here without Compose UI testing dependencies.
- *
- * So we test what ProfileView *displays* by deriving the exact UI strings from ProfileUiState
- * and checking they change when the ViewModel state changes.
- */
 class ProfileViewTest {
+
+    private val TODAY = LocalDate(2026, 3, 4)
+
     private class FakeAuthRepository : AuthRepository {
         override fun signup(name: String, email: String, password: String) = true
         override fun login(email: String, password: String) = true
         override fun logout() {}
+    }
+
+    private fun ps(
+        userId: Int,
+        minutesPerDay: Int,
+        daysPerWeek: Int
+    ): ProgressSummary {
+        return ProgressSummary(
+            userId = userId,
+            date = TODAY,
+            dailyProgress = DailyProgress(
+                minutesLearned = 0,
+                lastDailyGoalCompletedDate = null,
+                dailyGoalMinutes = minutesPerDay
+            ),
+            weeklyProgress = WeeklyProgress(
+                daysCompleted = 0,
+                lastCreditedDate = null,
+                weeklyGoalDays = daysPerWeek
+            ),
+            dayStreak = 7
+        )
     }
 
     private class FakeUserRepository(
@@ -33,31 +58,52 @@ class ProfileViewTest {
         override fun getUser(): User = user
         override fun getUserProfile(): UserProfile = profile
 
+        override fun updateLearningProgress(): Boolean = true
+
         override fun updateLearningGoals(minutesPerDay: Int, daysPerWeek: Int) {
-            profile = profile.copy(
-                learningGoalPerDay = minutesPerDay,
-                learningGoalPerWeek = daysPerWeek
+            val old = profile.progressSummary
+            val updated = old.copy(
+                dailyProgress = old.dailyProgress.copy(dailyGoalMinutes = minutesPerDay),
+                weeklyProgress = old.weeklyProgress.copy(weeklyGoalDays = daysPerWeek)
             )
+            profile = profile.copy(progressSummary = updated)
         }
+
+        override fun updateWordsLearned(wordsLearned: Int) {
+            profile = profile.copy(wordsLearned = wordsLearned)
+        }
+
+        override fun getStarredItems() =
+            emptyList<ca.uwaterloo.helloasl.domain.starModel.StarItem>()
+
+        override fun removeStar(itemId: String) {}
     }
 
     private fun makeVm(
         minutesPerDay: Int = 15,
-        daysPerWeek: Int = 3
+        daysPerWeek: Int = 3,
+        userName: String = "Yanjin Xia"
     ): ProfileViewModel {
+        val db = MockDB()
         val userRepo = FakeUserRepository(
-            user = User(id = 1, name = "Yanjin Xia", email = "yanjin@gmail.com"),
+            user = User(id = 1, name = userName, email = "yanjin@gmail.com"),
             profile = UserProfile(
                 userId = 1,
-                learningGoalPerDay = minutesPerDay,
-                learningGoalPerWeek = daysPerWeek,
-                streakDays = 7,
+                progressSummary = ps(userId = 1, minutesPerDay = minutesPerDay, daysPerWeek = daysPerWeek),
                 learningProgress = LearningProgress(module = 1, lesson = 2),
                 wordsLearned = 40,
                 starredSigns = 12
             )
         )
-        val model = Model(Repositories(auth = FakeAuthRepository(), user = userRepo))
+        val model = Model(
+            Repositories(
+                auth = FakeAuthRepository(),
+                user = userRepo,
+                learning = MockLearningRepository(db),
+                translate = MockTranslateRepository(db),
+                progressTracker = MockProgressTrackerRepository(db)
+            )
+        )
         return ProfileViewModel(model)
     }
 
@@ -84,29 +130,11 @@ class ProfileViewTest {
 
     @Test
     fun headerText_changes_when_userName_changes() {
-        val vm = makeVm()
+        val vm = makeVm(userName = "Yanjin Xia")
         val beforeName = vm.state.userName
         val beforeAvatar = vm.state.avatarText
 
-        val vm2 = makeVm().also {
-        }
-
-        val vmDifferent = run {
-            val userRepo = FakeUserRepository(
-                user = User(id = 1, name = "New Name", email = "n@uw.ca"),
-                profile = UserProfile(
-                    userId = 1,
-                    learningGoalPerDay = 15,
-                    learningGoalPerWeek = 3,
-                    streakDays = 7,
-                    learningProgress = LearningProgress(1, 2),
-                    wordsLearned = 40,
-                    starredSigns = 12
-                )
-            )
-            val model = Model(Repositories(auth = FakeAuthRepository(), user = userRepo))
-            ProfileViewModel(model)
-        }
+        val vmDifferent = makeVm(userName = "New Name")
 
         assertNotEquals(beforeName, vmDifferent.state.userName)
         assertNotEquals(beforeAvatar, vmDifferent.state.avatarText)

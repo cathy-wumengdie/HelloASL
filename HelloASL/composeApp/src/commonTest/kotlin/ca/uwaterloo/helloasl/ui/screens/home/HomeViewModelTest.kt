@@ -1,12 +1,13 @@
 package ca.uwaterloo.helloasl.ui.screens.home
 
-import ca.uwaterloo.helloasl.data.repository.AuthRepository
-import ca.uwaterloo.helloasl.data.repository.UserRepository
+import ca.uwaterloo.helloasl.data.MockDB
+import ca.uwaterloo.helloasl.data.authRepository.AuthRepository
+import ca.uwaterloo.helloasl.data.learningRepository.MockLearningRepository
+import ca.uwaterloo.helloasl.data.progressTrackerRepository.MockProgressTrackerRepository
+import ca.uwaterloo.helloasl.data.translateRepository.MockTranslateRepository
+import ca.uwaterloo.helloasl.data.userRepository.MockUserRepository
 import ca.uwaterloo.helloasl.domain.Model
 import ca.uwaterloo.helloasl.domain.Repositories
-import ca.uwaterloo.helloasl.domain.userModel.LearningProgress
-import ca.uwaterloo.helloasl.domain.userModel.User
-import ca.uwaterloo.helloasl.domain.userModel.UserProfile
 import ca.uwaterloo.helloasl.ui.navigations.HomeDestination
 import ca.uwaterloo.helloasl.ui.navigations.HomeNavEvent
 import kotlinx.coroutines.CoroutineStart
@@ -18,123 +19,87 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class HomeViewModelTest {
-    private class FakeAuthRepository : AuthRepository {
-        override fun signup(name: String, email: String, password: String) = true
-        override fun login(email: String, password: String) = true
-        override fun logout() {}
+    private class FakeAuthRepository(private val db: MockDB) : AuthRepository {
+        override fun signup(name: String, email: String, password: String): Boolean =
+            db.signup(name, email, password)
+
+        override fun login(email: String, password: String): Boolean =
+            db.login(email, password)
+
+        override fun logout() = db.logout()
     }
 
-    private class FakeUserRepository(
-        private var user: User,
-        private var profile: UserProfile
-    ) : UserRepository {
+    private fun makeVmLoggedInAsUser1(): Triple<HomeViewModel, MockDB, Model> {
+        val db = MockDB()
 
-        fun setUser(newUser: User) { user = newUser }
-        fun setProfile(newProfile: UserProfile) { profile = newProfile }
+        // IMPORTANT: MockDB requires a session to call getUser/getUserProfile
+        val ok = db.login(email = "yanjin@gmail.com", password = "1234")
+        check(ok) { "Test setup failed: could not login as user 1" }
 
-        override fun getUser(): User = user
-        override fun getUserProfile(): UserProfile = profile
-
-        override fun updateLearningGoals(minutesPerDay: Int, daysPerWeek: Int) {
-            profile = profile.copy(
-                learningGoalPerDay = minutesPerDay,
-                learningGoalPerWeek = daysPerWeek
-            )
-        }
-    }
-
-    private fun makeVmWith(
-        user: User = User(id = 1, name = "Yanjin Xia", email = "yanjin@gmail.com"),
-        profile: UserProfile = UserProfile(
-            userId = 1,
-            learningGoalPerDay = 15,
-            learningGoalPerWeek = 3,
-            streakDays = 7,
-            learningProgress = LearningProgress(module = 1, lesson = 2),
-            wordsLearned = 40,
-            starredSigns = 12
+        val repos = Repositories(
+            auth = FakeAuthRepository(db),
+            user = MockUserRepository(db),
+            learning = MockLearningRepository(db),
+            translate = MockTranslateRepository(db),
+            progressTracker = MockProgressTrackerRepository(db)
         )
-    ): Triple<HomeViewModel, FakeUserRepository, Model> {
-        val userRepo = FakeUserRepository(user, profile)
-        val model = Model(
-            Repositories(
-                auth = FakeAuthRepository(),
-                user = userRepo
-            )
-        )
+        val model = Model(repos)
         val vm = HomeViewModel(model)
-        return Triple(vm, userRepo, model)
+        return Triple(vm, db, model)
     }
 
     @Test
     fun init_buildsStateFromModel() {
-        // Arrange
-        val (vm, _, _) = makeVmWith(
-            user = User(id = 1, name = "Alice Bob", email = "a@b.com"),
-            profile = UserProfile(
-                userId = 1,
-                learningGoalPerDay = 20,
-                learningGoalPerWeek = 4,
-                streakDays = 10,
-                learningProgress = LearningProgress(module = 2, lesson = 1),
-                wordsLearned = 99,
-                starredSigns = 5
-            )
-        )
+        val (vm, _, _) = makeVmLoggedInAsUser1()
 
-        assertEquals("Alice Bob", vm.state.userName)
-        assertEquals("Module 2: Greetings", vm.state.moduleTitle)
-        assertEquals(3, vm.state.totalLessonsInModule)
+        // MockDB defaults for user 1:
+        // - name = "Yanjin"
+        // - module 1 title = "Unit 1: Basics"
+        // - module 1 has 2 lessons
+        // - learningProgress = (module=1, lesson=1)
+        // - dayStreak = 7
+        // - dailyProgress: minutesLearned=20, dailyGoalMinutes=15
+        assertEquals("Yanjin", vm.state.userName)
+        assertEquals("Unit 1: Basics", vm.state.moduleTitle)
+        assertEquals(2, vm.state.totalLessonsInModule)
         assertEquals(1, vm.state.lessonsCompleted)
-        assertEquals(10, vm.state.streakDays)
-        assertEquals(2, vm.state.dailyGoalsDone)
-        assertEquals(20, vm.state.dailyGoalsTotal)
+
+        assertEquals(7, vm.state.streakDays)
+
+        // dailyGoalsDone = minutesLearned and total = dailyGoalMinutes
+        assertEquals(20, vm.state.dailyGoalsDone)
+        assertEquals(15, vm.state.dailyGoalsTotal)
     }
 
     @Test
-    fun refresh_rebuildsStateFromLatestRepoData() {
-        val (vm, userRepo, _) = makeVmWith()
+    fun refresh_rebuildsStateFromLatestRepoData_afterDbMutation() {
+        val (vm, db, _) = makeVmLoggedInAsUser1()
+        db.updateLearningGoals(minutesPerDay = 30, daysPerWeek = 6)
 
-        userRepo.setUser(User(id = 1, name = "New Name", email = "n@uw.ca"))
-        userRepo.setProfile(
-            UserProfile(
-                userId = 1,
-                learningGoalPerDay = 30,
-                learningGoalPerWeek = 6,
-                streakDays = 1,
-                learningProgress = LearningProgress(module = 3, lesson = 2),
-                wordsLearned = 123,
-                starredSigns = 77
-            )
-        )
-
+        // Add learning minutes, which can also affect streak/weekly if goal met
+        db.addLearningMinutes(5)
+        // Advance learning progress: from lesson 1 -> lesson 2
+        db.updateLearningProgress()
         vm.refresh()
 
-        assertEquals("New Name", vm.state.userName)
-        assertEquals("Module 3: Greetings", vm.state.moduleTitle)
-        assertEquals(3, vm.state.totalLessonsInModule)
+        assertEquals("Yanjin", vm.state.userName)
+        assertEquals("Unit 1: Basics", vm.state.moduleTitle)
+        assertEquals(2, vm.state.totalLessonsInModule)
+
+        // After advancing to lesson 2, lessonsCompleted should be 2
         assertEquals(2, vm.state.lessonsCompleted)
-        assertEquals(1, vm.state.streakDays)
-        assertEquals(2, vm.state.dailyGoalsDone)
+        // Daily goal total should reflect updated goal minutes
         assertEquals(30, vm.state.dailyGoalsTotal)
+        // dailyGoalsDone should have increased by +5 from initial 20 -> 25
+        assertEquals(25, vm.state.dailyGoalsDone)
     }
 
     @Test
     fun state_computedProperties_matchExpected() {
-        val (vm, _, _) = makeVmWith(
-            profile = UserProfile(
-                userId = 1,
-                learningGoalPerDay = 15,
-                learningGoalPerWeek = 3,
-                streakDays = 7,
-                learningProgress = LearningProgress(module = 1, lesson = 2),
-                wordsLearned = 40,
-                starredSigns = 12
-            )
-        )
-
-        assertEquals("Lesson 2 of 3", vm.state.lessonProgress)
-        assertEquals(2f / 3f, vm.state.progress)
+        val (vm, _, _) = makeVmLoggedInAsUser1()
+        // Default learningProgress for user1 is (module=1, lesson=1)
+        assertEquals("Lesson 1 of 2", vm.state.lessonProgress)
+        assertEquals(1f / 2f, vm.state.progress)
     }
 
     private suspend fun awaitOneNavEvent(vm: HomeViewModel): HomeNavEvent =
@@ -142,55 +107,49 @@ class HomeViewModelTest {
 
     @Test
     fun onDayStreak_emitsDayStreakDestination() = runBlocking {
-        val (vm, _, _) = makeVmWith()
+        val (vm, _, _) = makeVmLoggedInAsUser1()
         val wait = async(start = CoroutineStart.UNDISPATCHED) { awaitOneNavEvent(vm) }
         vm.onDayStreak()
-        val event = wait.await()
-        assertEquals(HomeDestination.DAY_STREAK, event.dest)
+        assertEquals(HomeDestination.DAY_STREAK, wait.await().dest)
     }
 
     @Test
     fun onDailyGoals_emitsDailyGoalsDestination() = runBlocking {
-        val (vm, _, _) = makeVmWith()
+        val (vm, _, _) = makeVmLoggedInAsUser1()
         val wait = async(start = CoroutineStart.UNDISPATCHED) { awaitOneNavEvent(vm) }
         vm.onDailyGoals()
-        val event = wait.await()
-        assertEquals(HomeDestination.DAILY_GOALS, event.dest)
+        assertEquals(HomeDestination.DAILY_GOALS, wait.await().dest)
     }
 
     @Test
     fun onLearning_emitsLearningDestination() = runBlocking {
-        val (vm, _, _) = makeVmWith()
+        val (vm, _, _) = makeVmLoggedInAsUser1()
         val wait = async(start = CoroutineStart.UNDISPATCHED) { awaitOneNavEvent(vm) }
         vm.onLearning()
-        val event = wait.await()
-        assertEquals(HomeDestination.LEARNING, event.dest)
+        assertEquals(HomeDestination.LEARNING, wait.await().dest)
     }
 
     @Test
     fun onTakeQuiz_emitsQuizDestination() = runBlocking {
-        val (vm, _, _) = makeVmWith()
+        val (vm, _, _) = makeVmLoggedInAsUser1()
         val wait = async(start = CoroutineStart.UNDISPATCHED) { awaitOneNavEvent(vm) }
         vm.onTakeQuiz()
-        val event = wait.await()
-        assertEquals(HomeDestination.QUIZ, event.dest)
+        assertEquals(HomeDestination.QUIZ, wait.await().dest)
     }
 
     @Test
     fun onTranslate_emitsTranslateDestination() = runBlocking {
-        val (vm, _, _) = makeVmWith()
+        val (vm, _, _) = makeVmLoggedInAsUser1()
         val wait = async(start = CoroutineStart.UNDISPATCHED) { awaitOneNavEvent(vm) }
         vm.onTranslate()
-        val event = wait.await()
-        assertEquals(HomeDestination.TRANSLATE, event.dest)
+        assertEquals(HomeDestination.TRANSLATE, wait.await().dest)
     }
 
     @Test
     fun onNotifications_emitsNotificationsDestination() = runBlocking {
-        val (vm, _, _) = makeVmWith()
+        val (vm, _, _) = makeVmLoggedInAsUser1()
         val wait = async(start = CoroutineStart.UNDISPATCHED) { awaitOneNavEvent(vm) }
         vm.onNotifications()
-        val event = wait.await()
-        assertEquals(HomeDestination.NOTIFICATIONS, event.dest)
+        assertEquals(HomeDestination.NOTIFICATIONS, wait.await().dest)
     }
 }

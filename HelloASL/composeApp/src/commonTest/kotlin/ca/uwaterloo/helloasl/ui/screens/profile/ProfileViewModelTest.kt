@@ -1,28 +1,67 @@
 package ca.uwaterloo.helloasl.ui.screens.profile
 
-import ca.uwaterloo.helloasl.data.repository.AuthRepository
-import ca.uwaterloo.helloasl.data.repository.UserRepository
+import ca.uwaterloo.helloasl.data.MockDB
+import ca.uwaterloo.helloasl.data.authRepository.AuthRepository
+import ca.uwaterloo.helloasl.data.learningRepository.MockLearningRepository
+import ca.uwaterloo.helloasl.data.progressTrackerRepository.MockProgressTrackerRepository
+import ca.uwaterloo.helloasl.data.translateRepository.MockTranslateRepository
+import ca.uwaterloo.helloasl.data.userRepository.UserRepository
 import ca.uwaterloo.helloasl.domain.Model
 import ca.uwaterloo.helloasl.domain.Repositories
+import ca.uwaterloo.helloasl.domain.trackingModel.DailyProgress
+import ca.uwaterloo.helloasl.domain.trackingModel.ProgressSummary
+import ca.uwaterloo.helloasl.domain.trackingModel.WeeklyProgress
 import ca.uwaterloo.helloasl.domain.userModel.LearningProgress
 import ca.uwaterloo.helloasl.domain.userModel.User
 import ca.uwaterloo.helloasl.domain.userModel.UserProfile
 import ca.uwaterloo.helloasl.ui.navigations.ProfileDestination
 import ca.uwaterloo.helloasl.ui.navigations.ProfileNavEvent
 import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
+import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
-import kotlinx.coroutines.async
-import kotlinx.coroutines.flow.first
 
 class ProfileViewModelTest {
+
+    private val TODAY = LocalDate(2026, 3, 4)
+
     private class FakeAuthRepository : AuthRepository {
         override fun signup(name: String, email: String, password: String) = true
         override fun login(email: String, password: String) = true
         override fun logout() {}
+    }
+
+    private fun ps(
+        userId: Int,
+        dailyGoalMinutes: Int,
+        weeklyGoalDays: Int,
+        minutesLearned: Int = 0,
+        weeklyDaysCompleted: Int = 0,
+        dayStreak: Int = 0,
+        date: LocalDate = TODAY,
+        lastDailyGoalCompletedDate: LocalDate? = null,
+        lastCreditedDate: LocalDate? = null
+    ): ProgressSummary {
+        return ProgressSummary(
+            userId = userId,
+            date = date,
+            dailyProgress = DailyProgress(
+                minutesLearned = minutesLearned,
+                lastDailyGoalCompletedDate = lastDailyGoalCompletedDate,
+                dailyGoalMinutes = dailyGoalMinutes
+            ),
+            weeklyProgress = WeeklyProgress(
+                daysCompleted = weeklyDaysCompleted,
+                lastCreditedDate = lastCreditedDate,
+                weeklyGoalDays = weeklyGoalDays
+            ),
+            dayStreak = dayStreak
+        )
     }
 
     private class FakeUserRepository(
@@ -37,35 +76,55 @@ class ProfileViewModelTest {
         fun setProfile(newProfile: UserProfile) { profile = newProfile }
 
         override fun getUser(): User = user
-
         override fun getUserProfile(): UserProfile = profile
+
+        override fun updateLearningProgress(): Boolean = true
 
         override fun updateLearningGoals(minutesPerDay: Int, daysPerWeek: Int) {
             lastUpdateGoals = minutesPerDay to daysPerWeek
-            profile = profile.copy(
-                learningGoalPerDay = minutesPerDay,
-                learningGoalPerWeek = daysPerWeek
+
+            val old = profile.progressSummary
+            val updated = old.copy(
+                dailyProgress = old.dailyProgress.copy(dailyGoalMinutes = minutesPerDay),
+                weeklyProgress = old.weeklyProgress.copy(weeklyGoalDays = daysPerWeek)
             )
+            profile = profile.copy(progressSummary = updated)
         }
+
+        override fun updateWordsLearned(wordsLearned: Int) {
+            profile = profile.copy(wordsLearned = wordsLearned)
+        }
+
+        override fun getStarredItems() =
+            emptyList<ca.uwaterloo.helloasl.domain.starModel.StarItem>()
+
+        override fun removeStar(itemId: String) {}
     }
 
     private fun makeVmWith(
         user: User = User(id = 1, name = "Yanjin Xia", email = "yanjin@gmail.com"),
         profile: UserProfile = UserProfile(
             userId = 1,
-            learningGoalPerDay = 15,
-            learningGoalPerWeek = 3,
-            streakDays = 7,
+            progressSummary = ps(
+                userId = 1,
+                dailyGoalMinutes = 15,
+                weeklyGoalDays = 3,
+                dayStreak = 7
+            ),
             learningProgress = LearningProgress(module = 1, lesson = 2),
             wordsLearned = 40,
             starredSigns = 12
         )
     ): Triple<ProfileViewModel, FakeUserRepository, Model> {
+        val db = MockDB()
         val userRepo = FakeUserRepository(user, profile)
         val model = Model(
             Repositories(
                 auth = FakeAuthRepository(),
-                user = userRepo
+                user = userRepo,
+                learning = MockLearningRepository(db),
+                translate = MockTranslateRepository(db),
+                progressTracker = MockProgressTrackerRepository(db)
             )
         )
         val vm = ProfileViewModel(model)
@@ -74,14 +133,16 @@ class ProfileViewModelTest {
 
     @Test
     fun init_buildsStateFromModel() {
-        // Arrange
         val (vm, _, _) = makeVmWith(
             user = User(id = 1, name = "Alice Bob", email = "a@b.com"),
             profile = UserProfile(
                 userId = 1,
-                learningGoalPerDay = 20,
-                learningGoalPerWeek = 4,
-                streakDays = 10,
+                progressSummary = ps(
+                    userId = 1,
+                    dailyGoalMinutes = 20,
+                    weeklyGoalDays = 4,
+                    dayStreak = 10
+                ),
                 learningProgress = LearningProgress(0, 0),
                 wordsLearned = 99,
                 starredSigns = 5
@@ -89,9 +150,11 @@ class ProfileViewModelTest {
         )
 
         assertEquals("Alice Bob", vm.state.userName)
-        assertEquals("AB", vm.state.avatarText) // from name.toAvatarText()
+        assertEquals("AB", vm.state.avatarText)
         assertEquals(99, vm.state.wordsLearned)
         assertEquals(5, vm.state.starredSigns)
+
+        // goals now come from progressSummary
         assertEquals(20, vm.state.learningGoalPerDay)
         assertEquals(4, vm.state.learningGoalPerWeek)
     }
@@ -104,9 +167,12 @@ class ProfileViewModelTest {
         userRepo.setProfile(
             UserProfile(
                 userId = 1,
-                learningGoalPerDay = 30,
-                learningGoalPerWeek = 6,
-                streakDays = 1,
+                progressSummary = ps(
+                    userId = 1,
+                    dailyGoalMinutes = 30,
+                    weeklyGoalDays = 6,
+                    dayStreak = 1
+                ),
                 learningProgress = LearningProgress(2, 3),
                 wordsLearned = 123,
                 starredSigns = 77
@@ -143,8 +209,7 @@ class ProfileViewModelTest {
         val (vm, _, _) = makeVmWith()
         val wait = async(start = CoroutineStart.UNDISPATCHED) { awaitOneNavEvent(vm) }
         vm.onSettings()
-        val event = wait.await()
-        assertEquals(ProfileDestination.SETTINGS, event.dest)
+        assertEquals(ProfileDestination.SETTINGS, wait.await().dest)
     }
 
     @Test
@@ -152,8 +217,7 @@ class ProfileViewModelTest {
         val (vm, _, _) = makeVmWith()
         val wait = async(start = CoroutineStart.UNDISPATCHED) { awaitOneNavEvent(vm) }
         vm.onWordsLearned()
-        val event = wait.await()
-        assertEquals(ProfileDestination.WORDS_LEARNED, event.dest)
+        assertEquals(ProfileDestination.WORDS_LEARNED, wait.await().dest)
     }
 
     @Test
@@ -161,8 +225,7 @@ class ProfileViewModelTest {
         val (vm, _, _) = makeVmWith()
         val wait = async(start = CoroutineStart.UNDISPATCHED) { awaitOneNavEvent(vm) }
         vm.onStarredSigns()
-        val event = wait.await()
-        assertEquals(ProfileDestination.STARRED_SIGNS, event.dest)
+        assertEquals(ProfileDestination.STARRED_SIGNS, wait.await().dest)
     }
 
     @Test
@@ -170,8 +233,7 @@ class ProfileViewModelTest {
         val (vm, _, _) = makeVmWith()
         val wait = async(start = CoroutineStart.UNDISPATCHED) { awaitOneNavEvent(vm) }
         vm.onAccount()
-        val event = wait.await()
-        assertEquals(ProfileDestination.ACCOUNT, event.dest)
+        assertEquals(ProfileDestination.ACCOUNT, wait.await().dest)
     }
 
     @Test
@@ -179,8 +241,7 @@ class ProfileViewModelTest {
         val (vm, _, _) = makeVmWith()
         val wait = async(start = CoroutineStart.UNDISPATCHED) { awaitOneNavEvent(vm) }
         vm.onLicense()
-        val event = wait.await()
-        assertEquals(ProfileDestination.LICENSE, event.dest)
+        assertEquals(ProfileDestination.LICENSE, wait.await().dest)
     }
 
     @Test
@@ -188,7 +249,6 @@ class ProfileViewModelTest {
         val (vm, _, _) = makeVmWith()
         val wait = async(start = CoroutineStart.UNDISPATCHED) { awaitOneNavEvent(vm) }
         vm.onSignOut()
-        val event = wait.await()
-        assertEquals(ProfileDestination.SIGN_IN, event.dest)
+        assertEquals(ProfileDestination.SIGN_IN, wait.await().dest)
     }
 }
