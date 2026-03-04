@@ -7,7 +7,8 @@ import ca.uwaterloo.helloasl.domain.learningModel.Module
 interface LearningRepository {
     fun getModules(): List<Module>
     fun getLessons(): List<Lesson>
-    fun getLessonById(id: Int): Lesson?
+    fun getModuleById(id: Int): Module
+    fun getLessonById(id: Int): Lesson
     fun getSignById(id: Int): ASLSign?
     fun getSignsByIds(ids: List<Int>): List<ASLSign>
 }

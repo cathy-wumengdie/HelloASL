@@ -29,10 +29,11 @@ class HomeViewModel(private val model: Model) {
         val user = model.getUser()
         val progressSummary = model.getProgressSummary()
         val profile = model.getUserProfile()
+        val module = model.getModule(profile.learningProgress.module)
         return HomeUiState(
             userName = user.name,
-            moduleTitle = "Module ${profile.learningProgress.module}: Greetings",            /*change after learning class completed*/
-            totalLessonsInModule = 3,                       /*change after learning class completed*/
+            moduleTitle = module.title,
+            totalLessonsInModule = module.lessonIds.size,
             lessonsCompleted = profile.learningProgress.lesson,
             streakDays = progressSummary.dayStreak,
             dailyGoalsDone = progressSummary.dailyProgress.minutesLearned,

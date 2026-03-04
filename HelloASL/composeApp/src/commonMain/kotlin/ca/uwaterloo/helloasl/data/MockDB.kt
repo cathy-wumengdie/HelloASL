@@ -27,28 +27,28 @@ class MockDB {
 
     val signs: List<ASLSign> = listOf(
         ASLSign(
-            id = 0,
+            id = 1,
             word = "Hello",
             description = "Greeting",
             videoUrls = listOf("files/video/hello.mp4"),
             tags = setOf("basic")
         ),
         ASLSign(
-            id = 1,
+            id = 2,
             word = "Thanks",
             description = "Gratitude",
             videoUrls = listOf("files/video/thankyou.mp4"),
             tags = setOf("basic")
         ),
         ASLSign(
-            id = 2,
+            id = 3,
             word = "Yes",
             description = "Affirmation",
             videoUrls = listOf("files/video/yes.mp4"),
             tags = setOf("basic")
         ),
         ASLSign(
-            id = 3,
+            id = 4,
             word = "No",
             description = "Negation",
             videoUrls = listOf("files/video/no.mp4"),
@@ -58,16 +58,16 @@ class MockDB {
 
     val lessons: List<Lesson> = listOf(
         Lesson(
-            id = 0,
+            id = 1,
             title = "Basic Greetings",
-            signIds = listOf(0, 1),
+            signIds = listOf(1, 2),
             category = "Beginner",
             locked = false
         ),
         Lesson(
-            id = 1,
+            id = 2,
             title = "Yes / No",
-            signIds = listOf(2, 3),
+            signIds = listOf(3, 4),
             category = "Beginner",
             locked = true
         )
@@ -75,9 +75,9 @@ class MockDB {
 
     val modules: List<Module> = listOf(
         Module(
-            id = 0,
+            id = 1,
             title = "Unit 1: Basics",
-            lessonIds = listOf(0, 1),
+            lessonIds = listOf(1, 2),
             category = "Beginner",
             locked = false
         )
@@ -139,8 +139,8 @@ class MockDB {
         1 to UserProfile(
             userId = 1,
             progressSummary = progressSummary[1]!!,
-            learningProgress = LearningProgress(module = 2, lesson = 3),
-            wordsLearned = 40,
+            learningProgress = LearningProgress(module = 1, lesson = 1),
+            wordsLearned = 0,
             starredSigns = 12
         ),
 
@@ -155,8 +155,8 @@ class MockDB {
         3 to UserProfile(
             userId = 3,
             progressSummary = progressSummary[3]!!,
-            learningProgress = LearningProgress(module = 2, lesson = 1),
-            wordsLearned = 28,
+            learningProgress = LearningProgress(module = 1, lesson = 1),
+            wordsLearned = 0,
             starredSigns = 10
         )
     )
@@ -180,6 +180,11 @@ class MockDB {
         return userProfiles[userId] ?: error("Profile not found")
     }
 
+    fun updateLearningProgress(moduleId: Int, lessonId: Int) {
+        val userId = getUserId()
+        userProfiles[userId] = userProfiles[userId]!!.copy(learningProgress = LearningProgress(moduleId, lessonId))
+    }
+
     fun updateLearningGoals(minutesPerDay: Int, daysPerWeek: Int) {
         val userId = getUserId()
         val ps = refreshProgressSummary()
@@ -188,6 +193,11 @@ class MockDB {
             weeklyProgress = ps.weeklyProgress.copy(weeklyGoalDays = daysPerWeek)
         )
         setProgressSummary(userId, updated)
+    }
+
+    fun updateWordsLearned(newWordsLearned: Int) {
+        val userId = getUserId()
+        userProfiles[userId] = userProfiles[userId]!!.copy(wordsLearned = newWordsLearned)
     }
 
     fun signup(name: String, email: String, password: String): Boolean {
