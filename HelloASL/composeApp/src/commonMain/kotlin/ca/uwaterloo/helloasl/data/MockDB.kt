@@ -8,6 +8,12 @@ import ca.uwaterloo.helloasl.domain.userModel.*
 import kotlinx.datetime.*
 import ca.uwaterloo.helloasl.domain.learningModel.*
 import ca.uwaterloo.helloasl.domain.translateModel.*
+import ca.uwaterloo.helloasl.domain.userModel.LearningProgress
+import ca.uwaterloo.helloasl.domain.userModel.User
+import ca.uwaterloo.helloasl.domain.userModel.UserCredential
+import ca.uwaterloo.helloasl.domain.userModel.UserProfile
+import ca.uwaterloo.helloasl.domain.userModel.UserSession
+import ca.uwaterloo.helloasl.domain.starModel.StarItem
 import java.util.Objects.hash
 
 class MockDB {
@@ -394,5 +400,23 @@ class MockDB {
     // Hard-coded recognition result
     fun recognizeAsl(): AslRecognitionResult {
         return AslRecognitionResult(recognizedText = "Hello", confidence = 0.86f)
+    }
+
+    private val starredItems = mutableMapOf(
+        1 to mutableListOf(
+            StarItem(id = "cat", label = "Cat"),
+            StarItem(id = "dog", label = "Dog"),
+            StarItem(id = "fish", label = "Fish")
+        )
+    )
+
+    fun getStarredItems(): List<StarItem> {
+        val userId = getUserId()
+        return starredItems[userId]?.toList() ?: emptyList()
+    }
+
+    fun removeStar(itemId: String) {
+        val userId = getUserId()
+        starredItems[userId]?.removeAll { it.id == itemId }
     }
 }
