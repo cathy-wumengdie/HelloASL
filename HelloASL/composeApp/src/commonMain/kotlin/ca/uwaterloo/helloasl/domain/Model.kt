@@ -14,6 +14,7 @@ import ca.uwaterloo.helloasl.domain.userModel.UserProfile
 import ca.uwaterloo.helloasl.domain.translateModel.AslRecognitionResult
 import ca.uwaterloo.helloasl.domain.translateModel.TranslateHistoryItem
 import ca.uwaterloo.helloasl.domain.translateModel.TranslateResult
+import ca.uwaterloo.helloasl.domain.starModel.StarItem
 
 
 // Repository bundle
@@ -113,4 +114,11 @@ class Model(private val repos: Repositories) {
     fun addTranslateHistory(word: String) = repos.translate.addHistory(word)
     fun clearTranslateHistory() = repos.translate.clearHistory()
     fun recognizeAsl(): AslRecognitionResult = repos.translate.recognizeAsl()
+
+    fun getStarredItems(): List<StarItem> {
+        return repos.user.getStarredItems()
+    }
+    fun removeStar(itemId: String) {
+        repos.user.removeStar(itemId)
+    }
 }

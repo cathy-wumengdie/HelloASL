@@ -17,6 +17,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import data.HelloAslDataStore
 import kotlinx.coroutines.launch
+import ca.uwaterloo.helloasl.App
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

@@ -2,10 +2,20 @@ package ca.uwaterloo.helloasl.ui.navigations
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import ca.uwaterloo.helloasl.ui.screens.profile.ProfileDestination
 import ca.uwaterloo.helloasl.ui.screens.profile.ProfileView
 import ca.uwaterloo.helloasl.ui.screens.profile.ProfileViewModel
 import kotlinx.coroutines.flow.collectLatest
+
+enum class ProfileDestination {
+    SETTINGS,
+    WORDS_LEARNED,
+    STARRED_SIGNS,
+    ACCOUNT,
+    LICENSE,
+    SIGN_IN
+}
+
+data class ProfileNavEvent(val dest: ProfileDestination)
 
 @Composable
 fun ProfileRoute(

@@ -1,4 +1,4 @@
-package ca.uwaterloo.helloasl.ui.screens.star
+package ca.uwaterloo.helloasl.domain.starModel
 
 data class StarItem(
     val id: String,
