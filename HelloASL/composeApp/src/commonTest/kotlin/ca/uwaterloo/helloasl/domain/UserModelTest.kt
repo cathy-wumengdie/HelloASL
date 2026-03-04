@@ -120,29 +120,13 @@ class UserModelTest {
 
     @Test
     fun getNumberOfWordsLearned_return() {
-        val (_, model) = makeModel()
-        /* update once getNumberOfWordsLearned completed */
-        val profile = UserProfile(
-            userId = 1,
-            progressSummary = ProgressSummary(
-                userId = 1,
-                date = today(),
-                dailyProgress = DailyProgress(
-                    minutesLearned = 20,
-                    lastDailyGoalCompletedDate = today(),
-                    dailyGoalMinutes = 15
-                ),
-                weeklyProgress = WeeklyProgress(
-                    daysCompleted = 3,
-                    lastCreditedDate = today(),
-                    weeklyGoalDays = 3
-                ),
-                dayStreak = 7
-            ),
-            learningProgress = LearningProgress(module = 2, lesson = 3),
-            wordsLearned = 40,
-            starredSigns = 12
-        )
-        assertEquals(40, model.getNumberOfWordsLearned())
+        val (db, model) = makeModel()
+        val ok = db.login("yanjin@gmail.com", "1234")
+        assertTrue(ok)
+
+        // Put user at Module 1, Lesson 3 so finished Lesson 1 and 2
+        // Should include signs from lessons 1 and 2 => 4 signs total.
+        db.updateLearningProgress(moduleId = 1, lessonId = 3)
+        assertEquals(4, model.getNumberOfWordsLearned())
     }
 }
