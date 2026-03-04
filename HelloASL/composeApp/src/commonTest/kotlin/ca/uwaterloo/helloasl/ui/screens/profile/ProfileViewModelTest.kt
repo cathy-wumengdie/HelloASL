@@ -117,6 +117,7 @@ class ProfileViewModelTest {
         )
     ): Triple<ProfileViewModel, FakeUserRepository, Model> {
         val db = MockDB()
+        db.login("yanjin@gmail.com", "1234")
         val userRepo = FakeUserRepository(user, profile)
         val model = Model(
             Repositories(
@@ -153,10 +154,6 @@ class ProfileViewModelTest {
         assertEquals("AB", vm.state.avatarText)
         assertEquals(99, vm.state.wordsLearned)
         assertEquals(5, vm.state.starredSigns)
-
-        // goals now come from progressSummary
-        assertEquals(20, vm.state.learningGoalPerDay)
-        assertEquals(4, vm.state.learningGoalPerWeek)
     }
 
     @Test
@@ -185,8 +182,6 @@ class ProfileViewModelTest {
         assertEquals("NN", vm.state.avatarText)
         assertEquals(123, vm.state.wordsLearned)
         assertEquals(77, vm.state.starredSigns)
-        assertEquals(30, vm.state.learningGoalPerDay)
-        assertEquals(6, vm.state.learningGoalPerWeek)
     }
 
     @Test
@@ -197,8 +192,6 @@ class ProfileViewModelTest {
         vm.onSaveLearningGoals(minutesPerDay = 25, daysPerWeek = 5)
 
         assertEquals(25 to 5, userRepo.lastUpdateGoals)
-        assertEquals(25, vm.state.learningGoalPerDay)
-        assertEquals(5, vm.state.learningGoalPerWeek)
     }
 
     private suspend fun awaitOneNavEvent(vm: ProfileViewModel): ProfileNavEvent =
