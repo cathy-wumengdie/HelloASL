@@ -8,17 +8,9 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import ca.uwaterloo.helloasl.ui.navigations.HomeDestination
+import ca.uwaterloo.helloasl.ui.navigations.HomeNavEvent
 
-enum class HomeDestination {
-    LEARNING,
-    DAY_STREAK,
-    DAILY_GOALS,
-    QUIZ,
-    TRANSLATE,
-    NOTIFICATIONS
-}
-
-data class HomeNavEvent(val dest: HomeDestination)
 
 class HomeViewModel(private val model: Model) {
     var state by mutableStateOf(buildState())

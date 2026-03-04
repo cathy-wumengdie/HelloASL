@@ -7,6 +7,13 @@ import ca.uwaterloo.helloasl.domain.trackingModel.TimeUtils.today
 import ca.uwaterloo.helloasl.domain.userModel.*
 import kotlinx.datetime.*
 import ca.uwaterloo.helloasl.domain.learningModel.*
+import ca.uwaterloo.helloasl.domain.translateModel.*
+import ca.uwaterloo.helloasl.domain.userModel.LearningProgress
+import ca.uwaterloo.helloasl.domain.userModel.User
+import ca.uwaterloo.helloasl.domain.userModel.UserCredential
+import ca.uwaterloo.helloasl.domain.userModel.UserProfile
+import ca.uwaterloo.helloasl.domain.userModel.UserSession
+import ca.uwaterloo.helloasl.domain.starModel.StarItem
 import java.util.Objects.hash
 
 class MockDB {
@@ -236,7 +243,6 @@ class MockDB {
         return true
     }
 
-
     fun updateLearningGoals(minutesPerDay: Int, daysPerWeek: Int) {
         val userId = getUserId()
         val ps = refreshProgressSummary()
@@ -405,5 +411,63 @@ class MockDB {
             after = updated
         )
         setProgressSummary(userId, updated)
+    }
+
+    // ------ Translate ------ (Fake, for Sprint 2 only)
+    private val translateDictionary: Map<String, TranslateResult> = mapOf(
+        "hello" to TranslateResult(query = "hello", videoUrls = listOf("files/video/hello.mp4")),
+        "thanks" to TranslateResult(query = "thanks", videoUrls = listOf("files/video/thankyou.mp4")),
+        "thank you" to TranslateResult(query = "thank you", videoUrls = listOf("files/video/thankyou.mp4")),
+        "yes" to TranslateResult(query = "yes", videoUrls = listOf("files/video/yes.mp4")),
+        "no" to TranslateResult(query = "no", videoUrls = listOf("files/video/no.mp4"))
+    )
+
+    private var nextHistoryId = 1
+    private val translateHistory = mutableListOf(
+        TranslateHistoryItem(id = nextHistoryId++, query = "Hello"),
+        TranslateHistoryItem(id = nextHistoryId++, query = "Thanks")
+    )
+
+    fun searchWord(word: String): TranslateResult? {
+        val key = word.trim().lowercase()
+        if (key.isBlank()) return null
+        return translateDictionary[key] ?: TranslateResult(query = word.trim())
+    }
+
+    fun getTranslateSearchHistory(): List<TranslateHistoryItem> {
+        return translateHistory.asReversed()  // newest search should appear at the top
+    }
+
+    fun addTranslateHistory(word: String) {
+        val clean = word.trim()
+        if (clean.isBlank()) return
+        translateHistory.add(TranslateHistoryItem(id = nextHistoryId++, query = clean))
+    }
+
+    fun clearTranslateHistory() {
+        translateHistory.clear()
+    }
+
+    // Hard-coded recognition result
+    fun recognizeAsl(): AslRecognitionResult {
+        return AslRecognitionResult(recognizedText = "Hello", confidence = 0.86f)
+    }
+
+    private val starredItems = mutableMapOf(
+        1 to mutableListOf(
+            StarItem(id = "cat", label = "Cat"),
+            StarItem(id = "dog", label = "Dog"),
+            StarItem(id = "fish", label = "Fish")
+        )
+    )
+
+    fun getStarredItems(): List<StarItem> {
+        val userId = getUserId()
+        return starredItems[userId]?.toList() ?: emptyList()
+    }
+
+    fun removeStar(itemId: String) {
+        val userId = getUserId()
+        starredItems[userId]?.removeAll { it.id == itemId }
     }
 }

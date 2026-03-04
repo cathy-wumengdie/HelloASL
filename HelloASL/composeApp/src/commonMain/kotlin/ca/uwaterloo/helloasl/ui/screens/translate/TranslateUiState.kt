@@ -1,0 +1,25 @@
+package ca.uwaterloo.helloasl.ui.screens.translate
+
+import ca.uwaterloo.helloasl.domain.translateModel.TranslateHistoryItem
+import ca.uwaterloo.helloasl.domain.translateModel.TranslateResult
+
+enum class TranslateMode { EN_TO_ASL, ASL_TO_EN }
+
+data class TranslateUiState(
+    val mode: TranslateMode = TranslateMode.EN_TO_ASL,
+
+    // EN -> ASL
+    val queryHint: String = "Search an English word",
+    val query: String = "",
+    val searchHistory: List<TranslateHistoryItem> = emptyList(),
+    val lastResult: TranslateResult? = null,
+
+    // ASL -> EN
+    val recoText: String = "",
+    val confidence: Float = 0f,
+    val errorMessage: String? = null,
+    val isCameraRunning: Boolean = false
+) {
+    val confidenceLabel: String
+        get() = "${(confidence * 100).toInt()}%"
+}

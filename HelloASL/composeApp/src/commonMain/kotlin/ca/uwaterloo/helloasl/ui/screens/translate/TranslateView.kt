@@ -18,6 +18,8 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.unit.dp
 import ca.uwaterloo.helloasl.ui.components.HelloASLCard
 import ca.uwaterloo.helloasl.ui.components.ClickableSection
+import ca.uwaterloo.helloasl.ui.components.SignVideoPlayer
+import ca.uwaterloo.helloasl.ui.components.CameraPreview
 
 /*
 Translation tab:
@@ -93,13 +95,13 @@ fun TranslateView(
                 onSelectHistoryItem = vm::onSelectHistoryItem,
                 onQueryChange = vm::onQueryChange
             )
-
             TranslateMode.ASL_TO_EN -> AslToEnUI(
                 state = state,
                 hasCameraHardware = hasCameraHardware,
                 cameraGranted = cameraGranted,
                 onRequestCameraPermission = requestCameraPermission,
-                onStartCamera = vm::onStartCamera
+                onStartCamera = vm::onStartCamera,
+                onStopCamera = vm::onStopCamera
             )
         }
     }
@@ -133,8 +135,8 @@ private fun DirectionLabel(
 }
 
 @Composable
-private fun EnToAslUI(
-    state: TranslateModel,
+private fun EnToAslUI (
+    state: TranslateUiState,
     onSearch: () -> Unit,
     onSelectHistoryItem: (String) -> Unit,
     onQueryChange: (String) -> Unit
@@ -162,22 +164,19 @@ private fun EnToAslUI(
         HelloASLCard(modifier = Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp)) {
                 Text("Search Results for \"${state.query}\"", style = MaterialTheme.typography.titleMedium)
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(8.dp))
 
-                // Placeholder boxes (for images/videos)
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Surface(
+                val videoUrl = state.lastResult?.videoUrls?.firstOrNull()
+
+                if (videoUrl != null) {
+                    SignVideoPlayer(
+                        resourcePath = videoUrl,
                         modifier = Modifier
-                            .weight(1f)
-                            .height(110.dp),
-                        tonalElevation = 1.dp
-                    ) {}
-                    Surface(
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(110.dp),
-                        tonalElevation = 1.dp
-                    ) {}
+                            .fillMaxWidth()
+                            .height(220.dp)
+                    )
+                } else {
+                    Text("No video available for this word.")
                 }
             }
         }
@@ -189,11 +188,9 @@ private fun EnToAslUI(
             Column(Modifier.padding(16.dp)) {
                 Text("Search History", style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(12.dp))
-                // Show the list of words that the user had searched
-                state.searchHistory.forEach { word ->
-                    ClickableSection(
-                        onClick = { onSelectHistoryItem(word) } // worry about this later ;)
-                    ) { Text(word) }
+                // Show the last 5 words that the user searched
+                state.searchHistory.take(5).forEach { item ->
+                    ClickableSection(onClick = { onSelectHistoryItem(item.query) }) { Text(item.query) }
                     Spacer(Modifier.height(6.dp))
                 }
             }
@@ -204,11 +201,12 @@ private fun EnToAslUI(
 
 @Composable
 private fun AslToEnUI(
-    state: TranslateModel,
+    state: TranslateUiState,
     hasCameraHardware: Boolean,
     cameraGranted: Boolean,
     onRequestCameraPermission: () -> Unit,
-    onStartCamera: () -> Unit
+    onStartCamera: () -> Unit,
+    onStopCamera: () -> Unit,
 ) {
     Spacer(Modifier.height(16.dp))
     if (!hasCameraHardware) {
@@ -231,6 +229,8 @@ private fun AslToEnUI(
             Text("Translate ASL to English", style = MaterialTheme.typography.titleLarge)
             Spacer(Modifier.height(12.dp))
 
+            val cameraReady = hasCameraHardware && cameraGranted
+
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -238,23 +238,29 @@ private fun AslToEnUI(
                 shape = MaterialTheme.shapes.medium,
                 tonalElevation = 1.dp
             ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = Icons.Filled.Videocam,
-                        contentDescription = "Camera",
-                        modifier = Modifier.size(64.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                if (cameraReady && state.isCameraRunning) {
+                    CameraPreview(
+                        modifier = Modifier.fillMaxSize()
                     )
+                } else {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.Filled.Videocam,
+                            contentDescription = "Camera",
+                            modifier = Modifier.size(64.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
 
             Spacer(Modifier.height(12.dp))
 
-            val cameraReady = hasCameraHardware && cameraGranted
             Button(
                 onClick = {
                     when {
                         !cameraGranted -> onRequestCameraPermission()
+                        state.isCameraRunning -> onStopCamera()
                         else -> onStartCamera()
                     }
                 },
@@ -266,6 +272,7 @@ private fun AslToEnUI(
                     when {
                         !hasCameraHardware -> "Camera Not Available"
                         !cameraGranted -> "Enable Camera"
+                        state.isCameraRunning -> "Stop Camera"
                         else -> "Start Camera"
                     }
                 )

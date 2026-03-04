@@ -38,6 +38,12 @@ kotlin {
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
+        }
+        androidInstrumentedTest.dependencies {
+            implementation("androidx.compose.ui:ui-test-junit4:1.7.3")
+            implementation("androidx.test.ext:junit:1.1.5")
+            implementation("androidx.test.espresso:espresso-core:3.5.1")
         }
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)
@@ -79,6 +85,11 @@ android {
 
 dependencies {
     debugImplementation(libs.compose.uiTooling)
+    // CameraX (Android)
+    implementation("androidx.camera:camera-core:1.4.2")
+    implementation("androidx.camera:camera-camera2:1.4.2")
+    implementation("androidx.camera:camera-lifecycle:1.4.2")
+    implementation("androidx.camera:camera-view:1.4.2")
 }
 
 compose.desktop {

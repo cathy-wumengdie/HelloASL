@@ -29,6 +29,7 @@ fun LessonView(
     val state = vm.state
     val pageBg = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.22f)
     val cardBg = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.40f)
+    val solidBg = MaterialTheme.colorScheme.secondary
 
     Column(
         modifier = Modifier
@@ -81,8 +82,8 @@ fun LessonView(
                 shape = RoundedCornerShape(24.dp)
             ) {
                 val color = when {
-                    correctChoice -> MaterialTheme.colorScheme.primary
-                    wrongChoice -> MaterialTheme.colorScheme.primary
+                    correctChoice -> solidBg
+                    wrongChoice -> solidBg
                     else -> MaterialTheme.colorScheme.onSurface
                 }
                 Text(opt, color = color)
@@ -90,8 +91,8 @@ fun LessonView(
         }
 
         when (state.isCorrect) {
-            true -> Text("Correct!", color = MaterialTheme.colorScheme.primary)
-            false -> Text("Incorrect, try again", color = MaterialTheme.colorScheme.primary)
+            true -> Text("Correct!", color = solidBg)
+            false -> Text("Incorrect, try again", color = solidBg)
             null -> {}
         }
 
@@ -99,7 +100,10 @@ fun LessonView(
             Button(
                 onClick = { vm.onNext() },
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(24.dp)
+                shape = RoundedCornerShape(24.dp),
+                colors = ButtonDefaults.buttonColors(
+                    solidBg
+                )
             ) {
                 Text("Next")
             }

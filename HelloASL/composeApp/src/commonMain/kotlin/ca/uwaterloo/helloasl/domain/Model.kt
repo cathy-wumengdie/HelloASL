@@ -4,12 +4,18 @@ import ca.uwaterloo.helloasl.data.authRepository.AuthRepository
 import ca.uwaterloo.helloasl.data.learningRepository.LearningRepository
 import ca.uwaterloo.helloasl.data.progressTrackerRepository.ProgressTrackerRepository
 import ca.uwaterloo.helloasl.data.userRepository.UserRepository
+import ca.uwaterloo.helloasl.data.translateRepository.TranslateRepository
 import ca.uwaterloo.helloasl.domain.learningModel.ASLSign
 import ca.uwaterloo.helloasl.domain.learningModel.Lesson
 import ca.uwaterloo.helloasl.domain.learningModel.Module
 import ca.uwaterloo.helloasl.domain.trackingModel.ProgressSummary
 import ca.uwaterloo.helloasl.domain.userModel.User
 import ca.uwaterloo.helloasl.domain.userModel.UserProfile
+import ca.uwaterloo.helloasl.domain.translateModel.AslRecognitionResult
+import ca.uwaterloo.helloasl.domain.translateModel.TranslateHistoryItem
+import ca.uwaterloo.helloasl.domain.translateModel.TranslateResult
+import ca.uwaterloo.helloasl.domain.starModel.StarItem
+
 
 // Repository bundle
 // auth / user / learning / ...
@@ -17,6 +23,7 @@ data class Repositories(
     val auth: AuthRepository,
     val user: UserRepository,
     val learning: LearningRepository,
+    val translate: TranslateRepository,
     val progressTracker: ProgressTrackerRepository
 )
 
@@ -33,6 +40,7 @@ class Model(private val repos: Repositories) {
     fun getUser(): User = repos.user.getUser()
     fun getUserProfile(): UserProfile = repos.user.getUserProfile()
     fun setLearningGoals(minutesPerDay: Int, daysPerWeek: Int) = repos.user.updateLearningGoals(minutesPerDay, daysPerWeek)
+
     private fun getNumberOfWordsLearned(): Int {
         val profile = getUserProfile()
         val currentModuleId = profile.learningProgress.module
@@ -75,6 +83,7 @@ class Model(private val repos: Repositories) {
         val lesson = repos.learning.getLessonById(lessonId)
         return repos.learning.getSignsByIds(lesson.signIds)
     }
+
     fun onLessonCompleted() {
         // 1) advance learning progress first
         val advanced = repos.user.updateLearningProgress()
@@ -101,4 +110,18 @@ class Model(private val repos: Repositories) {
     // progress tracker
     fun getProgressSummary(): ProgressSummary = repos.progressTracker.getProgressSummary()
     fun addLearningMinutes(minutes: Int): ProgressSummary = repos.progressTracker.addLearningMinutes(minutes)
+
+    // translate
+    fun translateWord(word: String): TranslateResult? = repos.translate.searchWord(word)
+    fun getTranslateHistory(): List<TranslateHistoryItem> = repos.translate.getSearchHistory()
+    fun addTranslateHistory(word: String) = repos.translate.addHistory(word)
+    fun clearTranslateHistory() = repos.translate.clearHistory()
+    fun recognizeAsl(): AslRecognitionResult = repos.translate.recognizeAsl()
+
+    fun getStarredItems(): List<StarItem> {
+        return repos.user.getStarredItems()
+    }
+    fun removeStar(itemId: String) {
+        repos.user.removeStar(itemId)
+    }
 }

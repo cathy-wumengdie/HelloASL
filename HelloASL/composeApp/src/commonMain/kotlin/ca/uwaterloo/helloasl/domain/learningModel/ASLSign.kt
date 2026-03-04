@@ -10,5 +10,3 @@ data class ASLSign(
     val videoUrls: List<String> = emptyList(),
     val tags: Set<String> = emptySet()
 )
-
-//todo: 加一些function

@@ -8,18 +8,9 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import ca.uwaterloo.helloasl.ui.navigations.ProfileDestination
+import ca.uwaterloo.helloasl.ui.navigations.ProfileNavEvent
 import kotlin.String
-
-enum class ProfileDestination {
-    SETTINGS,
-    WORDS_LEARNED,
-    STARRED_SIGNS,
-    ACCOUNT,
-    LICENSE,
-    SIGN_IN
-}
-
-data class ProfileNavEvent(val dest: ProfileDestination)
 
 class ProfileViewModel ( private val model: Model) {
     var state by mutableStateOf(buildState())
