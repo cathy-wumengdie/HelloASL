@@ -3,9 +3,9 @@ package ca.uwaterloo.helloasl.domain
 import ca.uwaterloo.helloasl.data.MockDB
 import ca.uwaterloo.helloasl.data.authRepository.MockAuthRepository
 import ca.uwaterloo.helloasl.data.learningRepository.MockLearningRepository
+import ca.uwaterloo.helloasl.data.progressTrackerRepository.MockProgressTrackerRepository
 import ca.uwaterloo.helloasl.data.userRepository.MockUserRepository
 import ca.uwaterloo.helloasl.domain.trackingModel.DailyProgress
-import ca.uwaterloo.helloasl.domain.trackingModel.DayStreakState
 import ca.uwaterloo.helloasl.domain.trackingModel.ProgressSummary
 import ca.uwaterloo.helloasl.domain.trackingModel.TimeUtils.today
 import ca.uwaterloo.helloasl.domain.trackingModel.WeeklyProgress
@@ -21,6 +21,7 @@ class UserModelTest {
             auth = MockAuthRepository(db),
             user = MockUserRepository(db),
             learning = MockLearningRepository(db),
+            progressTracker = MockProgressTrackerRepository(db),
         )
         return db to Model(repos)
     }
@@ -54,7 +55,7 @@ class UserModelTest {
         assertEquals(1, profile.userId)
         assertEquals(15, profile.progressSummary.dailyProgress.dailyGoalMinutes)
         assertEquals(3, profile.progressSummary.weeklyProgress.weeklyGoalDays)
-        assertEquals(7, profile.progressSummary.dayStreakState.currentStreak)
+        assertEquals(7, profile.progressSummary.dayStreak)
     }
 
     @Test
@@ -119,6 +120,7 @@ class UserModelTest {
 
     @Test
     fun getNumberOfWordsLearned_return() {
+        val (_, model) = makeModel()
         /* update once getNumberOfWordsLearned completed */
         val profile = UserProfile(
             userId = 1,
@@ -127,21 +129,20 @@ class UserModelTest {
                 date = today(),
                 dailyProgress = DailyProgress(
                     minutesLearned = 20,
+                    lastDailyGoalCompletedDate = today(),
                     dailyGoalMinutes = 15
                 ),
                 weeklyProgress = WeeklyProgress(
                     daysCompleted = 3,
+                    lastCreditedDate = today(),
                     weeklyGoalDays = 3
                 ),
-                dayStreakState = DayStreakState(
-                    lastLearnedDate = today(),
-                    currentStreak = 7
-                )
+                dayStreak = 7
             ),
             learningProgress = LearningProgress(module = 2, lesson = 3),
             wordsLearned = 40,
             starredSigns = 12
         )
-        assertEquals(40, profile.getNumberOfWordsLearned())
+        assertEquals(40, model.getNumberOfWordsLearned())
     }
 }

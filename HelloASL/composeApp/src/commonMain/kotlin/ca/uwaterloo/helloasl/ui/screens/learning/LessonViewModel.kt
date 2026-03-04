@@ -40,6 +40,7 @@ class LessonViewModel(private val model: Model) {
             stopAndCommit()
             _elapsedSeconds.value = 0
             committedMinutes = 0
+            model.onLessonCompleted(lessonId ?: return)
             onLessonCompleted?.invoke(lessonId ?: return)
         }
 
