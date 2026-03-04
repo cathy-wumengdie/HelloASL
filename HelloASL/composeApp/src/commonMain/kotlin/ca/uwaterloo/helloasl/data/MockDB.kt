@@ -180,10 +180,62 @@ class MockDB {
         return userProfiles[userId] ?: error("Profile not found")
     }
 
-    fun updateLearningProgress(moduleId: Int, lessonId: Int) {
+    fun updateLearningProgress(): Boolean {
         val userId = getUserId()
-        userProfiles[userId] = userProfiles[userId]!!.copy(learningProgress = LearningProgress(moduleId, lessonId))
+        val profile = getUserProfile()
+        val sortedModules = modules.sortedBy { it.id }
+        val current = profile.learningProgress
+        val currentModuleIndex = sortedModules.indexOfFirst { it.id == current.module }
+        if (currentModuleIndex == -1) error("Module not found: ${current.module}")
+        val currentModule = sortedModules[currentModuleIndex]
+        val lessonIds = currentModule.lessonIds
+        if (lessonIds.isEmpty()) {
+            return advanceToNextModuleFirstLesson(userId, profile, sortedModules, currentModuleIndex)
+        }
+        val currentLessonIdx = current.lesson - 1
+        if (currentLessonIdx !in lessonIds.indices) {
+            error("Invalid lesson number ${current.lesson} for module ${current.module}. lessonIds=$lessonIds")
+        }
+        val nextLessonIdx = currentLessonIdx + 1
+        // 1) Next lesson exists in same module
+        if (nextLessonIdx in lessonIds.indices) {
+            val newProgress = LearningProgress(module = current.module, lesson = nextLessonIdx + 1)
+            userProfiles[userId] = profile.copy(learningProgress = newProgress)
+            return true
+        }
+        // 2) Otherwise go to next module’s first lesson
+        return advanceToNextModuleFirstLesson(userId, profile, sortedModules, currentModuleIndex)
     }
+
+    private fun advanceToNextModuleFirstLesson(
+        userId: Int,
+        profile: UserProfile,
+        sortedModules: List<Module>,
+        currentModuleIndex: Int
+    ): Boolean {
+        val nextModuleIndex = currentModuleIndex + 1
+        if (nextModuleIndex > sortedModules.lastIndex) {
+            // No next module => finished everything
+            // move cursor past the last lesson so words-learned counts the final lesson
+            val lastModule = sortedModules[currentModuleIndex]
+            val completedProgress = LearningProgress(
+                module = lastModule.id,
+                lesson = lastModule.lessonIds.size + 1
+            )
+            userProfiles[userId] = profile.copy(learningProgress = completedProgress)
+            return false
+        }
+        val nextModule = sortedModules[nextModuleIndex]
+        if (nextModule.lessonIds.isEmpty()) {
+            // skip empty modules (optional but usually helpful)
+            // recursively try further modules
+            return advanceToNextModuleFirstLesson(userId, profile, sortedModules, nextModuleIndex)
+        }
+        val newProgress = LearningProgress(module = nextModule.id, lesson = 1)
+        userProfiles[userId] = profile.copy(learningProgress = newProgress)
+        return true
+    }
+
 
     fun updateLearningGoals(minutesPerDay: Int, daysPerWeek: Int) {
         val userId = getUserId()

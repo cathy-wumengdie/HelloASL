@@ -5,13 +5,7 @@ import ca.uwaterloo.helloasl.data.authRepository.MockAuthRepository
 import ca.uwaterloo.helloasl.data.learningRepository.MockLearningRepository
 import ca.uwaterloo.helloasl.data.progressTrackerRepository.MockProgressTrackerRepository
 import ca.uwaterloo.helloasl.data.userRepository.MockUserRepository
-import ca.uwaterloo.helloasl.domain.trackingModel.DailyProgress
-import ca.uwaterloo.helloasl.domain.trackingModel.ProgressSummary
-import ca.uwaterloo.helloasl.domain.trackingModel.TimeUtils.today
-import ca.uwaterloo.helloasl.domain.trackingModel.WeeklyProgress
-import ca.uwaterloo.helloasl.domain.userModel.LearningProgress
 import ca.uwaterloo.helloasl.domain.userModel.User
-import ca.uwaterloo.helloasl.domain.userModel.UserProfile
 import kotlin.test.*
 
 class UserModelTest {

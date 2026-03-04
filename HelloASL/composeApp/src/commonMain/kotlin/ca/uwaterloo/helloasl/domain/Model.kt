@@ -33,7 +33,7 @@ class Model(private val repos: Repositories) {
     fun getUser(): User = repos.user.getUser()
     fun getUserProfile(): UserProfile = repos.user.getUserProfile()
     fun setLearningGoals(minutesPerDay: Int, daysPerWeek: Int) = repos.user.updateLearningGoals(minutesPerDay, daysPerWeek)
-    fun getNumberOfWordsLearned(): Int {
+    private fun getNumberOfWordsLearned(): Int {
         val profile = getUserProfile()
         val currentModuleId = profile.learningProgress.module
         val currentLessonNumber = profile.learningProgress.lesson
@@ -75,17 +75,18 @@ class Model(private val repos: Repositories) {
         val lesson = repos.learning.getLessonById(lessonId)
         return repos.learning.getSignsByIds(lesson.signIds)
     }
-    fun onLessonCompleted(completedLessonId: Int) {
+    fun onLessonCompleted() {
         // 1) advance learning progress first
-        val profile = repos.user.getUserProfile()
-        val current = profile.learningProgress
-        repos.user.updateLearningProgress(current.module, current.lesson + 1)
-
+        val advanced = repos.user.updateLearningProgress()
         // 2) recompute words learned based on updated progress
         val newWordsLearned = getNumberOfWordsLearned()
-
         // 3) persist to profile
         repos.user.updateWordsLearned(newWordsLearned)
+
+        if (!advanced) {
+            // no modules and lessons left to advance => all lessons completed
+            return
+        }
     }
 
     // starred

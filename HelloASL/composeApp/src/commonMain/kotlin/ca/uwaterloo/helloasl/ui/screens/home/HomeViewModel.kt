@@ -8,7 +8,6 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlin.String
 
 enum class HomeDestination {
     LEARNING,
@@ -29,12 +28,19 @@ class HomeViewModel(private val model: Model) {
         val user = model.getUser()
         val progressSummary = model.getProgressSummary()
         val profile = model.getUserProfile()
+
         val module = model.getModule(profile.learningProgress.module)
+        val totalLessons = module.lessonIds.size
+        val lessonNumber = profile.learningProgress.lesson
+
+        // lessonNumber > totalLessons if user completes all lessons => handle the sentinel case
+        val lessonNumberDisplay = lessonNumber.coerceAtMost(totalLessons)
+
         return HomeUiState(
             userName = user.name,
             moduleTitle = module.title,
-            totalLessonsInModule = module.lessonIds.size,
-            lessonsCompleted = profile.learningProgress.lesson,
+            totalLessonsInModule = totalLessons,
+            lessonsCompleted = lessonNumberDisplay,
             streakDays = progressSummary.dayStreak,
             dailyGoalsDone = progressSummary.dailyProgress.minutesLearned,
             dailyGoalsTotal = progressSummary.dailyProgress.dailyGoalMinutes,
