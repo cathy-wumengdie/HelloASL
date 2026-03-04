@@ -128,6 +128,7 @@ class UserModelTest {
         // Put user at Module 1, Lesson 3 so finished Lesson 1 and 2
         // Should include signs from lessons 1 and 2 => 4 signs total.
         db.updateLearningProgress()
+        db.updateLearningProgress()
         assertEquals(4, model.getNumberOfWordsLearned())
     }
 }
