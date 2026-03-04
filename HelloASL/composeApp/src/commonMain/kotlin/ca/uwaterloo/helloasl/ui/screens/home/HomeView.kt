@@ -12,10 +12,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import ca.uwaterloo.helloasl.ui.components.HelloASLCard
-import kotlinx.coroutines.flow.collectLatest
-
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.material3.ripple
+import androidx.compose.runtime.remember
 @Composable
 fun HomeView(vm: HomeViewModel) {
+    LaunchedEffect(Unit) {
+        vm.refresh()
+    }
+
     val state = vm.state
 
     Column(
@@ -46,36 +52,66 @@ fun HomeView(vm: HomeViewModel) {
             }
         }
         Spacer(Modifier.height(16.dp))
-        HelloASLCard(modifier = Modifier.fillMaxWidth()) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("🔥", fontSize = MaterialTheme.typography.titleLarge.fontSize)
-                    Spacer(Modifier.width(8.dp))
-                    TextButton(onClick = vm::onDayStreak) {
-                        Text(
-                            "${state.streakDays} Day Streak",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onBackground
-                        )
+
+                HelloASLCard(Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(14.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.weight(0.9f).clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = ripple(),
+                                    onClick = vm::onDayStreak
+                                ),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("🔥", fontSize = MaterialTheme.typography.titleLarge.fontSize)
+                            Spacer(Modifier.width(10.dp))
+                            Text(
+                                "${state.streakDays} Day Streak",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onBackground,
+                                maxLines = 1
+                            )
+                        }
+                        Row(
+                            modifier = Modifier.weight(1.3f).clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = ripple(),
+                                    onClick = vm::onDailyGoals
+                                ),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.End
+                        ) {
+                            Text("🎯", fontSize = MaterialTheme.typography.titleLarge.fontSize)
+                            Spacer(Modifier.width(10.dp))
+                            if (state.dailyGoalsTotal == 0 || state.weeklyGoalsTotal == 0) {
+                                Text(
+                                    "Set your learning goals on Profile page",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.onBackground
+                                )
+                            } else {
+                                Column(horizontalAlignment = Alignment.Start) {
+                                    Text(
+                                        "${state.dailyGoalsDone} / ${state.dailyGoalsTotal} min today",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = MaterialTheme.colorScheme.onBackground,
+                                        maxLines = 1
+                                    )
+                                    Text(
+                                        "${state.weeklyGoalsDone} / ${state.weeklyGoalsTotal} days/week",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = MaterialTheme.colorScheme.onBackground,
+                                        maxLines = 1
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("🎯", fontSize = MaterialTheme.typography.titleLarge.fontSize)
-                    Spacer(Modifier.width(8.dp))
-                    TextButton(onClick = vm::onDailyGoals) {
-                        Text(
-                            "${state.dailyGoalsDone} / ${state.dailyGoalsTotal} Daily Goals",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onBackground
-                        )
-                    }
-                }
-            }
-        }
         Spacer(Modifier.height(16.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),

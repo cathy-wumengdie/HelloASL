@@ -1,4 +1,4 @@
-package ca.uwaterloo.helloasl.data.repository
+package ca.uwaterloo.helloasl.data.authRepository
 
 interface AuthRepository {
     fun signup(name: String, email: String, password: String): Boolean

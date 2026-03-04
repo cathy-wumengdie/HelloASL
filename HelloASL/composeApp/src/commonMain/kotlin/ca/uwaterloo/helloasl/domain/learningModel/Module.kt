@@ -1,4 +1,4 @@
-package ca.uwaterloo.helloasl.domain.learning
+package ca.uwaterloo.helloasl.domain.learningModel
 
 data class Module(
     val id: Int,

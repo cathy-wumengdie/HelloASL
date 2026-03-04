@@ -27,15 +27,18 @@ class HomeViewModel(private val model: Model) {
 
     private fun buildState(): HomeUiState {
         val user = model.getUser()
+        val progressSummary = model.getProgressSummary()
         val profile = model.getUserProfile()
         return HomeUiState(
             userName = user.name,
             moduleTitle = "Module ${profile.learningProgress.module}: Greetings",            /*change after learning class completed*/
             totalLessonsInModule = 3,                       /*change after learning class completed*/
             lessonsCompleted = profile.learningProgress.lesson,
-            streakDays = profile.streakDays,
-            dailyGoalsDone = 2,                             /*learning tracker*/
-            dailyGoalsTotal = profile.learningGoalPerDay
+            streakDays = progressSummary.dayStreak,
+            dailyGoalsDone = progressSummary.dailyProgress.minutesLearned,
+            dailyGoalsTotal = progressSummary.dailyProgress.dailyGoalMinutes,
+            weeklyGoalsDone = progressSummary.weeklyProgress.daysCompleted,
+            weeklyGoalsTotal = progressSummary.weeklyProgress.weeklyGoalDays
         )
     }
 

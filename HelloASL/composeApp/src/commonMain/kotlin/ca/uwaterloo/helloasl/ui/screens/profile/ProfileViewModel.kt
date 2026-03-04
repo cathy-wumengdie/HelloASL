@@ -27,14 +27,15 @@ class ProfileViewModel ( private val model: Model) {
 
     private fun buildState(): ProfileUiState {
         val user = model.getUser()
+        val progressSummary = model.getProgressSummary()
         val profile = model.getUserProfile()
         return ProfileUiState(
             userName = user.name,
             avatarText = user.avatarText,
             wordsLearned = profile.wordsLearned,
             starredSigns = profile.starredSigns,
-            learningGoalPerDay = profile.learningGoalPerDay,
-            learningGoalPerWeek = profile.learningGoalPerWeek
+            learningGoalPerDay = progressSummary.dailyProgress.dailyGoalMinutes,
+            learningGoalPerWeek = progressSummary.weeklyProgress.weeklyGoalDays,
         )
     }
 
@@ -75,6 +76,7 @@ class ProfileViewModel ( private val model: Model) {
     }
 
     fun onSignOut() {
+        model.logout()
         _navEvents.tryEmit(ProfileNavEvent(ProfileDestination.SIGN_IN))
     }
 }

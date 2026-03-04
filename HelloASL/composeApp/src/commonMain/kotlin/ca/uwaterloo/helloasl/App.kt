@@ -10,9 +10,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import ca.uwaterloo.helloasl.data.MockDB
-import ca.uwaterloo.helloasl.data.repository.MockAuthRepository
-import ca.uwaterloo.helloasl.data.repository.MockUserRepository
-import ca.uwaterloo.helloasl.data.repository.MockLearningRepository
+import ca.uwaterloo.helloasl.data.authRepository.MockAuthRepository
+import ca.uwaterloo.helloasl.data.userRepository.MockUserRepository
+import ca.uwaterloo.helloasl.data.learningRepository.MockLearningRepository
+import ca.uwaterloo.helloasl.data.progressTrackerRepository.MockProgressTrackerRepository
 import ca.uwaterloo.helloasl.domain.Model
 import ca.uwaterloo.helloasl.domain.Repositories
 import ca.uwaterloo.helloasl.ui.navigations.HomeRoute
@@ -46,7 +47,8 @@ fun App(
             Repositories(
                 auth = MockAuthRepository(db),
                 user = MockUserRepository(db),
-                learning = MockLearningRepository(db)
+                learning = MockLearningRepository(db),
+                progressTracker = MockProgressTrackerRepository(db),
             )
         }
         val model = remember { Model(repositories) }

@@ -1,4 +1,4 @@
-package ca.uwaterloo.helloasl.data.repository
+package ca.uwaterloo.helloasl.data.userRepository
 
 import ca.uwaterloo.helloasl.domain.userModel.User
 import ca.uwaterloo.helloasl.domain.userModel.UserProfile

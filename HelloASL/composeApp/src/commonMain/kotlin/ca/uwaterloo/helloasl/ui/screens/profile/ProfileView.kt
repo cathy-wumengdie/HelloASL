@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -28,6 +29,7 @@ import ca.uwaterloo.helloasl.ui.components.NumberWheelPicker
 
 @Composable
 fun ProfileView(vm: ProfileViewModel) {
+    LaunchedEffect(Unit) { vm.refresh() }
     val state = vm.state
     var showSetGoalsPopup by rememberSaveable { mutableStateOf(false) }
 
@@ -87,9 +89,15 @@ fun ProfileView(vm: ProfileViewModel) {
                         style = MaterialTheme.typography.titleLarge
                     )
                     Spacer(Modifier.height(8.dp))
-                    Text("Learn ${state.learningGoalPerDay} minutes per day", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        if (state.learningGoalPerDay > 0) "Learn ${state.learningGoalPerDay} minutes per day" else "Daily goal not set",
+                        style = MaterialTheme.typography.titleMedium
+                    )
                     Spacer(Modifier.height(8.dp))
-                    Text("Learn ${state.learningGoalPerWeek} days per week", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        if (state.learningGoalPerWeek > 0) "Learn ${state.learningGoalPerWeek} days per week" else "Weekly goal not set",
+                        style = MaterialTheme.typography.titleMedium
+                    )
                 }
                 if (showSetGoalsPopup) {
                     SetGoalsDialog(

@@ -1,8 +1,9 @@
 package ca.uwaterloo.helloasl.domain
 
 import ca.uwaterloo.helloasl.data.MockDB
-import ca.uwaterloo.helloasl.data.repository.MockAuthRepository
-import ca.uwaterloo.helloasl.data.repository.MockUserRepository
+import ca.uwaterloo.helloasl.data.authRepository.MockAuthRepository
+import ca.uwaterloo.helloasl.data.learningRepository.MockLearningRepository
+import ca.uwaterloo.helloasl.data.userRepository.MockUserRepository
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -15,7 +16,8 @@ class ModelAuthTest {
         val db = MockDB()
         val repos = Repositories(
             auth = MockAuthRepository(db),
-            user = MockUserRepository(db)
+            user = MockUserRepository(db),
+            learning = MockLearningRepository(db),
         )
         return db to Model(repos)
     }

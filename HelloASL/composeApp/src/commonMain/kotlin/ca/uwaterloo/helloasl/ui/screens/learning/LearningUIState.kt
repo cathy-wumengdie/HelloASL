@@ -1,7 +1,7 @@
 package ca.uwaterloo.helloasl.ui.screens.learning
 
-import ca.uwaterloo.helloasl.domain.learning.Module
-import ca.uwaterloo.helloasl.domain.learning.Lesson
+import ca.uwaterloo.helloasl.domain.learningModel.Module
+import ca.uwaterloo.helloasl.domain.learningModel.Lesson
 
 data class LearningUIState(
     val starredCount: Int = 12,

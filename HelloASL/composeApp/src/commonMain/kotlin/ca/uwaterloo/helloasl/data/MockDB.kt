@@ -6,14 +6,13 @@ import ca.uwaterloo.helloasl.domain.trackingModel.TimeUtils.isSameWeek
 import ca.uwaterloo.helloasl.domain.trackingModel.TimeUtils.today
 import ca.uwaterloo.helloasl.domain.userModel.*
 import kotlinx.datetime.*
-import ca.uwaterloo.helloasl.domain.learning.*
+import ca.uwaterloo.helloasl.domain.learningModel.*
 import java.util.Objects.hash
 
 class MockDB {
-    private val today = today()
-    private val yesterday = today.minus(DatePeriod(days = 1))
-    private val twoDaysAgo = today.minus(DatePeriod(days = 2))
-    private val threeDaysAgo = today.minus(DatePeriod(days = 3))
+    private val yesterday = today().minus(DatePeriod(days = 1))
+    private val twoDaysAgo = today().minus(DatePeriod(days = 2))
+    private val threeDaysAgo = today().minus(DatePeriod(days = 3))
     private val users = mutableMapOf(
         1 to User(id = 1, name = "Yanjin", email = "yanjin@gmail.com"),
         2 to User(id = 2, name = "Erdo Long", email = "erdolong@gmail.com"),
@@ -89,53 +88,50 @@ class MockDB {
     private val progressSummary = mutableMapOf(
         1 to ProgressSummary(
             userId = 1,
-            date = today,
+            date = today(),
             dailyProgress = DailyProgress(
                 minutesLearned = 20,
+                lastDailyGoalCompletedDate = today(),
                 dailyGoalMinutes = 15
             ),
             weeklyProgress = WeeklyProgress(
                 daysCompleted = 3,
+                lastCreditedDate = today(),
                 weeklyGoalDays = 3
             ),
-            dayStreakState = DayStreakState(
-                lastLearnedDate = today,
-                currentStreak = 7
-            )
+            dayStreak = 7
         ),
 
         2 to ProgressSummary(
             userId = 2,
-            date = today,
+            date = today(),
             dailyProgress = DailyProgress(
                 minutesLearned = 4,
+                lastDailyGoalCompletedDate = yesterday,
                 dailyGoalMinutes = 5
             ),
             weeklyProgress = WeeklyProgress(
                 daysCompleted = 1,
+                lastCreditedDate = yesterday,
                 weeklyGoalDays = 2
             ),
-            dayStreakState = DayStreakState(
-                lastLearnedDate = yesterday,
-                currentStreak = 1
-            )
+            dayStreak = 1
         ),
 
         3 to ProgressSummary(
             userId = 3,
-            date = today,
+            date = today(),
             dailyProgress = DailyProgress(
                 minutesLearned = 35,
+                lastDailyGoalCompletedDate = threeDaysAgo,
                 dailyGoalMinutes = 30
             ),
             weeklyProgress = WeeklyProgress(
                 daysCompleted = 2,
+                lastCreditedDate = threeDaysAgo,
                 weeklyGoalDays = 5
             ),
-            dayStreakState = DayStreakState(
-                lastLearnedDate = threeDaysAgo,
-                currentStreak = 3
-            )
+            dayStreak = 3
         )
     )
 
@@ -162,31 +158,6 @@ class MockDB {
             learningProgress = LearningProgress(module = 2, lesson = 1),
             wordsLearned = 28,
             starredSigns = 10
-        )
-    )
-
-    // daily goal record on the last learned date per user
-    private val lastLearnedDateDailyGoalRecord = mutableMapOf<Int, LastLearnedDatesGoalsRecords>(
-        1 to LastLearnedDatesGoalsRecords(
-            userId = 1,
-            lastLearnedDate = today,
-            isDailyGoalCompleted = true,
-            learnedDatesCountInWeek = 3,
-            isWeeklyGoalCompleted = true
-        ),
-        2 to LastLearnedDatesGoalsRecords(
-            userId = 2,
-            lastLearnedDate = yesterday,
-            isDailyGoalCompleted = false,
-            learnedDatesCountInWeek = 1,
-            isWeeklyGoalCompleted = false
-        ),
-        3 to LastLearnedDatesGoalsRecords(
-            userId = 3,
-            lastLearnedDate = threeDaysAgo,
-            isDailyGoalCompleted = true,
-            learnedDatesCountInWeek = 2,
-            isWeeklyGoalCompleted = false
         )
     )
 
@@ -229,19 +200,18 @@ class MockDB {
         val newUser = User(id = newUserId, name = name.trim(), email = cleanEmail)
         val newProgressSummary = ProgressSummary(
             userId = newUserId,
-            date = today,
+            date = today(),
             dailyProgress = DailyProgress(
                 minutesLearned = 0,
+                lastDailyGoalCompletedDate = null,
                 dailyGoalMinutes = 0
             ),
             weeklyProgress = WeeklyProgress(
                 daysCompleted = 0,
+                lastCreditedDate = null,
                 weeklyGoalDays = 0
             ),
-            dayStreakState = DayStreakState(
-                lastLearnedDate = null,
-                currentStreak = 0
-            )
+            dayStreak = 0
         )
 
         users[newUserId] = newUser
@@ -253,13 +223,6 @@ class MockDB {
             learningProgress = LearningProgress(module = 1, lesson = 1),
             wordsLearned = 0,
             starredSigns = 0
-        )
-        lastLearnedDateDailyGoalRecord[newUserId] = LastLearnedDatesGoalsRecords(
-            userId = newUserId,
-            lastLearnedDate = today(),
-            isDailyGoalCompleted = false,
-            learnedDatesCountInWeek = 0,
-            isWeeklyGoalCompleted = false
         )
 
         // auto-login after signup
@@ -292,12 +255,12 @@ class MockDB {
         userSession = null
     }
 
-    fun refreshProgressSummary(): ProgressSummary {
+    private fun refreshProgressSummary(): ProgressSummary {
         val userId = getUserId()
         val t = today()
         val existing = progressSummary[userId] ?: error("Progress summary not found for user $userId")
 
-        // If still today, nothing to refresh
+        // If still today(), nothing to refresh
         if (isSameDate(existing.date, t)) return existing
 
         // If date changed, reset daily minutes
@@ -309,13 +272,19 @@ class MockDB {
         // If week changed, reset weekly daysCompleted
         if (!isSameWeek(existing.date, t)) {
             refreshed = refreshed.copy(
-                weeklyProgress = existing.weeklyProgress.copy(daysCompleted = 0)
+                weeklyProgress = existing.weeklyProgress.copy(
+                    daysCompleted = 0,
+                    lastCreditedDate = null
+                )
             )
         }
         setProgressSummary(userId, refreshed)
         return refreshed
     }
 
+    fun getProgressSummary(): ProgressSummary = refreshProgressSummary()
+
+    // Update the progress summary table and in the user profile
     private fun setProgressSummary(userId: Int, ps: ProgressSummary) {
         progressSummary[userId] = ps
         val profile = userProfiles[userId] ?: return
@@ -323,48 +292,23 @@ class MockDB {
     }
 
     private fun updateWeeklyProgress(
-        userId: Int,
         today: LocalDate,
-        before: ProgressSummary,    // the progress state before minutes added
-        after: ProgressSummary      // the progress state after minutes added
+        before: ProgressSummary,    // the progress summary before minutes added
+        after: ProgressSummary      // the progress summary after minutes added
     ): ProgressSummary {
-        // Only trigger when user complete the daily goal
+        // Only triggers when user complete the daily goal
         if (before.dailyProgress.isDailyGoalMet) return after
         if (!after.dailyProgress.isDailyGoalMet) return after
 
-        // If already counted today in records, then return after
-        val record = lastLearnedDateDailyGoalRecord[userId]
-        val alreadyRecordedToday = record != null && record.lastLearnedDate == today && record.isDailyGoalCompleted
-        if (alreadyRecordedToday) return after
+        // Prevent double counting today
+        if (after.weeklyProgress.lastCreditedDate == today) return after
 
-        // ---- Weekly increment rules ----
-        val sameWeekAsRecord = record != null && isSameWeek(record.lastLearnedDate, today)
-        val newLearnedDatesCountInWeek = when {
-            record == null -> 1
-            sameWeekAsRecord -> record.learnedDatesCountInWeek + 1
-            else -> 1 // new week
-        }
-
-        val weeklyGoalDays = after.weeklyProgress.weeklyGoalDays
-        val newIsWeeklyGoalCompleted = (weeklyGoalDays > 0 && newLearnedDatesCountInWeek >= weeklyGoalDays)
-
-        // Update record table (supposed to update at EOD, but we update now for mock)
-        lastLearnedDateDailyGoalRecord[userId] = LastLearnedDatesGoalsRecords(
-            userId = userId,
-            lastLearnedDate = today,
-            isDailyGoalCompleted = true,
-            learnedDatesCountInWeek = newLearnedDatesCountInWeek,
-            isWeeklyGoalCompleted = newIsWeeklyGoalCompleted
-        )
-
-        // Update weeklyProgress in summary
         val newWeekly = after.weeklyProgress.copy(
-            daysCompleted = newLearnedDatesCountInWeek
+            daysCompleted = after.weeklyProgress.daysCompleted + 1,
+            lastCreditedDate = today
         )
 
-        return after.copy(
-            weeklyProgress = newWeekly
-        )
+        return after.copy(weeklyProgress = newWeekly)
     }
 
     fun addLearningMinutes(minutes: Int) {
@@ -373,29 +317,31 @@ class MockDB {
         val t = today()
         // Ensure we have initialized summary for today
         val current = refreshProgressSummary()
-        // Update minutes learned today
+        // 1) Update minutes learned today
         val newMinutes = current.dailyProgress.minutesLearned + minutes
-        val newDaily = current.dailyProgress.copy(minutesLearned = newMinutes)
-        // If the goal is met, update streak
-        val newStreakState = updateDayStreak(
-            state = current.dayStreakState,
+        var newDailyProgress = current.dailyProgress.copy(minutesLearned = newMinutes)
+        // 2) If the goal is met, update streak + lastDailyGoalCompletedDate
+        val (newStreak, newLastDailyGoalCompletedDate) = updateDayStreak(
+            currentStreak = current.dayStreak,
+            lastDailyGoalCompletedDate = current.dailyProgress.lastDailyGoalCompletedDate,
             today = t,
-            isDailyGoalCompleted = newDaily.isDailyGoalMet
+            isDailyGoalCompleted = newDailyProgress.isDailyGoalMet
         )
-        // Save back
+        newDailyProgress = newDailyProgress.copy(
+            lastDailyGoalCompletedDate = newLastDailyGoalCompletedDate
+        )
+        // Save to progress summary
         var updated = current.copy(
             date = t,
-            dailyProgress = newDaily,
-            dayStreakState = newStreakState
+            dailyProgress = newDailyProgress,
+            dayStreak = newStreak
         )
-        // Met the daily goal, update weekly + lastLearnedDatesGoalsRecords once
+        // 3) Update weekly progress only when daily goal is met and haven't counted today yet
         updated = updateWeeklyProgress(
-            userId = userId,
             today = t,
             before = current,
             after = updated
         )
         setProgressSummary(userId, updated)
     }
-
 }

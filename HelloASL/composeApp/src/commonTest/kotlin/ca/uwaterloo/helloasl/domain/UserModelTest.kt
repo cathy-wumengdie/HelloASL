@@ -1,8 +1,14 @@
 package ca.uwaterloo.helloasl.domain
 
 import ca.uwaterloo.helloasl.data.MockDB
-import ca.uwaterloo.helloasl.data.repository.MockAuthRepository
-import ca.uwaterloo.helloasl.data.repository.MockUserRepository
+import ca.uwaterloo.helloasl.data.authRepository.MockAuthRepository
+import ca.uwaterloo.helloasl.data.learningRepository.MockLearningRepository
+import ca.uwaterloo.helloasl.data.userRepository.MockUserRepository
+import ca.uwaterloo.helloasl.domain.trackingModel.DailyProgress
+import ca.uwaterloo.helloasl.domain.trackingModel.DayStreakState
+import ca.uwaterloo.helloasl.domain.trackingModel.ProgressSummary
+import ca.uwaterloo.helloasl.domain.trackingModel.TimeUtils.today
+import ca.uwaterloo.helloasl.domain.trackingModel.WeeklyProgress
 import ca.uwaterloo.helloasl.domain.userModel.LearningProgress
 import ca.uwaterloo.helloasl.domain.userModel.User
 import ca.uwaterloo.helloasl.domain.userModel.UserProfile
@@ -13,7 +19,8 @@ class UserModelTest {
         val db = MockDB()
         val repos = Repositories(
             auth = MockAuthRepository(db),
-            user = MockUserRepository(db)
+            user = MockUserRepository(db),
+            learning = MockLearningRepository(db),
         )
         return db to Model(repos)
     }
@@ -45,9 +52,9 @@ class UserModelTest {
 
         val profile = model.getUserProfile()
         assertEquals(1, profile.userId)
-        assertEquals(15, profile.learningGoalPerDay)
-        assertEquals(3, profile.learningGoalPerWeek)
-        assertEquals(7, profile.streakDays)
+        assertEquals(15, profile.progressSummary.dailyProgress.dailyGoalMinutes)
+        assertEquals(3, profile.progressSummary.weeklyProgress.weeklyGoalDays)
+        assertEquals(7, profile.progressSummary.dayStreakState.currentStreak)
     }
 
     @Test
@@ -58,8 +65,8 @@ class UserModelTest {
         model.setLearningGoals(minutesPerDay = 20, daysPerWeek = 5)
 
         val updated = model.getUserProfile()
-        assertEquals(20, updated.learningGoalPerDay)
-        assertEquals(5, updated.learningGoalPerWeek)
+        assertEquals(20, updated.progressSummary.dailyProgress.dailyGoalMinutes)
+        assertEquals(5, updated.progressSummary.weeklyProgress.weeklyGoalDays)
     }
 
     @Test
@@ -115,9 +122,22 @@ class UserModelTest {
         /* update once getNumberOfWordsLearned completed */
         val profile = UserProfile(
             userId = 1,
-            learningGoalPerDay = 15,
-            learningGoalPerWeek = 3,
-            streakDays = 7,
+            progressSummary = ProgressSummary(
+                userId = 1,
+                date = today(),
+                dailyProgress = DailyProgress(
+                    minutesLearned = 20,
+                    dailyGoalMinutes = 15
+                ),
+                weeklyProgress = WeeklyProgress(
+                    daysCompleted = 3,
+                    weeklyGoalDays = 3
+                ),
+                dayStreakState = DayStreakState(
+                    lastLearnedDate = today(),
+                    currentStreak = 7
+                )
+            ),
             learningProgress = LearningProgress(module = 2, lesson = 3),
             wordsLearned = 40,
             starredSigns = 12

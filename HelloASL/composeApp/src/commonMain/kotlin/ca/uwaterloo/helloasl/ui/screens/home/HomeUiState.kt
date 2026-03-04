@@ -8,6 +8,8 @@ data class HomeUiState(
     val streakDays: Int,
     val dailyGoalsDone: Int,
     val dailyGoalsTotal: Int,
+    val weeklyGoalsDone: Int,
+    val weeklyGoalsTotal: Int,
 ) {
     val lessonProgress: String
         get() = "Lesson $lessonsCompleted of $totalLessonsInModule"

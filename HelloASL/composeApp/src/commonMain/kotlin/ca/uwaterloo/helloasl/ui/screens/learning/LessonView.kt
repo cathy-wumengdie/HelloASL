@@ -9,6 +9,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -19,6 +21,11 @@ import ca.uwaterloo.helloasl.ui.components.SignVideoPlayer
 fun LessonView(
     vm: LessonViewModel
 ) {
+    // Start timer when entering lesson screen
+    LaunchedEffect(Unit) { vm.onEnterLesson() }
+    // Stop timer + commit minutes when leaving lesson screen
+    DisposableEffect(Unit) { onDispose { vm.onExitLesson() } }
+
     val state = vm.state
     val pageBg = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.22f)
     val cardBg = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.40f)
