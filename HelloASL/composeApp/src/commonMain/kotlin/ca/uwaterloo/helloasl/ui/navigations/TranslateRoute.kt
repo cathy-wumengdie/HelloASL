@@ -5,12 +5,34 @@ import androidx.compose.runtime.LaunchedEffect
 import ca.uwaterloo.helloasl.ui.screens.translate.TranslateView
 import ca.uwaterloo.helloasl.ui.screens.translate.TranslateViewModel
 import kotlinx.coroutines.flow.collectLatest
+import androidx.compose.material3.Text
+import androidx.compose.material3.Button
 
 @Composable
 fun TranslateRoute(
-    vm: TranslateViewModel
+    vm: TranslateViewModel,
+    hasCameraHardware: Boolean,
+    cameraGranted: Boolean,
+    requestCameraPermission: () -> Unit
 ) {
-    TranslateView(vm = vm)
+    if (!hasCameraHardware) {
+        Text("Camera not available")
+        return
+    }
+
+    if (!cameraGranted) {
+        Button(onClick = requestCameraPermission) {
+            Text("Grant camera permission")
+        }
+        return
+    }
+
+    TranslateView(
+        vm = vm,
+        hasCameraHardware = hasCameraHardware,
+        cameraGranted = cameraGranted,
+        requestCameraPermission = requestCameraPermission
+    )
 }
 
 //enum class TranslateDestination {

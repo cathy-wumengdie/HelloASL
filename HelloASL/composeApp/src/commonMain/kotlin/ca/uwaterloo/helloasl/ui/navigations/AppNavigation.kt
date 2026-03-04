@@ -274,7 +274,10 @@ fun AppNavigation(
                 )
 
                 MainTab.TRANSLATE -> TranslateRoute(
-                    vm = translateVm
+                    vm = translateVm,
+                    hasCameraHardware = hasCameraHardware,
+                    cameraGranted = cameraGranted,
+                    requestCameraPermission = requestCameraPermission
                 )
 
                 MainTab.PROFILE -> ProfileRoute(

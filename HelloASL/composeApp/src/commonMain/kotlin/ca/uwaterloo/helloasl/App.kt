@@ -14,8 +14,7 @@ import ca.uwaterloo.helloasl.ui.navigations.AppNavigation
 import ca.uwaterloo.helloasl.ui.theme.HelloASLTheme
 
 @Composable
-fun AppNavigation(
-    model: Model,
+fun App(
     hasCameraHardware: Boolean,
     cameraGranted: Boolean,
     notificationGranted: Boolean,
