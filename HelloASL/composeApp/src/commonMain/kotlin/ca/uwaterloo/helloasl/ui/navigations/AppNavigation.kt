@@ -10,6 +10,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import ca.uwaterloo.helloasl.domain.Model
+import ca.uwaterloo.helloasl.ui.screens.PermissionsGateScreen
 import ca.uwaterloo.helloasl.ui.screens.auth.login.LoginViewModel
 import ca.uwaterloo.helloasl.ui.screens.auth.signup.SignupViewModel
 import ca.uwaterloo.helloasl.ui.screens.home.HomeViewModel
@@ -22,9 +23,16 @@ import ca.uwaterloo.helloasl.ui.screens.translate.TranslateViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AppNavigation(model: Model) {
-
-    // -------- Auth state --------
+fun AppNavigation(
+    model: Model,
+    hasCameraHardware: Boolean,
+    cameraGranted: Boolean,
+    notificationGranted: Boolean,
+    requestCameraPermission: () -> Unit,
+    requestNotificationPermission: () -> Unit,
+    hasSeenPermissionGate: Boolean,
+    onPermissionGateCompleted: () -> Unit
+) {
     var authRoute by rememberSaveable { mutableStateOf(AuthRoute.LOGIN) }
     var isLoggedIn by rememberSaveable { mutableStateOf(false) }
 
@@ -43,23 +51,32 @@ fun AppNavigation(model: Model) {
         return
     }
 
-    // -------- ViewModels (logged-in) --------
+    if (!hasSeenPermissionGate) {
+        PermissionsGateScreen(
+            hasCameraHardware = hasCameraHardware,
+            cameraGranted = cameraGranted,
+            notificationGranted = notificationGranted,
+            onRequestCamera = requestCameraPermission,
+            onRequestNotifications = requestNotificationPermission,
+            onContinue = { onPermissionGateCompleted() }
+        )
+        return
+    }
+
     val homeVm = remember { HomeViewModel(model) }
-    val translateVm = remember { TranslateViewModel() }
+    val translateVm = remember { TranslateViewModel(model) }
     val profileVm = remember { ProfileViewModel(model) }
     val starVm = remember { StarViewModel(model) }
 
-    val learningVm = remember { LearningViewModel() }
-    val lessonVm = remember { LessonViewModel() }
+    val learningVm = remember { LearningViewModel(model) }
+    val lessonVm = remember { LessonViewModel(model) }
 
-    // -------- Navigation states --------
     var selectedTab by rememberSaveable { mutableStateOf(MainTab.HOME) }
     var previousTab by rememberSaveable { mutableStateOf(MainTab.LEARNING) }
 
     var learningRoute by rememberSaveable { mutableStateOf(LearningInnerRoute.LEARNING_HOME) }
     var lessonTitle by rememberSaveable { mutableStateOf("") }
 
-    // -------- Colors --------
     val selectedColor = when (selectedTab) {
         MainTab.HOME -> MaterialTheme.colorScheme.primary
         MainTab.LEARNING -> MaterialTheme.colorScheme.secondary
@@ -85,7 +102,6 @@ fun AppNavigation(model: Model) {
         MainTab.STAR -> MaterialTheme.colorScheme.secondaryContainer
     }
 
-    // -------- UI Shell --------
     Scaffold(
         topBar = {
             when (selectedTab) {
@@ -199,7 +215,6 @@ fun AppNavigation(model: Model) {
         },
 
         bottomBar = {
-            // 保持你的原逻辑：STAR 不在底部 tab 里
             NavigationBar(containerColor = navBarColor) {
                 NavigationBarItem(
                     selected = (selectedTab == MainTab.HOME),

@@ -1,14 +1,7 @@
 package ca.uwaterloo.helloasl
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
-import ca.uwaterloo.helloasl.ui.theme.HelloASLTheme
-import androidx.compose.material3.*
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import ca.uwaterloo.helloasl.data.MockDB
 import ca.uwaterloo.helloasl.data.authRepository.MockAuthRepository
 import ca.uwaterloo.helloasl.data.userRepository.MockUserRepository
@@ -17,23 +10,12 @@ import ca.uwaterloo.helloasl.data.translateRepository.MockTranslateRepository
 import ca.uwaterloo.helloasl.data.progressTrackerRepository.MockProgressTrackerRepository
 import ca.uwaterloo.helloasl.domain.Model
 import ca.uwaterloo.helloasl.domain.Repositories
-import ca.uwaterloo.helloasl.ui.navigations.HomeRoute
-import ca.uwaterloo.helloasl.ui.screens.home.HomeViewModel
-import ca.uwaterloo.helloasl.ui.screens.translate.*
-import ca.uwaterloo.helloasl.ui.screens.learning.LearningEntry
-import ca.uwaterloo.helloasl.ui.screens.learning.LearningRoute
-import ca.uwaterloo.helloasl.ui.screens.learning.LearningViewModel
-import ca.uwaterloo.helloasl.ui.screens.learning.LessonViewModel
-import ca.uwaterloo.helloasl.ui.navigations.ProfileRoute
-import ca.uwaterloo.helloasl.ui.screens.PermissionsGateScreen
-import ca.uwaterloo.helloasl.ui.screens.profile.ProfileViewModel
-import ca.uwaterloo.helloasl.ui.screens.auth.login.*
-import ca.uwaterloo.helloasl.ui.screens.auth.signup.*
-import ca.uwaterloo.helloasl.ui.screens.star.*
+import ca.uwaterloo.helloasl.ui.navigations.AppNavigation
+import ca.uwaterloo.helloasl.ui.theme.HelloASLTheme
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun App(
+fun AppNavigation(
+    model: Model,
     hasCameraHardware: Boolean,
     cameraGranted: Boolean,
     notificationGranted: Boolean,
@@ -53,324 +35,18 @@ fun App(
                 progressTracker = MockProgressTrackerRepository(db),
             )
         }
+
         val model = remember { Model(repositories) }
 
-        var authRoute by rememberSaveable { mutableStateOf(AuthRoute.LOGIN) }
-        var isLoggedIn by rememberSaveable { mutableStateOf(false) }
-
-        if (!isLoggedIn) {
-            val loginVm = remember { LoginViewModel(model) }
-            val signupVm = remember { SignupViewModel(model) }
-            when (authRoute) {
-                AuthRoute.LOGIN -> {
-                    LoginView(
-                        viewModel = loginVm,
-                        onNavigateToSignup = { authRoute = AuthRoute.SIGNUP },
-                        onLoginSuccess = { isLoggedIn = true }
-                    )
-                }
-
-                AuthRoute.SIGNUP -> {
-                    SignupView(
-                        viewModel = signupVm,
-                        onBackToLogin = { authRoute = AuthRoute.LOGIN },
-                        onSignupSuccess = { isLoggedIn = true }
-                    )
-                }
-            }
-        } else {
-            if (!hasSeenPermissionGate) {
-                PermissionsGateScreen(
-                    hasCameraHardware = hasCameraHardware,
-                    cameraGranted = cameraGranted,
-                    notificationGranted = notificationGranted,
-                    onRequestCamera = requestCameraPermission,
-                    onRequestNotifications = requestNotificationPermission,
-                    onContinue = {
-                        onPermissionGateCompleted()
-                    }
-                )
-                return@HelloASLTheme
-            }
-            val homeVm = remember { HomeViewModel(model) }
-            val translateVm = remember { TranslateViewModel(model) }
-            val profileVm = remember { ProfileViewModel(model) }
-            val starVm = remember { StarViewModel() }
-            var previousTab by rememberSaveable { mutableStateOf(MainTab.LEARNING) }
-            val learningVm = remember { LearningViewModel(model) }
-            val lessonVm = remember { LessonViewModel(model) }
-            var learningRoute by rememberSaveable { mutableStateOf(LearningRoute.LEARNING_HOME) }
-            var lessonTitle by rememberSaveable { mutableStateOf("") }
-
-            var selectedTab by rememberSaveable { mutableStateOf(MainTab.HOME) }
-            val selectedColor = when (selectedTab) {
-                MainTab.HOME -> MaterialTheme.colorScheme.primary
-                MainTab.LEARNING -> MaterialTheme.colorScheme.secondary
-                MainTab.TRANSLATE -> MaterialTheme.colorScheme.tertiary
-                MainTab.PROFILE -> MaterialTheme.colorScheme.surface
-                MainTab.STAR -> MaterialTheme.colorScheme.secondary
-            }
-            val unselectedColor = MaterialTheme.colorScheme.onSurfaceVariant
-            val navBarIconColors = NavigationBarItemDefaults.colors(
-                selectedIconColor = selectedColor,
-                selectedTextColor = selectedColor,
-                unselectedIconColor = unselectedColor,
-                unselectedTextColor = unselectedColor,
-                indicatorColor = MaterialTheme.colorScheme.surfaceContainer
-            )
-            val navBarColor = when (selectedTab) {
-                MainTab.HOME -> MaterialTheme.colorScheme.primaryContainer
-                MainTab.LEARNING -> MaterialTheme.colorScheme.secondaryContainer
-                MainTab.TRANSLATE -> MaterialTheme.colorScheme.tertiaryContainer
-                MainTab.PROFILE -> MaterialTheme.colorScheme.surfaceVariant
-                MainTab.STAR -> MaterialTheme.colorScheme.secondaryContainer
-            }
-
-            Scaffold(
-                topBar = {
-                    when (selectedTab) {
-                        MainTab.HOME -> {
-                            TopAppBar(
-                                title = { Text("Hello, ${homeVm.state.userName}!") },
-                                actions = {
-                                    IconButton(onClick = { /* notification page */ }) {
-                                        Icon(
-                                            Icons.Filled.Notifications,
-                                            contentDescription = "Notifications"
-                                        )
-                                    }
-                                    IconButton(onClick = { /* settings page */ }) {
-                                        Icon(
-                                            Icons.Filled.Settings,
-                                            contentDescription = "Settings"
-                                        )
-                                    }
-                                },
-                                colors = TopAppBarDefaults.topAppBarColors(
-                                    containerColor = selectedColor,
-                                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary
-                                )
-                            )
-                        }
-
-                        MainTab.LEARNING -> {
-                            TopAppBar(
-                                title = {
-                                    val learningTitle = when (learningRoute) {
-                                        LearningRoute.LEARNING_HOME -> learningVm.state.modules.firstOrNull()?.title ?: "Learning"
-                                        LearningRoute.LESSON -> lessonTitle
-                                    }
-                                    Text(learningTitle)
-                                },
-                                navigationIcon = {
-                                    if (learningRoute != LearningRoute.LEARNING_HOME) {
-                                        IconButton(onClick = { learningRoute = LearningRoute.LEARNING_HOME }) {
-                                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                                        }
-                                    }
-                                },
-                                actions = {
-                                    IconButton(onClick = { /* notification page */ }) {
-                                        Icon(
-                                            Icons.Filled.Notifications,
-                                            contentDescription = "Notifications"
-                                        )
-                                    }
-                                    IconButton(onClick = { /* settings page */ }) {
-                                        Icon(
-                                            Icons.Filled.Settings,
-                                            contentDescription = "Settings"
-                                        )
-                                    }
-                                },
-                                colors = TopAppBarDefaults.topAppBarColors(
-                                    containerColor = selectedColor,
-                                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary,
-                                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
-                                )
-                            )
-                        }
-
-                        MainTab.TRANSLATE -> {
-                            TopAppBar(
-                                title = { Text("Translate ASL") },
-                                actions = {
-                                    IconButton(onClick = { /* notification page */ }) {
-                                        Icon(
-                                            Icons.Filled.Notifications,
-                                            contentDescription = "Notifications"
-                                        )
-                                    }
-                                    IconButton(onClick = { /* settings page */ }) {
-                                        Icon(
-                                            Icons.Filled.Settings,
-                                            contentDescription = "Settings"
-                                        )
-                                    }
-                                },
-                                // think: what do we need for action, a toggle button to change between ASL -> Eng & Eng -> ASL?
-                                colors = TopAppBarDefaults.topAppBarColors(
-                                    containerColor = selectedColor,
-                                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary
-                                )
-                            )
-                        }
-
-                        MainTab.PROFILE -> {
-                            TopAppBar(
-                                title = { Text("Profile") },
-                                actions = {
-                                    IconButton(onClick = { /* notification page */ }) {
-                                        Icon(
-                                            Icons.Filled.Notifications,
-                                            contentDescription = "Notifications"
-                                        )
-                                    }
-                                    IconButton(onClick = { /* settings page */ }) {
-                                        Icon(
-                                            Icons.Filled.Settings,
-                                            contentDescription = "Settings"
-                                        )
-                                    }
-                                },
-                                colors = TopAppBarDefaults.topAppBarColors(
-                                    containerColor = selectedColor,
-                                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary
-                                )
-                            )
-                        }
-
-                        MainTab.STAR -> {
-                            TopAppBar(
-                                title = { Text("Starred Signs") },
-                                navigationIcon = {
-                                    IconButton(onClick = {
-                                        selectedTab = previousTab
-                                    }) {
-                                        Icon(
-                                            Icons.AutoMirrored.Filled.ArrowBack,
-                                            contentDescription = "Back"
-                                        )
-                                    }
-                                },
-                                colors = TopAppBarDefaults.topAppBarColors(
-                                    containerColor = MaterialTheme.colorScheme.secondary,
-                                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
-                                )
-                            )
-                        }
-
-                    }
-
-                },
-                bottomBar = {
-                    NavigationBar(containerColor = navBarColor) {
-                        NavigationBarItem(
-                            selected = (selectedTab == MainTab.HOME),
-                            onClick = { selectedTab = MainTab.HOME },
-                            icon = { Icon(imageVector = Icons.Filled.Home, contentDescription = "Home") },
-                            colors = navBarIconColors
-                        )
-                        NavigationBarItem(
-                            selected = (selectedTab == MainTab.LEARNING),
-                            onClick = { selectedTab = MainTab.LEARNING },
-                            icon = { Icon(imageVector = Icons.Filled.School, contentDescription = "Learning") },
-                            colors = navBarIconColors
-                        )
-                        NavigationBarItem(
-                            selected = (selectedTab == MainTab.TRANSLATE),
-                            onClick = { selectedTab = MainTab.TRANSLATE },
-                            icon = { Icon(imageVector = Icons.Filled.Translate, contentDescription = "Translate") },
-                            colors = navBarIconColors
-                        )
-                        NavigationBarItem(
-                            selected = (selectedTab == MainTab.PROFILE),
-                            onClick = { selectedTab = MainTab.PROFILE },
-                            icon = { Icon(imageVector = Icons.Filled.Person, contentDescription = "Profile") },
-                            colors = navBarIconColors
-                        )
-                    }
-                }
-            ) { padding ->
-                Surface(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    when (selectedTab) {
-                        MainTab.HOME -> HomeRoute(
-                            vm = homeVm,
-                            onDayStreak = { /* later */ },
-                            onDailyGoals = { /* later */ },
-                            onLearning = { selectedTab = MainTab.LEARNING },
-                            onTakeQuiz = { /* later */ },
-                            onTranslate = { selectedTab = MainTab.TRANSLATE },
-                            onNotifications = { /* later */ }
-                        )
-
-                        MainTab.LEARNING -> {
-                            LearningEntry(
-                                vm = learningVm,
-                                lessonVm = lessonVm,
-                                route = learningRoute,
-                                onNavigate = { learningRoute = it },
-                                onUpdateLessonTitle = { lessonTitle = it },
-                                onOpenStarred = {
-                                    previousTab = selectedTab
-                                    selectedTab = MainTab.STAR
-                                }
-                            )
-                        }
-
-                        MainTab.TRANSLATE -> {
-                            TranslateView(
-                                vm = translateVm,
-                                hasCameraHardware = hasCameraHardware,
-                                cameraGranted = cameraGranted,
-                                requestCameraPermission = requestCameraPermission
-                            )
-                        }
-
-                        MainTab.PROFILE -> ProfileRoute(
-                            vm = profileVm,
-                            onSettings = { /* later */ },
-                            onWordsLearned = { /* later */ },
-                            onStarredSigns = {
-                                previousTab = selectedTab
-                                selectedTab = MainTab.STAR
-                            },
-                            onAccount = { /* later */ },
-                            onLicense = { /* later */ },
-                            onSignOut = {
-                                model.logout()
-                                isLoggedIn = false
-                                authRoute = AuthRoute.LOGIN
-                            }
-                        )
-
-                        MainTab.STAR -> {
-                            StarView(
-                                viewModel = starVm
-                            )
-                        }
-
-                    }
-                }
-            }
-        }
+        AppNavigation(
+            model = model,
+            hasCameraHardware = hasCameraHardware,
+            cameraGranted = cameraGranted,
+            notificationGranted = notificationGranted,
+            requestCameraPermission = requestCameraPermission,
+            requestNotificationPermission = requestNotificationPermission,
+            hasSeenPermissionGate = hasSeenPermissionGate,
+            onPermissionGateCompleted = onPermissionGateCompleted
+        )
     }
-}
-
-enum class MainTab {
-    HOME, LEARNING, TRANSLATE, PROFILE, STAR
-}
-
-enum class AuthRoute {
-    LOGIN, SIGNUP
 }
