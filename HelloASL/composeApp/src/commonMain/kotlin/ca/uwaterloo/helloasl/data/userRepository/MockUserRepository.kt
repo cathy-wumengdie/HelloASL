@@ -1,8 +1,7 @@
 package ca.uwaterloo.helloasl.data.userRepository
 
 import ca.uwaterloo.helloasl.data.MockDB
-import ca.uwaterloo.helloasl.domain.userModel.User
-import ca.uwaterloo.helloasl.domain.userModel.UserProfile
+import ca.uwaterloo.helloasl.domain.userModel.*
 import ca.uwaterloo.helloasl.domain.starModel.StarItem
 
 class MockUserRepository(private val db: MockDB): UserRepository {
@@ -10,8 +9,8 @@ class MockUserRepository(private val db: MockDB): UserRepository {
         return db.getUser()
     }
 
-    override fun getUserProfile(): UserProfile {
-        return db.getUserProfile()
+    override fun getUserLearningProgress(): UserLearningProgress {
+        return db.getUserLearningProgress()
     }
 
     override fun updateLearningProgress(): Boolean {

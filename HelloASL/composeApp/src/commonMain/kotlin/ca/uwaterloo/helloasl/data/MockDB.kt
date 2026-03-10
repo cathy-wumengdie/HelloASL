@@ -8,11 +8,6 @@ import ca.uwaterloo.helloasl.domain.userModel.*
 import kotlinx.datetime.*
 import ca.uwaterloo.helloasl.domain.learningModel.*
 import ca.uwaterloo.helloasl.domain.translateModel.*
-import ca.uwaterloo.helloasl.domain.userModel.LearningProgress
-import ca.uwaterloo.helloasl.domain.userModel.User
-import ca.uwaterloo.helloasl.domain.userModel.UserCredential
-import ca.uwaterloo.helloasl.domain.userModel.UserProfile
-import ca.uwaterloo.helloasl.domain.userModel.UserSession
 import ca.uwaterloo.helloasl.domain.starModel.StarItem
 import java.util.Objects.hash
 
@@ -142,27 +137,27 @@ class MockDB {
         )
     )
 
-    private var userProfiles = mutableMapOf(
-        1 to UserProfile(
+    private var userLearningProgress = mutableMapOf(
+        1 to UserLearningProgress(
             userId = 1,
-            progressSummary = progressSummary[1]!!,
-            learningProgress = LearningProgress(module = 1, lesson = 1),
+            moduleId = 1,
+            lessonId = 1,
             wordsLearned = 0,
             starredSigns = 12
         ),
 
-        2 to UserProfile(
+        2 to UserLearningProgress(
             userId = 2,
-            progressSummary = progressSummary[2]!!,
-            learningProgress = LearningProgress(module = 1, lesson = 2),
+            moduleId = 1,
+            lessonId = 2,
             wordsLearned = 4,
             starredSigns = 1
         ),
 
-        3 to UserProfile(
+        3 to UserLearningProgress(
             userId = 3,
-            progressSummary = progressSummary[3]!!,
-            learningProgress = LearningProgress(module = 1, lesson = 1),
+            moduleId = 1,
+            lessonId = 1,
             wordsLearned = 0,
             starredSigns = 10
         )
@@ -182,64 +177,73 @@ class MockDB {
         return users[userId] ?: error("User not found")
     }
 
-    fun getUserProfile(): UserProfile {
+    fun getUserLearningProgress(): UserLearningProgress {
         val userId = getUserId()
-        return userProfiles[userId] ?: error("Profile not found")
+        return userLearningProgress[userId] ?: error("User learning progress not found")
     }
 
     fun updateLearningProgress(): Boolean {
         val userId = getUserId()
-        val profile = getUserProfile()
+        val learningProgress = getUserLearningProgress()
+
+        // Already fully completed
+        if (learningProgress.lessonId == -1) {
+            return false
+        }
+
         val sortedModules = modules.sortedBy { it.id }
-        val current = profile.learningProgress
-        val currentModuleIndex = sortedModules.indexOfFirst { it.id == current.module }
-        if (currentModuleIndex == -1) error("Module not found: ${current.module}")
+        val currentModuleIndex = sortedModules.indexOfFirst { it.id == learningProgress.moduleId }
+        if (currentModuleIndex == -1) {
+            error("Module not found: ${learningProgress.moduleId}")
+        }
         val currentModule = sortedModules[currentModuleIndex]
         val lessonIds = currentModule.lessonIds
         if (lessonIds.isEmpty()) {
-            return advanceToNextModuleFirstLesson(userId, profile, sortedModules, currentModuleIndex)
+            return advanceToNextModuleFirstLesson(userId, learningProgress, sortedModules, currentModuleIndex)
         }
-        val currentLessonIdx = current.lesson - 1
-        if (currentLessonIdx !in lessonIds.indices) {
-            error("Invalid lesson number ${current.lesson} for module ${current.module}. lessonIds=$lessonIds")
+        val currentLessonIdx = lessonIds.indexOf(learningProgress.lessonId)
+        if (currentLessonIdx == -1) {
+            error("Invalid lesson id ${learningProgress.lessonId} for module ${learningProgress.moduleId}. lessonIds=$lessonIds")
         }
         val nextLessonIdx = currentLessonIdx + 1
-        // 1) Next lesson exists in same module
         if (nextLessonIdx in lessonIds.indices) {
-            val newProgress = LearningProgress(module = current.module, lesson = nextLessonIdx + 1)
-            userProfiles[userId] = profile.copy(learningProgress = newProgress)
+            userLearningProgress[userId] = learningProgress.copy(
+                lessonId = lessonIds[nextLessonIdx]
+            )
             return true
         }
-        // 2) Otherwise go to next module’s first lesson
-        return advanceToNextModuleFirstLesson(userId, profile, sortedModules, currentModuleIndex)
+        return advanceToNextModuleFirstLesson(userId, learningProgress, sortedModules, currentModuleIndex)
     }
 
     private fun advanceToNextModuleFirstLesson(
         userId: Int,
-        profile: UserProfile,
+        learningProgress: UserLearningProgress,
         sortedModules: List<Module>,
         currentModuleIndex: Int
     ): Boolean {
         val nextModuleIndex = currentModuleIndex + 1
         if (nextModuleIndex > sortedModules.lastIndex) {
-            // No next module => finished everything
-            // move cursor past the last lesson so words-learned counts the final lesson
             val lastModule = sortedModules[currentModuleIndex]
-            val completedProgress = LearningProgress(
-                module = lastModule.id,
-                lesson = lastModule.lessonIds.size + 1
+            val completedProgress = learningProgress.copy(
+                moduleId = lastModule.id,
+                lessonId = -1
             )
-            userProfiles[userId] = profile.copy(learningProgress = completedProgress)
+            userLearningProgress[userId] = completedProgress
             return false
         }
         val nextModule = sortedModules[nextModuleIndex]
         if (nextModule.lessonIds.isEmpty()) {
-            // skip empty modules (optional but usually helpful)
-            // recursively try further modules
-            return advanceToNextModuleFirstLesson(userId, profile, sortedModules, nextModuleIndex)
+            return advanceToNextModuleFirstLesson(
+                userId,
+                learningProgress,
+                sortedModules,
+                nextModuleIndex
+            )
         }
-        val newProgress = LearningProgress(module = nextModule.id, lesson = 1)
-        userProfiles[userId] = profile.copy(learningProgress = newProgress)
+        userLearningProgress[userId] = learningProgress.copy(
+            moduleId = nextModule.id,
+            lessonId = nextModule.lessonIds.first()
+        )
         return true
     }
 
@@ -255,7 +259,9 @@ class MockDB {
 
     fun updateWordsLearned(newWordsLearned: Int) {
         val userId = getUserId()
-        userProfiles[userId] = userProfiles[userId]!!.copy(wordsLearned = newWordsLearned)
+        userLearningProgress[userId]?.let { progress ->
+            userLearningProgress[userId] = progress.copy(wordsLearned = newWordsLearned)
+        } ?: error("User learning progress not found")
     }
 
     fun signup(name: String, email: String, password: String): Boolean {
@@ -281,14 +287,15 @@ class MockDB {
             ),
             dayStreak = 0
         )
-
+        val firstModule = modules.minByOrNull { it.id } ?: error("No modules available")
+        val firstLessonId = firstModule.lessonIds.firstOrNull() ?: error("First module has no lessons")
         users[newUserId] = newUser
         credentials[newUserId] = UserCredential(newUser.id, hash(password))
         setProgressSummary(newUserId, newProgressSummary)
-        userProfiles[newUserId] = UserProfile(
+        userLearningProgress[newUserId] = UserLearningProgress(
             userId = newUserId,
-            progressSummary = newProgressSummary,
-            learningProgress = LearningProgress(module = 1, lesson = 1),
+            moduleId = firstModule.id,
+            lessonId = firstLessonId,
             wordsLearned = 0,
             starredSigns = 0
         )
@@ -355,8 +362,6 @@ class MockDB {
     // Update the progress summary table and in the user profile
     private fun setProgressSummary(userId: Int, ps: ProgressSummary) {
         progressSummary[userId] = ps
-        val profile = userProfiles[userId] ?: return
-        userProfiles[userId] = profile.copy(progressSummary = ps)
     }
 
     private fun updateWeeklyProgress(
@@ -469,5 +474,9 @@ class MockDB {
     fun removeStar(itemId: String) {
         val userId = getUserId()
         starredItems[userId]?.removeAll { it.id == itemId }
+
+        val newCount = starredItems[userId]?.size ?: 0
+        val progress = userLearningProgress[userId] ?: error("User learning progress not found")
+        userLearningProgress[userId] = progress.copy(starredSigns = newCount)
     }
 }
