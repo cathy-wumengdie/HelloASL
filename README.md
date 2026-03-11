@@ -15,6 +15,8 @@ Name: Mengdie Wu  Email: m283wu@uwaterloo.ca
 ## Wiki
 This is our Wiki https://git.uwaterloo.ca/m283wu/cs-346-group-project/-/wikis/home.
 
+This is our UML ER Diagram https://git.uwaterloo.ca/m283wu/cs-346-group-project/-/wikis/UML-ER-Diagram.
+
 Our https://git.uwaterloo.ca/m283wu/cs-346-group-project/-/wikis/Team-Contract includes details on how we will work together.
 
 The https://git.uwaterloo.ca/m283wu/cs-346-group-project/-/wikis/Project-Proposal describes our project idea and anticipated features.
