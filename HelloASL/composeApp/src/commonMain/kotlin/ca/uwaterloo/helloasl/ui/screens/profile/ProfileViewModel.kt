@@ -10,7 +10,6 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import ca.uwaterloo.helloasl.ui.navigations.ProfileDestination
 import ca.uwaterloo.helloasl.ui.navigations.ProfileNavEvent
-import kotlin.String
 
 class ProfileViewModel ( private val model: Model) {
     var state by mutableStateOf(buildState())
@@ -19,12 +18,12 @@ class ProfileViewModel ( private val model: Model) {
     private fun buildState(): ProfileUiState {
         val user = model.getUser()
         val progressSummary = model.getProgressSummary()
-        val profile = model.getUserProfile()
+        val learningProgress = model.getUserLearningProgress()
         return ProfileUiState(
             userName = user.name,
             avatarText = user.avatarText,
-            wordsLearned = profile.wordsLearned,
-            starredSigns = profile.starredSigns,
+            wordsLearned = learningProgress.wordsLearned,
+            starredSigns = learningProgress.starredSigns,
             learningGoalPerDay = progressSummary.dailyProgress.dailyGoalMinutes,
             learningGoalPerWeek = progressSummary.weeklyProgress.weeklyGoalDays,
         )

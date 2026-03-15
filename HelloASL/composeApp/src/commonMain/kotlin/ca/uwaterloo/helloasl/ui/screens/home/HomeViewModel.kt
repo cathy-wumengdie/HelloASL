@@ -19,20 +19,24 @@ class HomeViewModel(private val model: Model) {
     private fun buildState(): HomeUiState {
         val user = model.getUser()
         val progressSummary = model.getProgressSummary()
-        val profile = model.getUserProfile()
+        val learningProgress = model.getUserLearningProgress()
 
-        val module = model.getModule(profile.learningProgress.module)
+        val module = model.getModule(learningProgress.moduleId)
         val totalLessons = module.lessonIds.size
-        val lessonNumber = profile.learningProgress.lesson
 
-        // lessonNumber > totalLessons if user completes all lessons => handle the sentinel case
-        val lessonNumberDisplay = lessonNumber.coerceAtMost(totalLessons)
+        val lessonsCompleted = when {
+            learningProgress.lessonId == -1 -> totalLessons
+            else -> {
+                val currentLessonIndex = module.lessonIds.indexOf(learningProgress.lessonId)
+                if (currentLessonIndex == -1) totalLessons else currentLessonIndex
+            }
+        }
 
         return HomeUiState(
             userName = user.name,
             moduleTitle = module.title,
             totalLessonsInModule = totalLessons,
-            lessonsCompleted = lessonNumberDisplay,
+            lessonsCompleted = lessonsCompleted,
             streakDays = progressSummary.dayStreak,
             dailyGoalsDone = progressSummary.dailyProgress.minutesLearned,
             dailyGoalsTotal = progressSummary.dailyProgress.dailyGoalMinutes,

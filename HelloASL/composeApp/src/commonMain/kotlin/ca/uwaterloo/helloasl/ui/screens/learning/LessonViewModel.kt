@@ -40,8 +40,9 @@ class LessonViewModel(private val model: Model) {
             stopAndCommit()
             _elapsedSeconds.value = 0
             committedMinutes = 0
-            model.onLessonCompleted()
-            onLessonCompleted?.invoke(lessonId ?: return)
+            val completedLessonId = lessonId ?: return
+            model.onLessonCompleted(completedLessonId)
+            onLessonCompleted?.invoke(completedLessonId)
         }
 
         state = state.copy(

@@ -11,9 +11,8 @@ import ca.uwaterloo.helloasl.domain.Repositories
 import ca.uwaterloo.helloasl.domain.trackingModel.DailyProgress
 import ca.uwaterloo.helloasl.domain.trackingModel.ProgressSummary
 import ca.uwaterloo.helloasl.domain.trackingModel.WeeklyProgress
-import ca.uwaterloo.helloasl.domain.userModel.LearningProgress
 import ca.uwaterloo.helloasl.domain.userModel.User
-import ca.uwaterloo.helloasl.domain.userModel.UserProfile
+import ca.uwaterloo.helloasl.domain.userModel.UserLearningProgress
 import ca.uwaterloo.helloasl.ui.navigations.ProfileDestination
 import ca.uwaterloo.helloasl.ui.navigations.ProfileNavEvent
 import kotlinx.coroutines.CoroutineStart
@@ -66,33 +65,42 @@ class ProfileViewModelTest {
 
     private class FakeUserRepository(
         private var user: User,
-        private var profile: UserProfile
+        private var learningProgress: UserLearningProgress,
+        private var progressSummary: ProgressSummary
     ) : UserRepository {
 
         var lastUpdateGoals: Pair<Int, Int>? = null
             private set
 
         fun setUser(newUser: User) { user = newUser }
-        fun setProfile(newProfile: UserProfile) { profile = newProfile }
+        fun setLearningProgress(newLearningProgress: UserLearningProgress) {
+            learningProgress = newLearningProgress
+        }
+        fun setProgressSummary(newProgressSummary: ProgressSummary) {
+            progressSummary = newProgressSummary
+        }
 
         override fun getUser(): User = user
-        override fun getUserProfile(): UserProfile = profile
+
+        override fun getUserLearningProgress(): UserLearningProgress = learningProgress
 
         override fun updateLearningProgress(): Boolean = true
 
         override fun updateLearningGoals(minutesPerDay: Int, daysPerWeek: Int) {
             lastUpdateGoals = minutesPerDay to daysPerWeek
 
-            val old = profile.progressSummary
-            val updated = old.copy(
-                dailyProgress = old.dailyProgress.copy(dailyGoalMinutes = minutesPerDay),
-                weeklyProgress = old.weeklyProgress.copy(weeklyGoalDays = daysPerWeek)
+            progressSummary = progressSummary.copy(
+                dailyProgress = progressSummary.dailyProgress.copy(
+                    dailyGoalMinutes = minutesPerDay
+                ),
+                weeklyProgress = progressSummary.weeklyProgress.copy(
+                    weeklyGoalDays = daysPerWeek
+                )
             )
-            profile = profile.copy(progressSummary = updated)
         }
 
         override fun updateWordsLearned(wordsLearned: Int) {
-            profile = profile.copy(wordsLearned = wordsLearned)
+            learningProgress = learningProgress.copy(wordsLearned = wordsLearned)
         }
 
         override fun getStarredItems() =
@@ -103,22 +111,23 @@ class ProfileViewModelTest {
 
     private fun makeVmWith(
         user: User = User(id = 1, name = "Yanjin Xia", email = "yanjin@gmail.com"),
-        profile: UserProfile = UserProfile(
+        learningProgress: UserLearningProgress = UserLearningProgress(
             userId = 1,
-            progressSummary = ps(
-                userId = 1,
-                dailyGoalMinutes = 15,
-                weeklyGoalDays = 3,
-                dayStreak = 7
-            ),
-            learningProgress = LearningProgress(module = 1, lesson = 2),
+            moduleId = 1,
+            lessonId = 2,
             wordsLearned = 40,
             starredSigns = 12
+        ),
+        progressSummary: ProgressSummary = ps(
+            userId = 1,
+            dailyGoalMinutes = 15,
+            weeklyGoalDays = 3,
+            dayStreak = 7
         )
     ): Triple<ProfileViewModel, FakeUserRepository, Model> {
         val db = MockDB()
         db.login("yanjin@gmail.com", "1234")
-        val userRepo = FakeUserRepository(user, profile)
+        val userRepo = FakeUserRepository(user, learningProgress, progressSummary)
         val model = Model(
             Repositories(
                 auth = FakeAuthRepository(),
@@ -136,17 +145,18 @@ class ProfileViewModelTest {
     fun init_buildsStateFromModel() {
         val (vm, _, _) = makeVmWith(
             user = User(id = 1, name = "Alice Bob", email = "a@b.com"),
-            profile = UserProfile(
+            learningProgress = UserLearningProgress(
                 userId = 1,
-                progressSummary = ps(
-                    userId = 1,
-                    dailyGoalMinutes = 20,
-                    weeklyGoalDays = 4,
-                    dayStreak = 10
-                ),
-                learningProgress = LearningProgress(0, 0),
+                moduleId = 1,
+                lessonId = 1,
                 wordsLearned = 99,
                 starredSigns = 5
+            ),
+            progressSummary = ps(
+                userId = 1,
+                dailyGoalMinutes = 20,
+                weeklyGoalDays = 4,
+                dayStreak = 10
             )
         )
 
@@ -161,18 +171,21 @@ class ProfileViewModelTest {
         val (vm, userRepo, _) = makeVmWith()
 
         userRepo.setUser(User(id = 1, name = "New Name", email = "n@uw.ca"))
-        userRepo.setProfile(
-            UserProfile(
+        userRepo.setLearningProgress(
+            UserLearningProgress(
                 userId = 1,
-                progressSummary = ps(
-                    userId = 1,
-                    dailyGoalMinutes = 30,
-                    weeklyGoalDays = 6,
-                    dayStreak = 1
-                ),
-                learningProgress = LearningProgress(2, 3),
+                moduleId = 2,
+                lessonId = 3,
                 wordsLearned = 123,
                 starredSigns = 77
+            )
+        )
+        userRepo.setProgressSummary(
+            ps(
+                userId = 1,
+                dailyGoalMinutes = 30,
+                weeklyGoalDays = 6,
+                dayStreak = 1
             )
         )
 

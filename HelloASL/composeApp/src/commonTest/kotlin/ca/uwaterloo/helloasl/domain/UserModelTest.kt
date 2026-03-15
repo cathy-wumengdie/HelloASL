@@ -6,12 +6,7 @@ import ca.uwaterloo.helloasl.data.learningRepository.MockLearningRepository
 import ca.uwaterloo.helloasl.data.progressTrackerRepository.MockProgressTrackerRepository
 import ca.uwaterloo.helloasl.data.translateRepository.MockTranslateRepository
 import ca.uwaterloo.helloasl.data.userRepository.MockUserRepository
-import ca.uwaterloo.helloasl.domain.trackingModel.DailyProgress
-import ca.uwaterloo.helloasl.domain.trackingModel.ProgressSummary
-import ca.uwaterloo.helloasl.domain.trackingModel.TimeUtils.today
-import ca.uwaterloo.helloasl.domain.trackingModel.WeeklyProgress
-import ca.uwaterloo.helloasl.domain.userModel.LearningProgress
-import ca.uwaterloo.helloasl.domain.userModel.User
+import ca.uwaterloo.helloasl.domain.userModel.*
 import kotlin.test.*
 
 class UserModelTest {
@@ -48,31 +43,44 @@ class UserModelTest {
     }
 
     @Test
-    fun getUserProfile_returns_profile_for_logged_in_user() {
+    fun getUserLearningProgress_returns_progress_for_logged_in_user() {
         val (_, model) = makeModel()
         model.login("yanjin@gmail.com", "1234")
 
-        val profile = model.getUserProfile()
-        assertEquals(1, profile.userId)
-        assertEquals(15, profile.progressSummary.dailyProgress.dailyGoalMinutes)
-        assertEquals(3, profile.progressSummary.weeklyProgress.weeklyGoalDays)
-        assertEquals(7, profile.progressSummary.dayStreak)
+        val learningProgress = model.getUserLearningProgress()
+        assertEquals(1, learningProgress.userId)
+        assertEquals(1, learningProgress.moduleId)
+        assertEquals(1, learningProgress.lessonId)
+        assertEquals(0, learningProgress.wordsLearned)
+        assertEquals(12, learningProgress.starredSigns)
     }
 
     @Test
-    fun updateLearningGoals_updates_profile_values() {
+    fun getProgressSummary_returns_summary_for_logged_in_user() {
+        val (_, model) = makeModel()
+        model.login("yanjin@gmail.com", "1234")
+
+        val summary = model.getProgressSummary()
+        assertEquals(1, summary.userId)
+        assertEquals(15, summary.dailyProgress.dailyGoalMinutes)
+        assertEquals(3, summary.weeklyProgress.weeklyGoalDays)
+        assertEquals(7, summary.dayStreak)
+    }
+
+    @Test
+    fun setLearningGoals_updates_progress_summary_values() {
         val (_, model) = makeModel()
         model.login("yanjin@gmail.com", "1234")
 
         model.setLearningGoals(minutesPerDay = 20, daysPerWeek = 5)
 
-        val updated = model.getUserProfile()
-        assertEquals(20, updated.progressSummary.dailyProgress.dailyGoalMinutes)
-        assertEquals(5, updated.progressSummary.weeklyProgress.weeklyGoalDays)
+        val updated = model.getProgressSummary()
+        assertEquals(20, updated.dailyProgress.dailyGoalMinutes)
+        assertEquals(5, updated.weeklyProgress.weeklyGoalDays)
     }
 
     @Test
-    fun updateLearningGoals_throws_when_not_logged_in() {
+    fun setLearningGoals_throws_when_not_logged_in() {
         val (_, model) = makeModel()
         assertFailsWith<IllegalStateException> {
             model.setLearningGoals(20, 5)
