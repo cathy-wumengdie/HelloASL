@@ -27,13 +27,11 @@ class LearningModelTest {
     }
 
     @Test
-    fun `unlockNext lesson reflects in getLessons`() {
+    fun `unlockNext lesson reflects in lock state`() {
         val model = newModel()
-        val lessons = model.getLessons()
-        assertTrue(lessons[1].locked) // lesson id 2 is locked
+        assertTrue(model.isLessonLocked(2))
         model.unlockLesson(2)
-        val refreshed = model.getLessons()
-        assertFalse(refreshed[1].locked)
+        assertFalse(model.isLessonLocked(2))
     }
 
     @Test
@@ -41,7 +39,7 @@ class LearningModelTest {
         val model = newModel()
         val signs = model.getSignsForLesson(1)
         assertEquals(2, signs.size)
-        assertEquals("Hello", signs.first().word)
+        assertEquals("Hello", signs.first().gloss)
     }
 
     @Test

@@ -24,12 +24,16 @@ data class Repositories(
 class Model(private val repos: Repositories) {
     private val starredSignIds: MutableSet<Int> = mutableSetOf()
 
-    // maintain lesson lock state within the session
-    private val lessonLocks: MutableMap<Int, Boolean> =
-        repos.learning.getLessons().associate { it.id to it.locked }.toMutableMap()
+    private val lessonLocks: MutableMap<Int, Boolean> = mutableMapOf<Int, Boolean>().apply {
+        val lessonsByModule = repos.learning.getLessons().groupBy { it.moduleId }
+        lessonsByModule.values.forEach { lessons ->
+            lessons.sortedBy { it.lessonId }.forEachIndexed { index, lesson ->
+                put(lesson.lessonId, index != 0)
+            }
+        }
+    }
 
-    private fun applyLessonLocks(lesson: Lesson): Lesson =
-        lesson.copy(locked = lessonLocks[lesson.id] ?: lesson.locked)
+    private fun isLessonLockedInternal(lessonId: Int): Boolean = lessonLocks[lessonId] ?: false
 
     // user & auth
     fun getUser(): User = repos.user.getUser()
@@ -41,33 +45,30 @@ class Model(private val repos: Repositories) {
         val learningProgress = getUserLearningProgress()
         val currentModuleId = learningProgress.moduleId
         val currentLessonId = learningProgress.lessonId
-        val modules = repos.learning.getModules().sortedBy { it.id }
-        val lessonsById = repos.learning.getLessons().associateBy { it.id }
-        val currentModuleIndex = modules.indexOfFirst { it.id == currentModuleId }
+        val modules = repos.learning.getModules().sortedBy { it.moduleId }
+        val lessonsByModule = repos.learning.getLessons().groupBy { it.moduleId }
+        val currentModuleIndex = modules.indexOfFirst { it.moduleId == currentModuleId }
         if (currentModuleIndex == -1) error("Module not found: $currentModuleId")
         val learnedSignIds = mutableSetOf<Int>()
 
         // 1) Add all signs from modules before current module
         for (module in modules.take(currentModuleIndex)) {
-            for (lessonId in module.lessonIds) {
-                val lesson = lessonsById[lessonId] ?: continue
-                learnedSignIds.addAll(lesson.signIds)
+            val lessons = lessonsByModule[module.moduleId].orEmpty().sortedBy { it.lessonId }
+            for (lesson in lessons) {
+                repos.learning.getSignsByLessonId(lesson.lessonId).forEach { learnedSignIds.add(it.signId) }
             }
         }
+
         // 2) Add signs from lessons before current lesson in current module
-        val currentModule = modules[currentModuleIndex]
-        val currentLessonIndex = currentModule.lessonIds.indexOf(currentLessonId)
-        if (currentLessonIndex == -1) {
-            // Treat as completed current module
-            for (lessonId in currentModule.lessonIds) {
-                val lesson = lessonsById[lessonId] ?: continue
-                learnedSignIds.addAll(lesson.signIds)
-            }
-            return learnedSignIds.size
+        val currentModuleLessons = lessonsByModule[currentModuleId].orEmpty().sortedBy { it.lessonId }
+        val currentLessonIndex = currentModuleLessons.indexOfFirst { it.lessonId == currentLessonId }
+        val lessonsToCount = if (currentLessonId == -1 || currentLessonIndex == -1) {
+            currentModuleLessons
+        } else {
+            currentModuleLessons.take(currentLessonIndex)
         }
-        for (lessonId in currentModule.lessonIds.take(currentLessonIndex)) {
-            val lesson = lessonsById[lessonId] ?: continue
-            learnedSignIds.addAll(lesson.signIds)
+        for (lesson in lessonsToCount) {
+            repos.learning.getSignsByLessonId(lesson.lessonId).forEach { learnedSignIds.add(it.signId) }
         }
         return learnedSignIds.size
     }
@@ -78,16 +79,18 @@ class Model(private val repos: Repositories) {
 
     // learning: modules / lessons / signs
     fun getModules(): List<Module> = repos.learning.getModules()
-    fun getLessons(): List<Lesson> = repos.learning.getLessons().map(::applyLessonLocks)
+    fun getLessons(): List<Lesson> = repos.learning.getLessons()
+    fun getLessonsByModuleId(moduleId: Int): List<Lesson> = repos.learning.getLessonsByModuleId(moduleId)
     fun getModule(id: Int): Module = repos.learning.getModuleById(id)
-    fun getLesson(lessonId: Int): Lesson = repos.learning.getLessonById(lessonId).let(::applyLessonLocks)
+    fun getLesson(lessonId: Int): Lesson = repos.learning.getLessonById(lessonId)
     fun unlockLesson(lessonId: Int) {
         lessonLocks[lessonId] = false
     }
+    fun isLessonLocked(lessonId: Int): Boolean = isLessonLockedInternal(lessonId)
+    fun getSignCountForLesson(lessonId: Int): Int = repos.learning.getSignsByLessonId(lessonId).size
 
     fun getSignsForLesson(lessonId: Int): List<ASLSign> {
-        val lesson = repos.learning.getLessonById(lessonId)
-        return repos.learning.getSignsByIds(lesson.signIds)
+        return repos.learning.getSignsByLessonId(lessonId)
     }
 
     fun onLessonCompleted(completedLessonId: Int) {

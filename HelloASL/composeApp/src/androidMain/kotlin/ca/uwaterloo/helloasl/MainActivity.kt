@@ -15,6 +15,8 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import ca.uwaterloo.helloasl.data.SupabaseAppDependency
+import ca.uwaterloo.helloasl.data.SupabaseClientFactory
 import data.HelloAslDataStore
 import kotlinx.coroutines.launch
 import ca.uwaterloo.helloasl.App
@@ -26,6 +28,12 @@ class MainActivity : ComponentActivity() {
         setContent {
             val context = LocalContext.current
             val scope = rememberCoroutineScope()
+            val supabaseDependency = remember {
+                createSupabaseDependencyOrNull(
+                    url = "https://dbdwlwyemwjivrrvuzjz.supabase.co",
+                    anonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRiZHdsd3llbXdqaXZycnZ1emp6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyNDY5MDksImV4cCI6MjA4ODgyMjkwOX0.7OGwHi2A0oOFhFwEBZEK_PnC0fJDHFWfRvd1Dfbng7A"
+                )
+            }
 
             // ---- DataStore ----
             val store = remember { HelloAslDataStore(context) }
@@ -161,8 +169,15 @@ class MainActivity : ComponentActivity() {
                     scope.launch {
                         store.setHasSeenPermissionGate(true)
                     }
-                }
+                },
+                supabaseDependency = supabaseDependency
             )
         }
     }
+}
+
+private fun createSupabaseDependencyOrNull(url: String, anonKey: String): SupabaseAppDependency? {
+    if (url.isBlank() || anonKey.isBlank()) return null
+    val client = SupabaseClientFactory.create(url, anonKey)
+    return SupabaseAppDependency(client)
 }

@@ -29,59 +29,49 @@ class MockDB {
 
     val signs: List<ASLSign> = listOf(
         ASLSign(
-            id = 1,
-            word = "Hello",
-            description = "Greeting",
-            videoUrls = listOf("files/video/hello.mp4"),
-            tags = setOf("basic")
+            signId = 1,
+            lessonId = 1,
+            gloss = "Hello",
+            videoUrl1 = "files/video/hello.mp4"
         ),
         ASLSign(
-            id = 2,
-            word = "Thanks",
-            description = "Gratitude",
-            videoUrls = listOf("files/video/thankyou.mp4"),
-            tags = setOf("basic")
+            signId = 2,
+            lessonId = 1,
+            gloss = "Thanks",
+            videoUrl1 = "files/video/thankyou.mp4"
         ),
         ASLSign(
-            id = 3,
-            word = "Yes",
-            description = "Affirmation",
-            videoUrls = listOf("files/video/yes.mp4"),
-            tags = setOf("basic")
+            signId = 3,
+            lessonId = 2,
+            gloss = "Yes",
+            videoUrl1 = "files/video/yes.mp4"
         ),
         ASLSign(
-            id = 4,
-            word = "No",
-            description = "Negation",
-            videoUrls = listOf("files/video/no.mp4"),
-            tags = setOf("basic")
+            signId = 4,
+            lessonId = 2,
+            gloss = "No",
+            videoUrl1 = "files/video/no.mp4"
         )
     )
 
     val lessons: List<Lesson> = listOf(
         Lesson(
-            id = 1,
-            title = "Basic Greetings",
-            signIds = listOf(1, 2),
-            category = "Beginner",
-            locked = false
+            lessonId = 1,
+            moduleId = 1,
+            title = "Basic Greetings"
         ),
         Lesson(
-            id = 2,
-            title = "Yes / No",
-            signIds = listOf(3, 4),
-            category = "Beginner",
-            locked = true
+            lessonId = 2,
+            moduleId = 1,
+            title = "Yes / No"
         )
     )
 
     val modules: List<Module> = listOf(
         Module(
-            id = 1,
+            moduleId = 1,
             title = "Unit 1: Basics",
-            lessonIds = listOf(1, 2),
-            category = "Beginner",
-            locked = false
+            category = "Beginner"
         )
     )
 
@@ -182,6 +172,13 @@ class MockDB {
         return userLearningProgress[userId] ?: error("User learning progress not found")
     }
 
+    private fun getLessonIdsForModule(moduleId: Int): List<Int> {
+        return lessons
+            .filter { it.moduleId == moduleId }
+            .sortedBy { it.lessonId }
+            .map { it.lessonId }
+    }
+
     fun updateLearningProgress(): Boolean {
         val userId = getUserId()
         val learningProgress = getUserLearningProgress()
@@ -191,13 +188,13 @@ class MockDB {
             return false
         }
 
-        val sortedModules = modules.sortedBy { it.id }
-        val currentModuleIndex = sortedModules.indexOfFirst { it.id == learningProgress.moduleId }
+        val sortedModules = modules.sortedBy { it.moduleId }
+        val currentModuleIndex = sortedModules.indexOfFirst { it.moduleId == learningProgress.moduleId }
         if (currentModuleIndex == -1) {
             error("Module not found: ${learningProgress.moduleId}")
         }
         val currentModule = sortedModules[currentModuleIndex]
-        val lessonIds = currentModule.lessonIds
+        val lessonIds = getLessonIdsForModule(currentModule.moduleId)
         if (lessonIds.isEmpty()) {
             return advanceToNextModuleFirstLesson(userId, learningProgress, sortedModules, currentModuleIndex)
         }
@@ -225,14 +222,15 @@ class MockDB {
         if (nextModuleIndex > sortedModules.lastIndex) {
             val lastModule = sortedModules[currentModuleIndex]
             val completedProgress = learningProgress.copy(
-                moduleId = lastModule.id,
+                moduleId = lastModule.moduleId,
                 lessonId = -1
             )
             userLearningProgress[userId] = completedProgress
             return false
         }
         val nextModule = sortedModules[nextModuleIndex]
-        if (nextModule.lessonIds.isEmpty()) {
+        val nextLessonIds = getLessonIdsForModule(nextModule.moduleId)
+        if (nextLessonIds.isEmpty()) {
             return advanceToNextModuleFirstLesson(
                 userId,
                 learningProgress,
@@ -241,8 +239,8 @@ class MockDB {
             )
         }
         userLearningProgress[userId] = learningProgress.copy(
-            moduleId = nextModule.id,
-            lessonId = nextModule.lessonIds.first()
+            moduleId = nextModule.moduleId,
+            lessonId = nextLessonIds.first()
         )
         return true
     }
@@ -287,14 +285,15 @@ class MockDB {
             ),
             dayStreak = 0
         )
-        val firstModule = modules.minByOrNull { it.id } ?: error("No modules available")
-        val firstLessonId = firstModule.lessonIds.firstOrNull() ?: error("First module has no lessons")
+        val firstModule = modules.minByOrNull { it.moduleId } ?: error("No modules available")
+        val firstLessonId = getLessonIdsForModule(firstModule.moduleId).firstOrNull()
+            ?: error("First module has no lessons")
         users[newUserId] = newUser
         credentials[newUserId] = UserCredential(newUser.id, hash(password))
         setProgressSummary(newUserId, newProgressSummary)
         userLearningProgress[newUserId] = UserLearningProgress(
             userId = newUserId,
-            moduleId = firstModule.id,
+            moduleId = firstModule.moduleId,
             lessonId = firstLessonId,
             wordsLearned = 0,
             starredSigns = 0

@@ -42,7 +42,7 @@ class LessonViewModelTest {
     fun correctAnswerShowsNextWhenNotLast() {
         val (vm, model) = newVm()
         vm.loadLesson(1)
-        val correct = model.getSignsForLesson(1).first().word
+        val correct = model.getSignsForLesson(1).first().gloss
         vm.onChoose(correct)
         assertTrue(vm.state.showNext)
     }
@@ -54,7 +54,7 @@ class LessonViewModelTest {
         var completedId: Int? = null
         vm.setOnLessonCompleted { completedId = it }
         vm.onNext()
-        val correct = model.getSignsForLesson(1)[1].word
+        val correct = model.getSignsForLesson(1)[1].gloss
         vm.onChoose(correct)
         assertEquals(1, completedId)
         assertFalse(vm.state.showNext)
@@ -65,8 +65,8 @@ class LessonViewModelTest {
         val (vm, model) = newVm()
         vm.loadLesson(1)
         val signs = model.getSignsForLesson(1)
-        val correct = signs.first().word
-        val wrong = signs.last().word // different sign
+        val correct = signs.first().gloss
+        val wrong = signs.last().gloss // different sign
         vm.onChoose(wrong)
         assertFalse(vm.state.showNext)
         assertFalse(vm.state.isCorrect ?: true)

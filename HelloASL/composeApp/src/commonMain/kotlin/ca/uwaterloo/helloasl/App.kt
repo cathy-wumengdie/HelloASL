@@ -3,6 +3,7 @@ package ca.uwaterloo.helloasl
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import ca.uwaterloo.helloasl.data.MockDB
+import ca.uwaterloo.helloasl.data.SupabaseAppDependency
 import ca.uwaterloo.helloasl.data.authRepository.MockAuthRepository
 import ca.uwaterloo.helloasl.data.userRepository.MockUserRepository
 import ca.uwaterloo.helloasl.data.learningRepository.MockLearningRepository
@@ -21,7 +22,8 @@ fun App(
     requestCameraPermission: () -> Unit,
     requestNotificationPermission: () -> Unit,
     hasSeenPermissionGate: Boolean,
-    onPermissionGateCompleted: () -> Unit
+    onPermissionGateCompleted: () -> Unit,
+    supabaseDependency: SupabaseAppDependency? = null
 ) {
     HelloASLTheme {
         val repositories = remember {
@@ -29,7 +31,7 @@ fun App(
             Repositories(
                 auth = MockAuthRepository(db),
                 user = MockUserRepository(db),
-                learning = MockLearningRepository(db),
+                learning = supabaseDependency?.learningRepository?: MockLearningRepository(db),
                 translate = MockTranslateRepository(db),
                 progressTracker = MockProgressTrackerRepository(db),
             )

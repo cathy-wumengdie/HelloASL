@@ -17,7 +17,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import ca.uwaterloo.helloasl.ui.components.ClickableSection
 import ca.uwaterloo.helloasl.ui.components.HelloASLCard
-import ca.uwaterloo.helloasl.domain.learningModel.Lesson
+import ca.uwaterloo.helloasl.ui.screens.learning.LessonItem
 
 @Composable
 fun LearningView(
@@ -27,8 +27,7 @@ fun LearningView(
 ) {
     val state = vm.state
     val moduleTitle = state.modules.firstOrNull()?.title ?: "Learning"
-    val lessons = state.modules.firstOrNull()?.lessonIds?.mapNotNull { id -> state.lessons.find { it.id == id } }
-        ?: state.lessons
+    val lessons = state.lessonItems
 
     LaunchedEffect(vm) {
         vm.navEvents.collectLatest { event ->
@@ -79,7 +78,7 @@ fun LearningView(
             ) {
                 lessons.forEach { lesson ->
                     LessonRow(lesson = lesson, enabled = !lesson.locked) {
-                        if (!lesson.locked) vm.onOpenLesson(lesson.id)
+                        if (!lesson.locked) vm.onOpenLesson(lesson.lessonId)
                     }
                 }
             }
@@ -88,7 +87,7 @@ fun LearningView(
 }
 
 @Composable
-private fun LessonRow(lesson: Lesson, enabled: Boolean, onClick: () -> Unit) {
+private fun LessonRow(lesson: LessonItem, enabled: Boolean, onClick: () -> Unit) {
     val shape = RoundedCornerShape(20.dp)
     ClickableSection(
         onClick = onClick,
@@ -104,7 +103,7 @@ private fun LessonRow(lesson: Lesson, enabled: Boolean, onClick: () -> Unit) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Column {
                 Text(lesson.title, style = MaterialTheme.typography.titleSmall)
-                Text("${lesson.signIds.size} signs", style = MaterialTheme.typography.bodySmall)
+                Text("${lesson.signCount} signs", style = MaterialTheme.typography.bodySmall)
             }
             if (!enabled) {
                 Icon(Icons.Filled.Lock, contentDescription = null)

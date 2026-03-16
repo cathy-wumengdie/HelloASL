@@ -4,10 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class Lesson(
-    val id: Int,
-    val title: String,
-    val signIds: List<Int>,
-    val level: Int = 1,
-    val category: String = "",
-    val locked: Boolean = false,
+    val lessonId: Int,
+    val moduleId: Int,
+    val title: String
 )
