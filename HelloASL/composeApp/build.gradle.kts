@@ -1,5 +1,8 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
+import org.jetbrains.compose.internal.utils.localPropertiesFile
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
+import kotlin.apply
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -7,6 +10,14 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.composeHotReload)
+    kotlin("plugin.serialization") version "2.3.0"
+}
+
+val localProps = Properties().apply {
+    val f = rootProject.file("local.properties")
+    if (f.exists()) {
+        f.inputStream().use { load(it) }
+    }
 }
 
 kotlin {
@@ -25,6 +36,7 @@ kotlin {
             implementation("androidx.datastore:datastore-preferences:1.1.1")
             implementation("androidx.media3:media3-exoplayer:1.2.1")
             implementation("androidx.media3:media3-ui:1.2.1")
+            implementation("io.ktor:ktor-client-android:2.3.11")
         }
         commonMain.dependencies {
             implementation(libs.compose.runtime)
@@ -35,6 +47,11 @@ kotlin {
             implementation(libs.compose.uiToolingPreview)
             implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.1")
             implementation("org.jetbrains.compose.material:material-icons-extended:1.7.3")
+            implementation(project.dependencies.platform("io.github.jan-tennert.supabase:bom:2.4.3"))
+            implementation("io.github.jan-tennert.supabase:postgrest-kt")
+//            implementation("io.github.jan-tennert.supabase:auth-kt")
+            implementation("io.github.jan-tennert.supabase:realtime-kt")
+            implementation("io.ktor:ktor-client-android:2.3.11")
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -57,7 +74,9 @@ kotlin {
 android {
     namespace = "ca.uwaterloo.helloasl"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
-
+    buildFeatures {
+        buildConfig = true
+    }
     defaultConfig {
         applicationId = "ca.uwaterloo.helloasl"
         minSdk = libs.versions.android.minSdk.get().toInt()
@@ -65,6 +84,16 @@ android {
         versionCode = 1
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField(
+            "String",
+            "SUPABASE_URL",
+            "\"${localProps.getProperty("SUPABASE_URL", "")}\""
+        )
+        buildConfigField(
+            "String",
+            "SUPABASE_ANON_KEY",
+            "\"${localProps.getProperty("SUPABASE_ANON_KEY", "")}\""
+        )
     }
     packaging {
         resources {
@@ -94,6 +123,11 @@ dependencies {
     implementation("androidx.camera:camera-camera2:1.4.2")
     implementation("androidx.camera:camera-lifecycle:1.4.2")
     implementation("androidx.camera:camera-view:1.4.2")
+    implementation(platform("io.github.jan-tennert.supabase:bom:2.4.3"))
+    implementation("io.github.jan-tennert.supabase:postgrest-kt")
+    //implementation("io.github.jan-tennert.supabase:auth-kt")
+    implementation("io.github.jan-tennert.supabase:realtime-kt")
+    implementation("io.ktor:ktor-client-android:2.3.11")
 }
 
 compose.desktop {

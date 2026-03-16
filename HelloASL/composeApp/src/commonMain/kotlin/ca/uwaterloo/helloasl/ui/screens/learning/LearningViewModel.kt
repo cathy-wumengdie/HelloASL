@@ -17,13 +17,33 @@ enum class LearningDestination {
 data class LearningNavEvent(val dest: LearningDestination, val lessonId: Int? = null)
 
 class LearningViewModel(private val model: Model) {
-    var state by mutableStateOf(
-        LearningUIState(
-            modules = model.getModules(),
-            lessons = model.getLessons()
-        )
-    )
+    var state by mutableStateOf(buildState())
         private set
+
+    private fun buildState(): LearningUIState {
+        val modules = model.getModules()
+        val lessons = model.getLessons()
+        val firstModuleId = modules.firstOrNull()?.moduleId
+        val lessonItems: List<LessonItem> = if (firstModuleId == null) {
+            emptyList()
+        } else {
+            model.getLessonsByModuleId(firstModuleId).map { lesson ->
+                LessonItem(
+                    lessonId = lesson.lessonId,
+                    title = lesson.title,
+                    signCount = model.getSignCountForLesson(lesson.lessonId),
+                    locked = model.isLessonLocked(lesson.lessonId)
+                )
+            }
+        }
+
+        return LearningUIState(
+            starredCount = model.getStarredSigns().size,
+            modules = modules,
+            lessons = lessons,
+            lessonItems = lessonItems
+        )
+    }
 
     private val _navEvents = MutableSharedFlow<LearningNavEvent>(
         replay = 0,
@@ -47,13 +67,13 @@ class LearningViewModel(private val model: Model) {
     }
 
     fun unlockNext(completedLessonId: Int) {
-        val lessonsList = state.lessons
-        val currentIndex = lessonsList.indexOfFirst { it.id == completedLessonId }
+        val lessonsList = state.lessonItems
+        val currentIndex = lessonsList.indexOfFirst { it.lessonId == completedLessonId }
         if (currentIndex == -1) return
         val nextIndex = currentIndex + 1
         if (nextIndex >= lessonsList.size) return
-        val nextId = lessonsList[nextIndex].id
+        val nextId = lessonsList[nextIndex].lessonId
         model.unlockLesson(nextId)
-        state = state.copy(lessons = model.getLessons())
+        state = buildState()
     }
 }

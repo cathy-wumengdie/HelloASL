@@ -31,7 +31,7 @@ class LessonViewModel(private val model: Model) {
 
     fun onChoose(option: String) {
         val sign = signs.getOrNull(currentIndex) ?: return
-        val correct = sign.word == option
+        val correct = sign.gloss == option
         val isLast = currentIndex == signs.lastIndex
         val completed = correct && isLast
 
@@ -62,7 +62,7 @@ class LessonViewModel(private val model: Model) {
 
     fun onStar() {
         val sign = signs.getOrNull(currentIndex) ?: return
-        model.toggleStar(sign.id)
+        model.toggleStar(sign.signId)
     }
 
     fun loadLesson(lessonId: Int) {
@@ -70,7 +70,7 @@ class LessonViewModel(private val model: Model) {
         this.signs = model.getSignsForLesson(lessonId)
         this.currentIndex = 0
 
-        val title = model.getLesson(lessonId)?.title ?: "Lesson"
+        val title = model.getLesson(lessonId).title
         state = state.copy(title = title)
 
         rebuildQuestion()
@@ -90,14 +90,14 @@ class LessonViewModel(private val model: Model) {
             return
         }
 
-        val correct = sign.word
-        val distractors = signs.map { it.word }.filter { it != correct }.shuffled().take(2)
+        val correct = sign.gloss
+        val distractors = signs.map { it.gloss }.filter { it != correct }.shuffled().take(2)
         val options = (distractors + correct).shuffled()
         val progressText = "${currentIndex + 1}/${signs.size}"
 
         state = state.copy(
             options = options,
-            videoUrl = sign.videoUrls.firstOrNull(),
+            videoUrl = sign.videoUrl1,
             selected = null,
             isCorrect = null,
             showNext = false,

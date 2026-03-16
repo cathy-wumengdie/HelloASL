@@ -22,12 +22,13 @@ class HomeViewModel(private val model: Model) {
         val learningProgress = model.getUserLearningProgress()
 
         val module = model.getModule(learningProgress.moduleId)
-        val totalLessons = module.lessonIds.size
+        val lessons = model.getLessonsByModuleId(module.moduleId).sortedBy { it.lessonId }
+        val totalLessons = lessons.size
 
         val lessonsCompleted = when {
             learningProgress.lessonId == -1 -> totalLessons
             else -> {
-                val currentLessonIndex = module.lessonIds.indexOf(learningProgress.lessonId)
+                val currentLessonIndex = lessons.indexOfFirst { it.lessonId == learningProgress.lessonId }
                 if (currentLessonIndex == -1) totalLessons else currentLessonIndex
             }
         }

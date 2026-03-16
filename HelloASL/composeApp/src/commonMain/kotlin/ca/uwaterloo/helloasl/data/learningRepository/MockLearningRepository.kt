@@ -10,14 +10,21 @@ class MockLearningRepository(private val db: MockDB) : LearningRepository {
 
     override fun getLessons(): List<Lesson> = db.lessons
 
-    override fun getModuleById(id: Int): Module = db.modules.find { it.id == id } ?: error("Module with id $id not found")
+    override fun getLessonsByModuleId(moduleId: Int): List<Lesson> = db.lessons.filter { it.moduleId == moduleId }
 
-    override fun getLessonById(id: Int): Lesson = db.lessons.find { it.id == id } ?: error("Lesson with id $id not found")
+    override fun getModuleById(id: Int): Module =
+        db.modules.find { it.moduleId == id } ?: error("Module with id $id not found")
 
-    override fun getSignById(id: Int): ASLSign? = db.signs.find { it.id == id }
+    override fun getLessonById(id: Int): Lesson =
+        db.lessons.find { it.lessonId == id } ?: error("Lesson with id $id not found")
+
+    override fun getSignById(id: Int): ASLSign? = db.signs.find { it.signId == id }
 
     override fun getSignsByIds(ids: List<Int>): List<ASLSign> {
-        val signsMap = db.signs.associateBy { it.id }
+        val signsMap = db.signs.associateBy { it.signId }
         return ids.mapNotNull { signsMap[it] }
     }
+
+    override fun getSignsByLessonId(lessonId: Int): List<ASLSign> =
+        db.signs.filter { it.lessonId == lessonId }
 }

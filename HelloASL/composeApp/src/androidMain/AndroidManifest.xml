@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- Network for streaming video links -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <!-- Camera permission -->
     <uses-permission android:name="android.permission.CAMERA" />
     <!-- Camera hardware is not required. If no camera, then block ASL->English feature -->
@@ -17,7 +20,8 @@
             android:label="@string/app_name"
             android:roundIcon="@mipmap/ic_launcher_round"
             android:supportsRtl="true"
-            android:theme="@android:style/Theme.Material.Light.NoActionBar">
+            android:theme="@android:style/Theme.Material.Light.NoActionBar"
+            android:usesCleartextTraffic="true">
         <activity
                 android:exported="true"
                 android:name=".MainActivity">

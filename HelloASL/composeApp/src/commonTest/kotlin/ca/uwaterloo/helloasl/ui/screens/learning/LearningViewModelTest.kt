@@ -35,9 +35,8 @@ class LearningViewModelTest {
     @Test
     fun unlockNextUnlocksFollowingLesson() {
         val (vm, model) = newVm()
-        val initialLocked = model.getLesson(2)?.locked
-        assertEquals(true, initialLocked)
+        assertTrue(model.isLessonLocked(2))
         vm.unlockNext(completedLessonId = 1)
-        assertFalse(model.getLesson(2)?.locked ?: true)
+        assertFalse(model.isLessonLocked(2))
     }
 }
