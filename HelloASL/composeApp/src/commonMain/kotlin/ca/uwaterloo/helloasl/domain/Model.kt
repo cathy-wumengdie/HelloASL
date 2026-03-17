@@ -67,62 +67,6 @@ class Model(
     suspend fun setLearningGoals(minutesPerDay: Int, daysPerWeek: Int) =
         repos.user.updateLearningGoals(minutesPerDay, daysPerWeek)
 
-    suspend fun getNumberOfWordsLearned(): Int = withContext(ioDispatcher) {
-        val learningProgress = getUserLearningProgress()
-        val currentModuleId = learningProgress.moduleId
-        val currentLessonId = learningProgress.lessonId
-
-        val modules = repos.learning.getModules().sortedBy { it.moduleId }
-        val lessonsByModule = repos.learning.getLessons().groupBy { it.moduleId }
-
-        // all lessons completed
-        if (currentModuleId == null || currentLessonId == null) {
-            val allSignIds = mutableSetOf<Long>()
-            for (module in modules) {
-                val lessons = lessonsByModule[module.moduleId].orEmpty().sortedBy { it.lessonId }
-                for (lesson in lessons) {
-                    repos.learning.getSignsByLessonId(lesson.lessonId)
-                        .forEach { allSignIds.add(it.signId) }
-                }
-            }
-            return@withContext allSignIds.size
-        }
-
-        val currentModuleIndex = modules.indexOfFirst { it.moduleId == currentModuleId }
-        if (currentModuleIndex == -1) error("Module not found: $currentModuleId")
-
-        val learnedSignIds = mutableSetOf<Long>()
-
-        // add signs from all fully completed modules
-        for (module in modules.take(currentModuleIndex)) {
-            val lessons = lessonsByModule[module.moduleId].orEmpty().sortedBy { it.lessonId }
-            for (lesson in lessons) {
-                repos.learning.getSignsByLessonId(lesson.lessonId)
-                    .forEach { learnedSignIds.add(it.signId) }
-            }
-        }
-
-        // add signs from lessons before current lesson in current module
-        val currentModuleLessons =
-            lessonsByModule[currentModuleId].orEmpty().sortedBy { it.lessonId }
-
-        val currentLessonIndex =
-            currentModuleLessons.indexOfFirst { it.lessonId == currentLessonId }
-
-        val lessonsToCount = if (currentLessonIndex == -1) {
-            currentModuleLessons
-        } else {
-            currentModuleLessons.take(currentLessonIndex)
-        }
-
-        for (lesson in lessonsToCount) {
-            repos.learning.getSignsByLessonId(lesson.lessonId)
-                .forEach { learnedSignIds.add(it.signId) }
-        }
-
-        learnedSignIds.size
-    }
-
     suspend fun signup(name: String, email: String, password: String): SignUpResult =
         repos.auth.signup(name, email, password)
 
@@ -170,13 +114,13 @@ class Model(
         repos.learning.getSignsByIds(starredSignIds.toList())
     }
 
-    suspend fun getQuizChoicesForSigns(signIds: List<Long>): Map<Int, List<QuizChoice>> =
+    suspend fun getQuizChoicesForSigns(signIds: List<Long>): Map<Long, List<QuizChoice>> =
         withContext(ioDispatcher) {
             if (signIds.isEmpty()) return@withContext emptyMap()
 
             repos.learning
                 .getQuizChoicesBySignIds(signIds)
-                .groupBy { it.signId.toInt() }
+                .groupBy { it.signId }
         }
 
     suspend fun onLessonCompleted(completedLessonId: Long) = withContext(ioDispatcher) {
@@ -186,13 +130,11 @@ class Model(
             return@withContext
         }
 
-        val advanced = repos.user.updateLearningProgress()
-        val newWordsLearned = getNumberOfWordsLearned()
-        repos.user.updateWordsLearned(newWordsLearned)
-
-        if (!advanced) {
+        val newlyCompleted = repos.user.completeLesson(completedLessonId)
+        if (!newlyCompleted) {
             return@withContext
         }
+        repos.user.updateLearningProgress()
     }
 
     fun isStarred(signId: Long): Boolean = signId in starredSignIds

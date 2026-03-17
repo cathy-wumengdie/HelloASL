@@ -17,23 +17,23 @@ class MockLearningRepository(private val db: MockDB) : LearningRepository {
         return db.quizChoices.filter { it.signId in idSet }
     }
 
-    override fun getLessonsByModuleId(moduleId: Long): List<Lesson> =
+    override suspend fun getLessonsByModuleId(moduleId: Long): List<Lesson> =
         db.lessons.filter { it.moduleId == moduleId }
 
-    override fun getModuleById(id: Long): Module =
+    override suspend fun getModuleById(id: Long): Module =
         db.modules.find { it.moduleId == id } ?: error("Module with id $id not found")
 
-    override fun getLessonById(id: Long): Lesson =
+    override suspend fun getLessonById(id: Long): Lesson =
         db.lessons.find { it.lessonId == id } ?: error("Lesson with id $id not found")
 
-    override fun getSignById(id: Long): ASLSign? =
+    override suspend fun getSignById(id: Long): ASLSign? =
         db.signs.find { it.signId == id }
 
-    override fun getSignsByIds(ids: List<Long>): List<ASLSign> {
+    override suspend fun getSignsByIds(ids: List<Long>): List<ASLSign> {
         val signsMap = db.signs.associateBy { it.signId }
         return ids.mapNotNull { signsMap[it] }
     }
 
-    override fun getSignsByLessonId(lessonId: Long): List<ASLSign> =
+    override suspend fun getSignsByLessonId(lessonId: Long): List<ASLSign> =
         db.signs.filter { it.lessonId == lessonId }
 }

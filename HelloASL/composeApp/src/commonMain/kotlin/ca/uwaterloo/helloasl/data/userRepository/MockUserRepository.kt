@@ -75,15 +75,20 @@ class MockUserRepository(private val db: MockDB) : UserRepository {
         db.putProgressSummary(userId, updated)
     }
 
-    override suspend fun updateWordsLearned(wordsLearned: Int) {
+    override suspend fun completeLesson(lessonId: Long): Boolean {
         val userId = db.requireCurrentUserId()
         val progress = db.getUserLearningProgress(userId)
             ?: error("User learning progress not found")
 
+        val inserted = db.addCompletedLesson(userId, lessonId)
+        if (!inserted) return false
+
+        val wordsInLesson = db.signs.count { it.lessonId == lessonId }
         db.putUserLearningProgress(
             userId,
-            progress.copy(wordsLearned = wordsLearned)
+            progress.copy(wordsLearned = progress.wordsLearned + wordsInLesson)
         )
+        return true
     }
 
     private fun getLessonIdsForModule(moduleId: Long): List<Long> {
@@ -113,7 +118,7 @@ class MockUserRepository(private val db: MockDB) : UserRepository {
         }
 
         val nextModule = sortedModules[nextModuleIndex]
-        val nextLessonIds = getLessonIdsForModule(nextModule.moduleId.toLong())
+        val nextLessonIds = getLessonIdsForModule(nextModule.moduleId)
 
         if (nextLessonIds.isEmpty()) {
             return advanceToNextModuleFirstLesson(
@@ -127,7 +132,7 @@ class MockUserRepository(private val db: MockDB) : UserRepository {
         db.putUserLearningProgress(
             userId,
             learningProgress.copy(
-                moduleId = nextModule.moduleId.toLong(),
+                moduleId = nextModule.moduleId,
                 lessonId = nextLessonIds.first()
             )
         )

@@ -27,60 +27,68 @@ class MockDB {
 
     val signs: List<ASLSign> = listOf(
         ASLSign(
-            id = 1L,
-            word = "Hello",
-            description = "Greeting",
-            videoUrls = listOf("files/video/hello.mp4"),
-            tags = setOf("basic")
+            signId = 1L,
+            lessonId = 1L,
+            gloss = "Hello",
+            videoUrl1 = "files/video/hello.mp4"
         ),
         ASLSign(
-            id = 2L,
-            word = "Thanks",
-            description = "Gratitude",
-            videoUrls = listOf("files/video/thankyou.mp4"),
-            tags = setOf("basic")
+            signId = 2L,
+            lessonId = 1L,
+            gloss = "Thanks",
+            videoUrl1 = "files/video/thankyou.mp4"
         ),
         ASLSign(
-            id = 3L,
-            word = "Yes",
-            description = "Affirmation",
-            videoUrls = listOf("files/video/yes.mp4"),
-            tags = setOf("basic")
+            signId = 3L,
+            lessonId = 2L,
+            gloss = "Yes",
+            videoUrl1 = "files/video/yes.mp4"
         ),
         ASLSign(
-            id = 4L,
-            word = "No",
-            description = "Negation",
-            videoUrls = listOf("files/video/no.mp4"),
-            tags = setOf("basic")
+            signId = 4L,
+            lessonId = 2L,
+            gloss = "No",
+            videoUrl1 = "files/video/no.mp4"
         )
     )
 
     val lessons: List<Lesson> = listOf(
         Lesson(
-            id = 1L,
-            title = "Basic Greetings",
-            signIds = listOf(1, 2),
-            category = "Beginner",
-            locked = false
+            lessonId = 1L,
+            moduleId = 1L,
+            title = "Basic Greetings"
         ),
         Lesson(
-            id = 2L,
-            title = "Yes / No",
-            signIds = listOf(3, 4),
-            category = "Beginner",
-            locked = true
+            lessonId = 2L,
+            moduleId = 1L,
+            title = "Yes / No"
         )
     )
 
     val modules: List<Module> = listOf(
         Module(
-            id = 1L,
+            moduleId = 1L,
             title = "Unit 1: Basics",
-            lessonIds = listOf(1, 2),
-            category = "Beginner",
-            locked = false
+            category = "Beginner"
         )
+    )
+
+    val quizChoices: List<QuizChoice> = listOf(
+        QuizChoice(choiceId = 1L, signId = 1L, choiceText = "Hello", isCorrect = true),
+        QuizChoice(choiceId = 2L, signId = 1L, choiceText = "Thanks", isCorrect = false),
+        QuizChoice(choiceId = 3L, signId = 1L, choiceText = "Yes", isCorrect = false),
+
+        QuizChoice(choiceId = 4L, signId = 2L, choiceText = "Thanks", isCorrect = true),
+        QuizChoice(choiceId = 5L, signId = 2L, choiceText = "Hello", isCorrect = false),
+        QuizChoice(choiceId = 6L, signId = 2L, choiceText = "No", isCorrect = false),
+
+        QuizChoice(choiceId = 7L, signId = 3L, choiceText = "Yes", isCorrect = true),
+        QuizChoice(choiceId = 8L, signId = 3L, choiceText = "No", isCorrect = false),
+        QuizChoice(choiceId = 9L, signId = 3L, choiceText = "Hello", isCorrect = false),
+
+        QuizChoice(choiceId = 10L, signId = 4L, choiceText = "No", isCorrect = true),
+        QuizChoice(choiceId = 11L, signId = 4L, choiceText = "Yes", isCorrect = false),
+        QuizChoice(choiceId = 12L, signId = 4L, choiceText = "Thanks", isCorrect = false)
     )
 
     private val progressSummary = mutableMapOf(
@@ -159,6 +167,10 @@ class MockDB {
         )
     )
 
+    private val completedLessons: MutableSet<CompletedLesson> = mutableSetOf(
+        CompletedLesson(userId = "2", lessonId = 1L)
+    )
+
     private var userSession: UserSession? = null
 
     fun getAllUsers(): Map<String, User> = users.toMap()
@@ -183,6 +195,23 @@ class MockDB {
     fun getUserLearningProgress(userId: String): UserLearningProgress? = userLearningProgress[userId]
     fun putUserLearningProgress(userId: String, progress: UserLearningProgress) {
         userLearningProgress[userId] = progress
+    }
+
+    fun getCompletedLessonsForUser(userId: String): Set<CompletedLesson> =
+        completedLessons.filter { it.userId == userId }.toSet()
+
+    fun getCompletedLessonIdsForUser(userId: String): Set<Long> =
+        completedLessons
+            .asSequence()
+            .filter { it.userId == userId }
+            .map { it.lessonId }
+            .toSet()
+
+    fun isLessonCompleted(userId: String, lessonId: Long): Boolean =
+        CompletedLesson(userId, lessonId) in completedLessons
+
+    fun addCompletedLesson(userId: String, lessonId: Long): Boolean {
+        return completedLessons.add(CompletedLesson(userId, lessonId))
     }
 
     fun logout() {

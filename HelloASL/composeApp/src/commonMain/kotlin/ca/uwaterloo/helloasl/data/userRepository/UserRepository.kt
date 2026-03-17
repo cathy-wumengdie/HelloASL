@@ -7,5 +7,5 @@ interface UserRepository {
     suspend fun getUserLearningProgress(): UserLearningProgress
     suspend fun updateLearningProgress(): Boolean
     suspend fun updateLearningGoals(minutesPerDay: Int, daysPerWeek: Int)
-    suspend fun addWordsLearnedForLesson(lessonId: Long)
+    suspend fun completeLesson(lessonId: Long): Boolean
 }

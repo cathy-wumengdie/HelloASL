@@ -24,7 +24,7 @@ class LessonViewModel(private val model: Model) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     private var signs: List<ASLSign> = emptyList()
-    private var quizChoices: Map<Int, List<QuizChoice>> = emptyMap()
+    private var quizChoices: Map<Long, List<QuizChoice>> = emptyMap()
     private var viewingIndex: Int = 0
     private var quizIndex: Int = 0
     private var videoIndex: Int = 0
@@ -54,7 +54,7 @@ class LessonViewModel(private val model: Model) {
         if (state.phase != LessonPhase.QUIZ) return
 
         val sign = signs.getOrNull(quizIndex) ?: return
-        val correctChoice = quizChoices[sign.signId.toInt()]
+        val correctChoice = quizChoices[sign.signId]
             ?.firstOrNull { it.isCorrect }
             ?.choiceText
             ?: sign.gloss
@@ -218,7 +218,7 @@ class LessonViewModel(private val model: Model) {
             return
         }
 
-        val choices = quizChoices[sign.signId.toInt()].orEmpty()
+        val choices = quizChoices[sign.signId].orEmpty()
         val optionTexts = if (choices.isNotEmpty()) {
             choices.map { it.choiceText }
         } else {

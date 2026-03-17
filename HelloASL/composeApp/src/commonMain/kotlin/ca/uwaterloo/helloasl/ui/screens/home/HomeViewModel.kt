@@ -69,7 +69,11 @@ class HomeViewModel(private val model: Model) {
 
         return HomeUiState(
             userName = user.name,
-            moduleTitle = module?.title ?: "Learning",
+            moduleTitle = if (module != null && moduleId != null) {
+                "Module $moduleId: ${module.title}"
+            } else {
+                "Learning"
+            },
             totalLessonsInModule = totalLessons,
             lessonsCompleted = lessonsCompleted,
             streakDays = progressSummary.dayStreak,

@@ -9,10 +9,10 @@ interface LearningRepository {
     suspend fun getModules(): List<Module>
     suspend fun getLessons(): List<Lesson>
     suspend fun getQuizChoicesBySignIds(signIds: List<Long>): List<QuizChoice>
-    fun getLessonsByModuleId(moduleId: Long): List<Lesson>
-    fun getModuleById(id: Long): Module
-    fun getLessonById(id: Long): Lesson
-    fun getSignById(id: Long): ASLSign?
-    fun getSignsByIds(ids: List<Long>): List<ASLSign>
-    fun getSignsByLessonId(lessonId: Long): List<ASLSign>
+    suspend fun getLessonsByModuleId(moduleId: Long): List<Lesson>
+    suspend fun getModuleById(id: Long): Module
+    suspend fun getLessonById(id: Long): Lesson
+    suspend fun getSignById(id: Long): ASLSign?
+    suspend fun getSignsByIds(ids: List<Long>): List<ASLSign>
+    suspend fun getSignsByLessonId(lessonId: Long): List<ASLSign>
 }

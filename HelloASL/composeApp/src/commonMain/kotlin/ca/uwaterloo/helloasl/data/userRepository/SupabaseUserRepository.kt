@@ -218,7 +218,7 @@ class SupabaseUserRepository(
         }
     }
 
-    override suspend fun addWordsLearnedForLesson(lessonId: Long) {
+    override suspend fun completeLesson(lessonId: Long): Boolean {
         val userId = requireUserId()
         val currentRow = getOrInitializeUserLearningProgressRow(userId)
 
@@ -233,7 +233,14 @@ class SupabaseUserRepository(
             .decodeList<CompletedLessonRow>()
             .isNotEmpty()
 
-        if (alreadyCompleted) return
+        if (alreadyCompleted) return false
+
+        supabase.from("CompletedLesson").insert(
+            CompletedLessonRow(
+                userId = userId,
+                lessonId = lessonId
+            )
+        )
 
         val lessonWordCount = getLessonWordCount(lessonId)
         val newTotal = currentRow.wordsLearned + lessonWordCount
@@ -244,12 +251,7 @@ class SupabaseUserRepository(
             filter { eq("user_id", userId) }
         }
 
-        supabase.from("CompletedLesson").insert(
-            CompletedLessonRow(
-                userId = userId,
-                lessonId = lessonId
-            )
-        )
+        return true
     }
 
     private suspend fun getLessonWordCount(lessonId: Long): Int {
