@@ -13,6 +13,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -26,11 +27,13 @@ import androidx.compose.ui.unit.sp
 import ca.uwaterloo.helloasl.ui.components.ClickableSection
 import ca.uwaterloo.helloasl.ui.components.HelloASLCard
 import ca.uwaterloo.helloasl.ui.components.NumberWheelPicker
+import kotlinx.coroutines.launch
 
 @Composable
 fun ProfileView(vm: ProfileViewModel) {
     LaunchedEffect(Unit) { vm.refresh() }
     val state = vm.state
+    val scope = rememberCoroutineScope()
     var showSetGoalsPopup by rememberSaveable { mutableStateOf(false) }
 
     Column(
@@ -121,7 +124,11 @@ fun ProfileView(vm: ProfileViewModel) {
                     Text("License", style = MaterialTheme.typography.titleMedium)
                 }
                 Spacer(Modifier.height(16.dp))
-                TextButton(onClick = vm::onSignOut) {
+                TextButton(onClick = {
+                    scope.launch {
+                        vm.onSignOut()
+                    }
+                }) {
                     Text("Sign out", style = MaterialTheme.typography.titleMedium)
                 }
                 Spacer(Modifier.height(16.dp))
@@ -238,6 +245,7 @@ fun SetGoalsDialog(
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
+
                     GoalStep.DAYS -> {
                         Text("Days per week: $daysPerWeek")
                         NumberWheelPicker(

@@ -8,11 +8,11 @@ import ca.uwaterloo.helloasl.domain.learningModel.QuizChoice
 interface LearningRepository {
     suspend fun getModules(): List<Module>
     suspend fun getLessons(): List<Lesson>
-    suspend fun getLessonsByModuleId(moduleId: Int): List<Lesson>
-    suspend fun getModuleById(id: Int): Module
-    suspend fun getLessonById(id: Int): Lesson
-    suspend fun getSignById(id: Int): ASLSign?
-    suspend fun getSignsByIds(ids: List<Int>): List<ASLSign>
-    suspend fun getSignsByLessonId(lessonId: Int): List<ASLSign>
-    suspend fun getQuizChoicesBySignIds(signIds: List<Int>): List<QuizChoice>
+    suspend fun getQuizChoicesBySignIds(signIds: List<Long>): List<QuizChoice>
+    fun getLessonsByModuleId(moduleId: Long): List<Lesson>
+    fun getModuleById(id: Long): Module
+    fun getLessonById(id: Long): Lesson
+    fun getSignById(id: Long): ASLSign?
+    fun getSignsByIds(ids: List<Long>): List<ASLSign>
+    fun getSignsByLessonId(lessonId: Long): List<ASLSign>
 }

@@ -21,7 +21,7 @@ import ca.uwaterloo.helloasl.ui.screens.learning.LessonItem
 
 @Composable
 fun LearningView(
-    onOpenLesson: (lessonId: Int) -> Unit,
+    onOpenLesson: (lessonId: Long) -> Unit,
     onOpenStarred: () -> Unit,
     vm: LearningViewModel
 ) {
@@ -32,7 +32,9 @@ fun LearningView(
     LaunchedEffect(vm) {
         vm.navEvents.collectLatest { event ->
             when (event.dest) {
-                LearningDestination.LESSON -> onOpenLesson(event.lessonId as Int)
+                LearningDestination.LESSON -> {
+                    event.lessonId?.let { onOpenLesson(it) }
+                }
                 LearningDestination.STARRED -> onOpenStarred()
             }
         }

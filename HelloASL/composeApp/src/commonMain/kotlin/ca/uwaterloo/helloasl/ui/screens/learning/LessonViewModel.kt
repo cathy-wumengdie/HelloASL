@@ -9,7 +9,11 @@ import ca.uwaterloo.helloasl.domain.learningModel.QuizChoice
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -24,8 +28,16 @@ class LessonViewModel(private val model: Model) {
     private var viewingIndex: Int = 0
     private var quizIndex: Int = 0
     private var videoIndex: Int = 0
-    private var lessonId: Int? = null
-    private var onLessonCompleted: ((Int) -> Unit)? = null
+    private var lessonId: Long? = null
+    private var onLessonCompleted: ((Long) -> Unit)? = null
+
+    // timing the amount of time user learned from entering to exiting the lesson
+    private var startMs: Long? = null
+    private var tickerJob: Job? = null
+    private var committedMinutes: Int = 0
+    private val _elapsedSeconds = MutableStateFlow(0)
+    val elapsedSeconds: StateFlow<Int> = _elapsedSeconds
+
     private fun stopAndCommit() {
         if (startMs == null) return
         tickerJob?.cancel()
@@ -34,31 +46,33 @@ class LessonViewModel(private val model: Model) {
         startMs = null
     }
 
-    fun setOnLessonCompleted(listener: (Int) -> Unit) {
+    fun setOnLessonCompleted(listener: (Long) -> Unit) {
         onLessonCompleted = listener
     }
 
     fun onChoose(option: String) {
         if (state.phase != LessonPhase.QUIZ) return
+
         val sign = signs.getOrNull(quizIndex) ?: return
-        val correctChoice = quizChoices[sign.signId]
+        val correctChoice = quizChoices[sign.signId.toInt()]
             ?.firstOrNull { it.isCorrect }
             ?.choiceText
             ?: sign.gloss
+
         val correct = correctChoice == option
         val isLast = quizIndex == signs.lastIndex
         val completed = correct && isLast
 
         if (completed) {
-            // Save any accumulated learning minutes immediately
             stopAndCommit()
             _elapsedSeconds.value = 0
             committedMinutes = 0
+
             val completedLessonId = lessonId ?: return
             scope.launch {
                 model.onLessonCompleted(completedLessonId)
+                onLessonCompleted?.invoke(completedLessonId)
             }
-            onLessonCompleted?.invoke(completedLessonId)
         }
 
         state = state.copy(
@@ -71,6 +85,7 @@ class LessonViewModel(private val model: Model) {
     fun onNext() {
         if (state.phase != LessonPhase.QUIZ) return
         if (signs.isEmpty()) return
+
         if (quizIndex < signs.lastIndex) {
             quizIndex += 1
             rebuildQuiz()
@@ -124,11 +139,14 @@ class LessonViewModel(private val model: Model) {
         model.toggleStar(sign.signId)
     }
 
-    fun loadLesson(lessonId: Int) {
+    fun loadLesson(lessonId: Long) {
         this.lessonId = lessonId
         scope.launch {
             val loadedSigns = model.getSignsForLesson(lessonId)
-            val loadedChoices = model.getQuizChoicesForSigns(loadedSigns.map { it.signId })
+            val loadedChoices = model.getQuizChoicesForSigns(
+                loadedSigns.map { it.signId }
+            )
+
             signs = loadedSigns
             quizChoices = loadedChoices
             viewingIndex = 0
@@ -200,7 +218,7 @@ class LessonViewModel(private val model: Model) {
             return
         }
 
-        val choices = quizChoices[sign.signId].orEmpty()
+        val choices = quizChoices[sign.signId.toInt()].orEmpty()
         val optionTexts = if (choices.isNotEmpty()) {
             choices.map { it.choiceText }
         } else {
@@ -208,6 +226,7 @@ class LessonViewModel(private val model: Model) {
             if (!fallback.contains(sign.gloss)) fallback.add(sign.gloss)
             fallback.take(3)
         }
+
         val progressText = "Quiz ${quizIndex + 1}/${signs.size}"
 
         state = state.copy(
@@ -229,15 +248,9 @@ class LessonViewModel(private val model: Model) {
         )
     }
 
-    // timing the amount of time user learned from entering to exiting the lesson
-    private var startMs: Long? = null
-    private var tickerJob: Job? = null
-    private var committedMinutes: Int = 0
-    private val _elapsedSeconds = MutableStateFlow(0)
-    val elapsedSeconds: StateFlow<Int> = _elapsedSeconds
-
     fun onEnterLesson() {
         if (startMs != null) return
+
         startMs = System.currentTimeMillis()
         val start = startMs!!
         committedMinutes = 0
@@ -257,12 +270,13 @@ class LessonViewModel(private val model: Model) {
         committedMinutes = 0
     }
 
-    // call this on exit, and optionally when lesson completes
     fun commitMinutesIfAny() {
         val totalMinutes = _elapsedSeconds.value / 60
         val uncommitted = totalMinutes - committedMinutes
         if (uncommitted > 0) {
-            model.addLearningMinutes(uncommitted)
+            scope.launch {
+                model.addLearningMinutes(uncommitted)
+            }
             committedMinutes += uncommitted
         }
     }

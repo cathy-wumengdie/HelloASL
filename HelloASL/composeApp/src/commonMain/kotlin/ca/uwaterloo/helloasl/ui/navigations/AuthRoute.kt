@@ -14,19 +14,20 @@ fun AuthRouteHost(
     loginVm: LoginViewModel,
     signupVm: SignupViewModel,
     onRouteChange: (AuthRoute) -> Unit,
-    onAuthSuccess: () -> Unit
+    onLoginSuccess: () -> Unit,
+    onSignupSuccess: () -> Unit
 ) {
     when (route) {
         AuthRoute.LOGIN -> LoginView(
             viewModel = loginVm,
             onNavigateToSignup = { onRouteChange(AuthRoute.SIGNUP) },
-            onLoginSuccess = onAuthSuccess
+            onLoginSuccess = onLoginSuccess
         )
 
         AuthRoute.SIGNUP -> SignupView(
             viewModel = signupVm,
             onBackToLogin = { onRouteChange(AuthRoute.LOGIN) },
-            onSignupSuccess = onAuthSuccess
+            onSignupSuccess = onSignupSuccess
         )
     }
 }

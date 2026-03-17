@@ -42,7 +42,7 @@ fun updateDayStreak(
 }
 
 data class ProgressSummary(
-    val userId: Int,
+    val userId: String,
     val date: LocalDate,    // progress summary should always be up to date. If date is not today then update needed.
     val dailyProgress: DailyProgress,
     val weeklyProgress: WeeklyProgress,

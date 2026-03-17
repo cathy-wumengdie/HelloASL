@@ -1,10 +1,13 @@
 package ca.uwaterloo.helloasl.domain
 
 import ca.uwaterloo.helloasl.data.authRepository.AuthRepository
+import ca.uwaterloo.helloasl.data.authRepository.LoginResult
+import ca.uwaterloo.helloasl.data.authRepository.SignUpResult
 import ca.uwaterloo.helloasl.data.learningRepository.LearningRepository
 import ca.uwaterloo.helloasl.data.progressTrackerRepository.ProgressTrackerRepository
-import ca.uwaterloo.helloasl.data.userRepository.UserRepository
+import ca.uwaterloo.helloasl.data.starRepository.StarRepository
 import ca.uwaterloo.helloasl.data.translateRepository.TranslateRepository
+import ca.uwaterloo.helloasl.data.userRepository.UserRepository
 import ca.uwaterloo.helloasl.domain.learningModel.*
 import ca.uwaterloo.helloasl.domain.trackingModel.*
 import ca.uwaterloo.helloasl.domain.userModel.*
@@ -14,10 +17,9 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-// Repository bundle
-// auth / user / learning / ...
 data class Repositories(
     val auth: AuthRepository,
+    val star: StarRepository,
     val user: UserRepository,
     val learning: LearningRepository,
     val translate: TranslateRepository,
@@ -28,19 +30,21 @@ class Model(
     private val repos: Repositories,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) {
-    private val starredSignIds: MutableSet<Int> = mutableSetOf()
+    private val starredSignIds: MutableSet<Long> = mutableSetOf()
 
-    private val lessonLocks: MutableMap<Int, Boolean> = mutableMapOf()
+    private val lessonLocks: MutableMap<Long, Boolean> = mutableMapOf()
     private var lessonLocksInitialized = false
 
     private suspend fun ensureLessonLocksInitialized() {
         if (lessonLocksInitialized) return
+
         val lessonsByModule = repos.learning.getLessons().groupBy { it.moduleId }
         lessonsByModule.values.forEach { lessons ->
             lessons.sortedBy { it.lessonId }.forEachIndexed { index, lesson ->
                 lessonLocks[lesson.lessonId] = index != 0
             }
         }
+
         lessonLocksInitialized = true
     }
 
@@ -48,125 +52,191 @@ class Model(
         ensureLessonLocksInitialized()
     }
 
-    private fun isLessonLockedInternal(lessonId: Int): Boolean = lessonLocks[lessonId] ?: false
+    private fun isLessonLockedInternal(lessonId: Long): Boolean =
+        lessonLocks[lessonId] ?: false
 
-    // user & auth
-    fun getUser(): User = repos.user.getUser()
-    fun getUserLearningProgress(): UserLearningProgress = repos.user.getUserLearningProgress()
-    fun setLearningGoals(minutesPerDay: Int, daysPerWeek: Int) =
+    fun isLoggedIn(): Boolean {
+        return repos.auth.isLoggedIn()
+    }
+
+    suspend fun getUser(): User = repos.user.getUser()
+
+    suspend fun getUserLearningProgress(): UserLearningProgress =
+        repos.user.getUserLearningProgress()
+
+    suspend fun setLearningGoals(minutesPerDay: Int, daysPerWeek: Int) =
         repos.user.updateLearningGoals(minutesPerDay, daysPerWeek)
 
     suspend fun getNumberOfWordsLearned(): Int = withContext(ioDispatcher) {
         val learningProgress = getUserLearningProgress()
         val currentModuleId = learningProgress.moduleId
         val currentLessonId = learningProgress.lessonId
+
         val modules = repos.learning.getModules().sortedBy { it.moduleId }
         val lessonsByModule = repos.learning.getLessons().groupBy { it.moduleId }
+
+        // all lessons completed
+        if (currentModuleId == null || currentLessonId == null) {
+            val allSignIds = mutableSetOf<Long>()
+            for (module in modules) {
+                val lessons = lessonsByModule[module.moduleId].orEmpty().sortedBy { it.lessonId }
+                for (lesson in lessons) {
+                    repos.learning.getSignsByLessonId(lesson.lessonId)
+                        .forEach { allSignIds.add(it.signId) }
+                }
+            }
+            return@withContext allSignIds.size
+        }
+
         val currentModuleIndex = modules.indexOfFirst { it.moduleId == currentModuleId }
         if (currentModuleIndex == -1) error("Module not found: $currentModuleId")
-        val learnedSignIds = mutableSetOf<Int>()
 
-        // 1) Add all signs from modules before current module
+        val learnedSignIds = mutableSetOf<Long>()
+
+        // add signs from all fully completed modules
         for (module in modules.take(currentModuleIndex)) {
             val lessons = lessonsByModule[module.moduleId].orEmpty().sortedBy { it.lessonId }
             for (lesson in lessons) {
-                repos.learning.getSignsByLessonId(lesson.lessonId).forEach { learnedSignIds.add(it.signId) }
+                repos.learning.getSignsByLessonId(lesson.lessonId)
+                    .forEach { learnedSignIds.add(it.signId) }
             }
         }
 
-        // 2) Add signs from lessons before current lesson in current module
-        val currentModuleLessons = lessonsByModule[currentModuleId].orEmpty().sortedBy { it.lessonId }
-        val currentLessonIndex = currentModuleLessons.indexOfFirst { it.lessonId == currentLessonId }
-        val lessonsToCount = if (currentLessonId == -1 || currentLessonIndex == -1) {
+        // add signs from lessons before current lesson in current module
+        val currentModuleLessons =
+            lessonsByModule[currentModuleId].orEmpty().sortedBy { it.lessonId }
+
+        val currentLessonIndex =
+            currentModuleLessons.indexOfFirst { it.lessonId == currentLessonId }
+
+        val lessonsToCount = if (currentLessonIndex == -1) {
             currentModuleLessons
         } else {
             currentModuleLessons.take(currentLessonIndex)
         }
+
         for (lesson in lessonsToCount) {
-            repos.learning.getSignsByLessonId(lesson.lessonId).forEach { learnedSignIds.add(it.signId) }
+            repos.learning.getSignsByLessonId(lesson.lessonId)
+                .forEach { learnedSignIds.add(it.signId) }
         }
+
         learnedSignIds.size
     }
 
-    fun signup(name: String, email: String, password: String): Boolean = repos.auth.signup(name, email, password)
-    fun login(email: String, password: String): Boolean = repos.auth.login(email, password)
-    fun logout() = repos.auth.logout()
+    suspend fun signup(name: String, email: String, password: String): SignUpResult =
+        repos.auth.signup(name, email, password)
 
-    // learning: modules / lessons / signs
-    suspend fun getModules(): List<Module> = withContext(ioDispatcher) { repos.learning.getModules() }
-    suspend fun getLessons(): List<Lesson> = withContext(ioDispatcher) { repos.learning.getLessons() }
-    suspend fun getLessonsByModuleId(moduleId: Int): List<Lesson> = withContext(ioDispatcher) {
+    suspend fun login(email: String, password: String): LoginResult =
+        repos.auth.login(email, password)
+
+    suspend fun logout(): Result<Unit> = repos.auth.logout()
+
+    suspend fun getModules(): List<Module> = withContext(ioDispatcher) {
+        repos.learning.getModules()
+    }
+
+    suspend fun getLessons(): List<Lesson> = withContext(ioDispatcher) {
+        repos.learning.getLessons()
+    }
+
+    suspend fun getLessonsByModuleId(moduleId: Long): List<Lesson> = withContext(ioDispatcher) {
         repos.learning.getLessonsByModuleId(moduleId)
     }
-    suspend fun getModule(id: Int): Module = withContext(ioDispatcher) { repos.learning.getModuleById(id) }
-    suspend fun getLesson(lessonId: Int): Lesson = withContext(ioDispatcher) { repos.learning.getLessonById(lessonId) }
-    fun unlockLesson(lessonId: Int) {
+
+    suspend fun getModule(id: Long): Module = withContext(ioDispatcher) {
+        repos.learning.getModuleById(id)
+    }
+
+    suspend fun getLesson(lessonId: Long): Lesson = withContext(ioDispatcher) {
+        repos.learning.getLessonById(lessonId)
+    }
+
+    fun unlockLesson(lessonId: Long) {
         lessonLocks[lessonId] = false
     }
-    fun isLessonLocked(lessonId: Int): Boolean = isLessonLockedInternal(lessonId)
-    suspend fun getSignCountForLesson(lessonId: Int): Int = withContext(ioDispatcher) {
+
+    fun isLessonLocked(lessonId: Long): Boolean =
+        isLessonLockedInternal(lessonId)
+
+    suspend fun getSignCountForLesson(lessonId: Long): Int = withContext(ioDispatcher) {
         repos.learning.getSignsByLessonId(lessonId).size
     }
 
-    suspend fun getSignsForLesson(lessonId: Int): List<ASLSign> = withContext(ioDispatcher) {
+    suspend fun getSignsForLesson(lessonId: Long): List<ASLSign> = withContext(ioDispatcher) {
         repos.learning.getSignsByLessonId(lessonId)
     }
 
-    suspend fun getQuizChoicesForSigns(signIds: List<Int>): Map<Int, List<QuizChoice>> = withContext(ioDispatcher) {
-        if (signIds.isEmpty()) return@withContext emptyMap()
-        repos.learning
-            .getQuizChoicesBySignIds(signIds)
-            .groupBy { it.signId.toInt() }
-    }
-
-    suspend fun onLessonCompleted(completedLessonId: Int) = withContext(ioDispatcher) {
-        val progress = getUserLearningProgress()
-        // Ignore repeated completion of an old lesson or after all lessons are done
-        if (progress.lessonId != completedLessonId) {
-            return@withContext
-        }
-        // 1) advance learning progress first
-        val advanced = repos.user.updateLearningProgress()
-        // 2) recompute words learned based on updated progress
-        val newWordsLearned = getNumberOfWordsLearned()
-        // 3) persist to profile
-        repos.user.updateWordsLearned(newWordsLearned)
-
-        if (!advanced) {
-            // no modules and lessons left to advance => all lessons completed
-            return@withContext
-        }
-    }
-
-    // starred
-    fun isStarred(signId: Int): Boolean = signId in starredSignIds
     suspend fun getStarredSigns(): List<ASLSign> = withContext(ioDispatcher) {
         repos.learning.getSignsByIds(starredSignIds.toList())
     }
-    fun toggleStar(signId: Int): Boolean = if (starredSignIds.remove(signId)) false else {
-        starredSignIds.add(signId); true
+
+    suspend fun getQuizChoicesForSigns(signIds: List<Long>): Map<Int, List<QuizChoice>> =
+        withContext(ioDispatcher) {
+            if (signIds.isEmpty()) return@withContext emptyMap()
+
+            repos.learning
+                .getQuizChoicesBySignIds(signIds)
+                .groupBy { it.signId.toInt() }
+        }
+
+    suspend fun onLessonCompleted(completedLessonId: Long) = withContext(ioDispatcher) {
+        val progress = getUserLearningProgress()
+
+        if (progress.lessonId != completedLessonId) {
+            return@withContext
+        }
+
+        val advanced = repos.user.updateLearningProgress()
+        val newWordsLearned = getNumberOfWordsLearned()
+        repos.user.updateWordsLearned(newWordsLearned)
+
+        if (!advanced) {
+            return@withContext
+        }
     }
 
-    // quiz helpers
-    fun nextIndex(current: Int, total: Int): Int = if (total <= 0) 0 else (current + 1).coerceAtMost(total - 1)
-    fun prevIndex(current: Int, total: Int): Int = if (total <= 0) 0 else (current - 1).coerceAtLeast(0)
+    fun isStarred(signId: Long): Boolean = signId in starredSignIds
 
-    // progress tracker
-    fun getProgressSummary(): ProgressSummary = repos.progressTracker.getProgressSummary()
-    fun addLearningMinutes(minutes: Int): ProgressSummary = repos.progressTracker.addLearningMinutes(minutes)
+    fun toggleStar(signId: Long): Boolean =
+        if (starredSignIds.remove(signId)) {
+            false
+        } else {
+            starredSignIds.add(signId)
+            true
+        }
 
-    // translate
-    fun translateWord(word: String): TranslateResult? = repos.translate.searchWord(word)
-    fun getTranslateHistory(): List<TranslateHistoryItem> = repos.translate.getSearchHistory()
-    fun addTranslateHistory(word: String) = repos.translate.addHistory(word)
-    fun clearTranslateHistory() = repos.translate.clearHistory()
-    fun recognizeAsl(): AslRecognitionResult = repos.translate.recognizeAsl()
+    fun nextIndex(current: Int, total: Int): Int =
+        if (total <= 0) 0 else (current + 1).coerceAtMost(total - 1)
+
+    fun prevIndex(current: Int, total: Int): Int =
+        if (total <= 0) 0 else (current - 1).coerceAtLeast(0)
+
+    suspend fun getProgressSummary(): ProgressSummary =
+        repos.progressTracker.getProgressSummary()
+
+    suspend fun addLearningMinutes(minutes: Int): ProgressSummary =
+        repos.progressTracker.addLearningMinutes(minutes)
+
+    fun translateWord(word: String): TranslateResult? =
+        repos.translate.searchWord(word)
+
+    fun getTranslateHistory(): List<TranslateHistoryItem> =
+        repos.translate.getSearchHistory()
+
+    fun addTranslateHistory(word: String) =
+        repos.translate.addHistory(word)
+
+    fun clearTranslateHistory() =
+        repos.translate.clearHistory()
+
+    fun recognizeAsl(): AslRecognitionResult =
+        repos.translate.recognizeAsl()
 
     fun getStarredItems(): List<StarItem> {
-        return repos.user.getStarredItems()
+        return repos.star.getStarredItems()
     }
 
     fun removeStar(itemId: String) {
-        repos.user.removeStar(itemId)
+        repos.star.removeStar(itemId)
     }
 }

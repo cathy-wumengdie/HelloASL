@@ -11,27 +11,29 @@ class MockLearningRepository(private val db: MockDB) : LearningRepository {
 
     override suspend fun getLessons(): List<Lesson> = db.lessons
 
-    override suspend fun getLessonsByModuleId(moduleId: Int): List<Lesson> = db.lessons.filter { it.moduleId == moduleId }
+    override suspend fun getQuizChoicesBySignIds(signIds: List<Long>): List<QuizChoice> {
+        if (signIds.isEmpty()) return emptyList()
+        val idSet = signIds.toSet()
+        return db.quizChoices.filter { it.signId in idSet }
+    }
 
-    override suspend fun getModuleById(id: Int): Module =
+    override fun getLessonsByModuleId(moduleId: Long): List<Lesson> =
+        db.lessons.filter { it.moduleId == moduleId }
+
+    override fun getModuleById(id: Long): Module =
         db.modules.find { it.moduleId == id } ?: error("Module with id $id not found")
 
-    override suspend fun getLessonById(id: Int): Lesson =
+    override fun getLessonById(id: Long): Lesson =
         db.lessons.find { it.lessonId == id } ?: error("Lesson with id $id not found")
 
-    override suspend fun getSignById(id: Int): ASLSign? = db.signs.find { it.signId == id }
+    override fun getSignById(id: Long): ASLSign? =
+        db.signs.find { it.signId == id }
 
-    override suspend fun getSignsByIds(ids: List<Int>): List<ASLSign> {
+    override fun getSignsByIds(ids: List<Long>): List<ASLSign> {
         val signsMap = db.signs.associateBy { it.signId }
         return ids.mapNotNull { signsMap[it] }
     }
 
-    override suspend fun getSignsByLessonId(lessonId: Int): List<ASLSign> =
+    override fun getSignsByLessonId(lessonId: Long): List<ASLSign> =
         db.signs.filter { it.lessonId == lessonId }
-
-    override suspend fun getQuizChoicesBySignIds(signIds: List<Int>): List<QuizChoice> {
-        if (signIds.isEmpty()) return emptyList()
-        val idSet = signIds.toSet()
-        return db.quizChoices.filter { it.signId.toInt() in idSet }
-    }
 }

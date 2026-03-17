@@ -1,8 +1,6 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
-import org.jetbrains.compose.internal.utils.localPropertiesFile
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.util.Properties
-import kotlin.apply
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -14,9 +12,9 @@ plugins {
 }
 
 val localProps = Properties().apply {
-    val f = rootProject.file("local.properties")
-    if (f.exists()) {
-        f.inputStream().use { load(it) }
+    val file = rootProject.file("local.properties")
+    if (file.exists()) {
+        file.inputStream().use(::load)
     }
 }
 
@@ -30,14 +28,6 @@ kotlin {
     jvm()
 
     sourceSets {
-        androidMain.dependencies {
-            implementation(libs.compose.uiToolingPreview)
-            implementation(libs.androidx.activity.compose)
-            implementation("androidx.datastore:datastore-preferences:1.1.1")
-            implementation("androidx.media3:media3-exoplayer:1.2.1")
-            implementation("androidx.media3:media3-ui:1.2.1")
-            implementation("io.ktor:ktor-client-android:2.3.11")
-        }
         commonMain.dependencies {
             implementation(libs.compose.runtime)
             implementation(libs.compose.foundation)
@@ -45,14 +35,26 @@ kotlin {
             implementation(libs.compose.ui)
             implementation(libs.compose.components.resources)
             implementation(libs.compose.uiToolingPreview)
-            implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.1")
+            implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.7.1")
             implementation("org.jetbrains.compose.material:material-icons-extended:1.7.3")
-            implementation(project.dependencies.platform("io.github.jan-tennert.supabase:bom:2.4.3"))
+            implementation(project.dependencies.platform("io.github.jan-tennert.supabase:bom:3.4.1"))
+            implementation("io.github.jan-tennert.supabase:auth-kt")
             implementation("io.github.jan-tennert.supabase:postgrest-kt")
-//            implementation("io.github.jan-tennert.supabase:auth-kt")
             implementation("io.github.jan-tennert.supabase:realtime-kt")
-            implementation("io.ktor:ktor-client-android:2.3.11")
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
+        }
+        androidMain.dependencies {
+            implementation(libs.compose.uiToolingPreview)
+            implementation(libs.androidx.activity.compose)
+            implementation("androidx.datastore:datastore-preferences:1.1.1")
+            implementation("androidx.media3:media3-exoplayer:1.2.1")
+            implementation("androidx.media3:media3-ui:1.2.1")
+            implementation("io.ktor:ktor-client-android:3.0.0")
+        }
+        jvmMain.dependencies {
+            implementation(compose.desktop.currentOs)
+            implementation(libs.kotlinx.coroutinesSwing)
+            implementation("io.ktor:ktor-client-cio:3.0.0")
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -64,10 +66,6 @@ kotlin {
             implementation("androidx.test.espresso:espresso-core:3.5.1")
             implementation("androidx.test:runner:1.5.2")
             implementation("androidx.test:rules:1.5.0")
-        }
-        jvmMain.dependencies {
-            implementation(compose.desktop.currentOs)
-            implementation(libs.kotlinx.coroutinesSwing)
         }
     }
 }
@@ -119,16 +117,10 @@ android {
 dependencies {
     debugImplementation(libs.compose.uiTooling)
     debugImplementation("androidx.compose.ui:ui-test-manifest:1.7.3")
-    // CameraX (Android)
     implementation("androidx.camera:camera-core:1.4.2")
     implementation("androidx.camera:camera-camera2:1.4.2")
     implementation("androidx.camera:camera-lifecycle:1.4.2")
     implementation("androidx.camera:camera-view:1.4.2")
-    implementation(platform("io.github.jan-tennert.supabase:bom:2.4.3"))
-    implementation("io.github.jan-tennert.supabase:postgrest-kt")
-    //implementation("io.github.jan-tennert.supabase:auth-kt")
-    implementation("io.github.jan-tennert.supabase:realtime-kt")
-    implementation("io.ktor:ktor-client-android:2.3.11")
 }
 
 compose.desktop {

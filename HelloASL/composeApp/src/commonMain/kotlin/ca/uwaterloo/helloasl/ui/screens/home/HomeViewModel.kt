@@ -4,19 +4,20 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import ca.uwaterloo.helloasl.domain.Model
+import ca.uwaterloo.helloasl.ui.navigations.HomeDestination
+import ca.uwaterloo.helloasl.ui.navigations.HomeNavEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import ca.uwaterloo.helloasl.ui.navigations.HomeDestination
-import ca.uwaterloo.helloasl.ui.navigations.HomeNavEvent
-
+import kotlinx.coroutines.launch
 
 class HomeViewModel(private val model: Model) {
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+
     var state by mutableStateOf(
         HomeUiState(
             userName = "",
@@ -32,10 +33,14 @@ class HomeViewModel(private val model: Model) {
     )
         private set
 
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
-
     init {
         refresh()
+    }
+
+    fun refresh() {
+        scope.launch {
+            state = buildState()
+        }
     }
 
     private suspend fun buildState(): HomeUiState {
@@ -43,21 +48,28 @@ class HomeViewModel(private val model: Model) {
         val progressSummary = model.getProgressSummary()
         val learningProgress = model.getUserLearningProgress()
 
-        val module = model.getModule(learningProgress.moduleId)
-        val lessons = model.getLessonsByModuleId(module.moduleId).sortedBy { it.lessonId }
+        val moduleId = learningProgress.moduleId
+        val lessonId = learningProgress.lessonId
+
+        val module = moduleId?.let { model.getModule(it) }
+
+        val lessons = moduleId
+            ?.let { model.getLessonsByModuleId(it).sortedBy { l -> l.lessonId } }
+            ?: emptyList()
+
         val totalLessons = lessons.size
 
-        val lessonsCompleted = when {
-            learningProgress.lessonId == -1 -> totalLessons
-            else -> {
-                val currentLessonIndex = lessons.indexOfFirst { it.lessonId == learningProgress.lessonId }
-                if (currentLessonIndex == -1) totalLessons else currentLessonIndex
+        val lessonsCompleted =
+            if (lessonId == null) {
+                totalLessons
+            } else {
+                val index = lessons.indexOfFirst { it.lessonId == lessonId }
+                if (index == -1) totalLessons else index
             }
-        }
 
         return HomeUiState(
             userName = user.name,
-            moduleTitle = module.title,
+            moduleTitle = module?.title ?: "Learning",
             totalLessonsInModule = totalLessons,
             lessonsCompleted = lessonsCompleted,
             streakDays = progressSummary.dayStreak,
@@ -68,17 +80,12 @@ class HomeViewModel(private val model: Model) {
         )
     }
 
-    fun refresh() {
-        scope.launch {
-            state = buildState()
-        }
-    }
-
     private val _navEvents = MutableSharedFlow<HomeNavEvent>(
         replay = 0,
         extraBufferCapacity = 1,
         onBufferOverflow = BufferOverflow.DROP_OLDEST
     )
+
     val navEvents: SharedFlow<HomeNavEvent> = _navEvents.asSharedFlow()
 
     fun onDayStreak() {
