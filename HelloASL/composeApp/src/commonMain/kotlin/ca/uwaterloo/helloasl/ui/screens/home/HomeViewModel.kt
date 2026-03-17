@@ -4,6 +4,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import ca.uwaterloo.helloasl.domain.Model
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -13,10 +17,28 @@ import ca.uwaterloo.helloasl.ui.navigations.HomeNavEvent
 
 
 class HomeViewModel(private val model: Model) {
-    var state by mutableStateOf(buildState())
+    var state by mutableStateOf(
+        HomeUiState(
+            userName = "",
+            moduleTitle = "",
+            totalLessonsInModule = 0,
+            lessonsCompleted = 0,
+            streakDays = 0,
+            dailyGoalsDone = 0,
+            dailyGoalsTotal = 0,
+            weeklyGoalsDone = 0,
+            weeklyGoalsTotal = 0
+        )
+    )
         private set
 
-    private fun buildState(): HomeUiState {
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+
+    init {
+        refresh()
+    }
+
+    private suspend fun buildState(): HomeUiState {
         val user = model.getUser()
         val progressSummary = model.getProgressSummary()
         val learningProgress = model.getUserLearningProgress()
@@ -47,7 +69,9 @@ class HomeViewModel(private val model: Model) {
     }
 
     fun refresh() {
-        state = buildState()
+        scope.launch {
+            state = buildState()
+        }
     }
 
     private val _navEvents = MutableSharedFlow<HomeNavEvent>(

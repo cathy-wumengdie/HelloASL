@@ -12,6 +12,8 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 
 class LessonViewModelTest {
     private fun newVm(): Pair<LessonViewModel, Model> {
@@ -29,55 +31,74 @@ class LessonViewModelTest {
     }
 
     @Test
-    fun loadLessonPopulatesOptionsAndProgress() {
-        val (vm, model) = newVm()
+    fun loadLessonShowsViewingState() = runBlocking {
+        val (vm, _) = newVm()
         vm.loadLesson(1)
+        delay(50)
         val state = vm.state
         assertEquals("Basic Greetings", state.title)
-        assertEquals(2, state.options.size)
-        assertEquals("1/2", state.progress)
+        assertEquals(LessonPhase.VIEWING, state.phase)
+        assertEquals(0, state.options.size)
+        assertEquals("Sign 1/2", state.progress)
     }
 
     @Test
-    fun correctAnswerShowsNextWhenNotLast() {
-        val (vm, model) = newVm()
+    fun startQuizPopulatesOptionsAndProgress() = runBlocking {
+        val (vm, _) = newVm()
         vm.loadLesson(1)
-        val correct = model.getSignsForLesson(1).first().gloss
-        vm.onChoose(correct)
+        delay(50)
+        vm.onStartQuiz()
+        val state = vm.state
+        assertEquals(LessonPhase.QUIZ, state.phase)
+        assertEquals(3, state.options.size)
+        assertEquals("Quiz 1/2", state.progress)
+    }
+
+    @Test
+    fun correctAnswerShowsNextWhenNotLast() = runBlocking {
+        val (vm, _) = newVm()
+        vm.loadLesson(1)
+        delay(50)
+        vm.onStartQuiz()
+        vm.onChoose("Hello")
         assertTrue(vm.state.showNext)
     }
 
     @Test
-    fun lastQuestionCorrectFiresCompletionAndHidesNext() {
-        val (vm, model) = newVm()
+    fun lastQuestionCorrectFiresCompletionAndHidesNext() = runBlocking {
+        val (vm, _) = newVm()
         vm.loadLesson(1)
+        delay(50)
         var completedId: Int? = null
         vm.setOnLessonCompleted { completedId = it }
+        vm.onStartQuiz()
+        vm.onChoose("Hello")
         vm.onNext()
-        val correct = model.getSignsForLesson(1)[1].gloss
-        vm.onChoose(correct)
+        vm.onChoose("Thanks")
         assertEquals(1, completedId)
         assertFalse(vm.state.showNext)
     }
 
     @Test
-    fun incorrectAnswerDoesNotShowNextAndAllowsRetry() {
-        val (vm, model) = newVm()
+    fun incorrectAnswerDoesNotShowNextAndAllowsRetry() = runBlocking {
+        val (vm, _) = newVm()
         vm.loadLesson(1)
-        val signs = model.getSignsForLesson(1)
-        val correct = signs.first().gloss
-        val wrong = signs.last().gloss // different sign
-        vm.onChoose(wrong)
+        delay(50)
+        vm.onStartQuiz()
+        vm.onChoose("Yes")
         assertFalse(vm.state.showNext)
         assertFalse(vm.state.isCorrect ?: true)
-        vm.onChoose(correct)
+        vm.onChoose("Hello")
         assertTrue(vm.state.isCorrect ?: false)
     }
 
     @Test
-    fun onNextStopsAtLastQuestion() {
+    fun onNextStopsAtLastQuestion() = runBlocking {
         val (vm, _) = newVm()
         vm.loadLesson(1)
+        delay(50)
+        vm.onStartQuiz()
+        vm.onChoose("Hello")
         vm.onNext() // move to second question
         val progressAfterOne = vm.state.progress
         vm.onNext() // should stay on last

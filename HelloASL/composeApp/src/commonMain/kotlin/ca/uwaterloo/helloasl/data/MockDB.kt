@@ -153,6 +153,24 @@ class MockDB {
         )
     )
 
+    val quizChoices: List<QuizChoice> = listOf(
+        QuizChoice(choiceId = 1, signId = 1, choiceText = "Hello", isCorrect = true),
+        QuizChoice(choiceId = 2, signId = 1, choiceText = "Thanks", isCorrect = false),
+        QuizChoice(choiceId = 3, signId = 1, choiceText = "Yes", isCorrect = false),
+
+        QuizChoice(choiceId = 4, signId = 2, choiceText = "Thanks", isCorrect = true),
+        QuizChoice(choiceId = 5, signId = 2, choiceText = "Hello", isCorrect = false),
+        QuizChoice(choiceId = 6, signId = 2, choiceText = "No", isCorrect = false),
+
+        QuizChoice(choiceId = 7, signId = 3, choiceText = "Yes", isCorrect = true),
+        QuizChoice(choiceId = 8, signId = 3, choiceText = "No", isCorrect = false),
+        QuizChoice(choiceId = 9, signId = 3, choiceText = "Hello", isCorrect = false),
+
+        QuizChoice(choiceId = 10, signId = 4, choiceText = "No", isCorrect = true),
+        QuizChoice(choiceId = 11, signId = 4, choiceText = "Yes", isCorrect = false),
+        QuizChoice(choiceId = 12, signId = 4, choiceText = "Thanks", isCorrect = false)
+    )
+
     private fun getUserId(): Int {
         return userSession?.userId ?: throw IllegalStateException("User not logged in")
     }

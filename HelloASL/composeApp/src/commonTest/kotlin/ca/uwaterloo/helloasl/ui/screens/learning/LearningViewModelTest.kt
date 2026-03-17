@@ -8,13 +8,9 @@ import ca.uwaterloo.helloasl.data.translateRepository.MockTranslateRepository
 import ca.uwaterloo.helloasl.data.userRepository.MockUserRepository
 import ca.uwaterloo.helloasl.domain.Model
 import ca.uwaterloo.helloasl.domain.Repositories
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class LearningViewModelTest {
@@ -33,10 +29,12 @@ class LearningViewModelTest {
     }
 
     @Test
-    fun unlockNextUnlocksFollowingLesson() {
+    fun unlockNextUnlocksFollowingLesson() = runBlocking {
         val (vm, model) = newVm()
+        vm.refresh()
+        delay(50)
         assertTrue(model.isLessonLocked(2))
         vm.unlockNext(completedLessonId = 1)
-        assertFalse(model.isLessonLocked(2))
+        assertTrue(!model.isLessonLocked(2))
     }
 }

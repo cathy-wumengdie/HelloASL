@@ -10,6 +10,9 @@ import ca.uwaterloo.helloasl.domain.trackingModel.*
 import ca.uwaterloo.helloasl.domain.userModel.*
 import ca.uwaterloo.helloasl.domain.translateModel.*
 import ca.uwaterloo.helloasl.domain.starModel.*
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 // Repository bundle
 // auth / user / learning / ...
@@ -21,16 +24,28 @@ data class Repositories(
     val progressTracker: ProgressTrackerRepository
 )
 
-class Model(private val repos: Repositories) {
+class Model(
+    private val repos: Repositories,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
+) {
     private val starredSignIds: MutableSet<Int> = mutableSetOf()
 
-    private val lessonLocks: MutableMap<Int, Boolean> = mutableMapOf<Int, Boolean>().apply {
+    private val lessonLocks: MutableMap<Int, Boolean> = mutableMapOf()
+    private var lessonLocksInitialized = false
+
+    private suspend fun ensureLessonLocksInitialized() {
+        if (lessonLocksInitialized) return
         val lessonsByModule = repos.learning.getLessons().groupBy { it.moduleId }
         lessonsByModule.values.forEach { lessons ->
             lessons.sortedBy { it.lessonId }.forEachIndexed { index, lesson ->
-                put(lesson.lessonId, index != 0)
+                lessonLocks[lesson.lessonId] = index != 0
             }
         }
+        lessonLocksInitialized = true
+    }
+
+    suspend fun prepareLessonLocks() = withContext(ioDispatcher) {
+        ensureLessonLocksInitialized()
     }
 
     private fun isLessonLockedInternal(lessonId: Int): Boolean = lessonLocks[lessonId] ?: false
@@ -41,7 +56,7 @@ class Model(private val repos: Repositories) {
     fun setLearningGoals(minutesPerDay: Int, daysPerWeek: Int) =
         repos.user.updateLearningGoals(minutesPerDay, daysPerWeek)
 
-    fun getNumberOfWordsLearned(): Int {
+    suspend fun getNumberOfWordsLearned(): Int = withContext(ioDispatcher) {
         val learningProgress = getUserLearningProgress()
         val currentModuleId = learningProgress.moduleId
         val currentLessonId = learningProgress.lessonId
@@ -70,7 +85,7 @@ class Model(private val repos: Repositories) {
         for (lesson in lessonsToCount) {
             repos.learning.getSignsByLessonId(lesson.lessonId).forEach { learnedSignIds.add(it.signId) }
         }
-        return learnedSignIds.size
+        learnedSignIds.size
     }
 
     fun signup(name: String, email: String, password: String): Boolean = repos.auth.signup(name, email, password)
@@ -78,26 +93,37 @@ class Model(private val repos: Repositories) {
     fun logout() = repos.auth.logout()
 
     // learning: modules / lessons / signs
-    fun getModules(): List<Module> = repos.learning.getModules()
-    fun getLessons(): List<Lesson> = repos.learning.getLessons()
-    fun getLessonsByModuleId(moduleId: Int): List<Lesson> = repos.learning.getLessonsByModuleId(moduleId)
-    fun getModule(id: Int): Module = repos.learning.getModuleById(id)
-    fun getLesson(lessonId: Int): Lesson = repos.learning.getLessonById(lessonId)
+    suspend fun getModules(): List<Module> = withContext(ioDispatcher) { repos.learning.getModules() }
+    suspend fun getLessons(): List<Lesson> = withContext(ioDispatcher) { repos.learning.getLessons() }
+    suspend fun getLessonsByModuleId(moduleId: Int): List<Lesson> = withContext(ioDispatcher) {
+        repos.learning.getLessonsByModuleId(moduleId)
+    }
+    suspend fun getModule(id: Int): Module = withContext(ioDispatcher) { repos.learning.getModuleById(id) }
+    suspend fun getLesson(lessonId: Int): Lesson = withContext(ioDispatcher) { repos.learning.getLessonById(lessonId) }
     fun unlockLesson(lessonId: Int) {
         lessonLocks[lessonId] = false
     }
     fun isLessonLocked(lessonId: Int): Boolean = isLessonLockedInternal(lessonId)
-    fun getSignCountForLesson(lessonId: Int): Int = repos.learning.getSignsByLessonId(lessonId).size
-
-    fun getSignsForLesson(lessonId: Int): List<ASLSign> {
-        return repos.learning.getSignsByLessonId(lessonId)
+    suspend fun getSignCountForLesson(lessonId: Int): Int = withContext(ioDispatcher) {
+        repos.learning.getSignsByLessonId(lessonId).size
     }
 
-    fun onLessonCompleted(completedLessonId: Int) {
+    suspend fun getSignsForLesson(lessonId: Int): List<ASLSign> = withContext(ioDispatcher) {
+        repos.learning.getSignsByLessonId(lessonId)
+    }
+
+    suspend fun getQuizChoicesForSigns(signIds: List<Int>): Map<Int, List<QuizChoice>> = withContext(ioDispatcher) {
+        if (signIds.isEmpty()) return@withContext emptyMap()
+        repos.learning
+            .getQuizChoicesBySignIds(signIds)
+            .groupBy { it.signId.toInt() }
+    }
+
+    suspend fun onLessonCompleted(completedLessonId: Int) = withContext(ioDispatcher) {
         val progress = getUserLearningProgress()
         // Ignore repeated completion of an old lesson or after all lessons are done
         if (progress.lessonId != completedLessonId) {
-            return
+            return@withContext
         }
         // 1) advance learning progress first
         val advanced = repos.user.updateLearningProgress()
@@ -108,13 +134,15 @@ class Model(private val repos: Repositories) {
 
         if (!advanced) {
             // no modules and lessons left to advance => all lessons completed
-            return
+            return@withContext
         }
     }
 
     // starred
     fun isStarred(signId: Int): Boolean = signId in starredSignIds
-    fun getStarredSigns(): List<ASLSign> = repos.learning.getSignsByIds(starredSignIds.toList())
+    suspend fun getStarredSigns(): List<ASLSign> = withContext(ioDispatcher) {
+        repos.learning.getSignsByIds(starredSignIds.toList())
+    }
     fun toggleStar(signId: Int): Boolean = if (starredSignIds.remove(signId)) false else {
         starredSignIds.add(signId); true
     }

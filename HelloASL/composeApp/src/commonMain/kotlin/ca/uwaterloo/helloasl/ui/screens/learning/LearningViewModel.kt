@@ -4,6 +4,10 @@ import ca.uwaterloo.helloasl.domain.Model
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -17,10 +21,17 @@ enum class LearningDestination {
 data class LearningNavEvent(val dest: LearningDestination, val lessonId: Int? = null)
 
 class LearningViewModel(private val model: Model) {
-    var state by mutableStateOf(buildState())
+    var state by mutableStateOf(LearningUIState())
         private set
 
-    private fun buildState(): LearningUIState {
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+
+    init {
+        refresh()
+    }
+
+    private suspend fun buildState(): LearningUIState {
+        model.prepareLessonLocks()
         val modules = model.getModules()
         val lessons = model.getLessons()
         val firstModuleId = modules.firstOrNull()?.moduleId
@@ -43,6 +54,12 @@ class LearningViewModel(private val model: Model) {
             lessons = lessons,
             lessonItems = lessonItems
         )
+    }
+
+    fun refresh() {
+        scope.launch {
+            state = buildState()
+        }
     }
 
     private val _navEvents = MutableSharedFlow<LearningNavEvent>(
@@ -74,6 +91,6 @@ class LearningViewModel(private val model: Model) {
         if (nextIndex >= lessonsList.size) return
         val nextId = lessonsList[nextIndex].lessonId
         model.unlockLesson(nextId)
-        state = buildState()
+        refresh()
     }
 }
