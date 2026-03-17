@@ -5,6 +5,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import ca.uwaterloo.helloasl.domain.Model
 import ca.uwaterloo.helloasl.domain.learningModel.ASLSign
+import ca.uwaterloo.helloasl.domain.learningModel.QuizChoice
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -13,8 +17,13 @@ class LessonViewModel(private val model: Model) {
     var state by mutableStateOf(LessonUIState())
         private set
 
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+
     private var signs: List<ASLSign> = emptyList()
-    private var currentIndex: Int = 0
+    private var quizChoices: Map<Int, List<QuizChoice>> = emptyMap()
+    private var viewingIndex: Int = 0
+    private var quizIndex: Int = 0
+    private var videoIndex: Int = 0
     private var lessonId: Int? = null
     private var onLessonCompleted: ((Int) -> Unit)? = null
     private fun stopAndCommit() {
@@ -30,9 +39,14 @@ class LessonViewModel(private val model: Model) {
     }
 
     fun onChoose(option: String) {
-        val sign = signs.getOrNull(currentIndex) ?: return
-        val correct = sign.gloss == option
-        val isLast = currentIndex == signs.lastIndex
+        if (state.phase != LessonPhase.QUIZ) return
+        val sign = signs.getOrNull(quizIndex) ?: return
+        val correctChoice = quizChoices[sign.signId]
+            ?.firstOrNull { it.isCorrect }
+            ?.choiceText
+            ?: sign.gloss
+        val correct = correctChoice == option
+        val isLast = quizIndex == signs.lastIndex
         val completed = correct && isLast
 
         if (completed) {
@@ -41,7 +55,9 @@ class LessonViewModel(private val model: Model) {
             _elapsedSeconds.value = 0
             committedMinutes = 0
             val completedLessonId = lessonId ?: return
-            model.onLessonCompleted(completedLessonId)
+            scope.launch {
+                model.onLessonCompleted(completedLessonId)
+            }
             onLessonCompleted?.invoke(completedLessonId)
         }
 
@@ -53,31 +69,125 @@ class LessonViewModel(private val model: Model) {
     }
 
     fun onNext() {
+        if (state.phase != LessonPhase.QUIZ) return
         if (signs.isEmpty()) return
-        if (currentIndex < signs.lastIndex) {
-            currentIndex += 1
-            rebuildQuestion()
+        if (quizIndex < signs.lastIndex) {
+            quizIndex += 1
+            rebuildQuiz()
         }
     }
 
+    fun onPrevSign() {
+        if (state.phase != LessonPhase.VIEWING) return
+        if (viewingIndex > 0) {
+            viewingIndex -= 1
+            videoIndex = 0
+            rebuildViewing()
+        }
+    }
+
+    fun onNextSign() {
+        if (state.phase != LessonPhase.VIEWING) return
+        if (viewingIndex < signs.lastIndex) {
+            viewingIndex += 1
+            videoIndex = 0
+            rebuildViewing()
+        }
+    }
+
+    fun onPrevVideo() {
+        if (state.phase != LessonPhase.VIEWING) return
+        if (videoIndex > 0) {
+            videoIndex -= 1
+            rebuildViewing()
+        }
+    }
+
+    fun onNextVideo() {
+        if (state.phase != LessonPhase.VIEWING) return
+        val sign = signs.getOrNull(viewingIndex) ?: return
+        if (sign.videoUrl2 != null && videoIndex == 0) {
+            videoIndex = 1
+            rebuildViewing()
+        }
+    }
+
+    fun onStartQuiz() {
+        if (state.phase == LessonPhase.QUIZ) return
+        quizIndex = 0
+        state = state.copy(phase = LessonPhase.QUIZ)
+        rebuildQuiz()
+    }
+
     fun onStar() {
-        val sign = signs.getOrNull(currentIndex) ?: return
+        val sign = signs.getOrNull(viewingIndex) ?: return
         model.toggleStar(sign.signId)
     }
 
     fun loadLesson(lessonId: Int) {
         this.lessonId = lessonId
-        this.signs = model.getSignsForLesson(lessonId)
-        this.currentIndex = 0
+        scope.launch {
+            val loadedSigns = model.getSignsForLesson(lessonId)
+            val loadedChoices = model.getQuizChoicesForSigns(loadedSigns.map { it.signId })
+            signs = loadedSigns
+            quizChoices = loadedChoices
+            viewingIndex = 0
+            quizIndex = 0
+            videoIndex = 0
 
-        val title = model.getLesson(lessonId).title
-        state = state.copy(title = title)
-
-        rebuildQuestion()
+            val title = model.getLesson(lessonId).title
+            state = state.copy(title = title, phase = LessonPhase.VIEWING)
+            rebuildViewing()
+        }
     }
 
-    private fun rebuildQuestion() {
-        val sign = signs.getOrNull(currentIndex)
+    private fun rebuildViewing() {
+        val sign = signs.getOrNull(viewingIndex)
+        if (sign == null) {
+            state = state.copy(
+                signIndex = 0,
+                signTotal = 0,
+                signGloss = "",
+                videoUrl = null,
+                canPrevSign = false,
+                canNextSign = false,
+                canPrevVideo = false,
+                canNextVideo = false,
+                options = emptyList(),
+                selected = null,
+                isCorrect = null,
+                showNext = false,
+                showStartQuiz = false,
+                progress = ""
+            )
+            return
+        }
+
+        val videoUrl = if (videoIndex == 1) sign.videoUrl2 ?: sign.videoUrl1 else sign.videoUrl1
+        val hasAltVideo = sign.videoUrl2 != null
+        val progressText = "Sign ${viewingIndex + 1}/${signs.size}"
+
+        state = state.copy(
+            phase = LessonPhase.VIEWING,
+            signIndex = viewingIndex,
+            signTotal = signs.size,
+            signGloss = sign.gloss,
+            videoUrl = videoUrl,
+            canPrevSign = viewingIndex > 0,
+            canNextSign = viewingIndex < signs.lastIndex,
+            canPrevVideo = hasAltVideo && videoIndex == 1,
+            canNextVideo = hasAltVideo && videoIndex == 0,
+            options = emptyList(),
+            selected = null,
+            isCorrect = null,
+            showNext = false,
+            showStartQuiz = viewingIndex == signs.lastIndex,
+            progress = progressText
+        )
+    }
+
+    private fun rebuildQuiz() {
+        val sign = signs.getOrNull(quizIndex)
         if (sign == null) {
             state = state.copy(
                 options = emptyList(),
@@ -90,23 +200,36 @@ class LessonViewModel(private val model: Model) {
             return
         }
 
-        val correct = sign.gloss
-        val distractors = signs.map { it.gloss }.filter { it != correct }.shuffled().take(2)
-        val options = (distractors + correct).shuffled()
-        val progressText = "${currentIndex + 1}/${signs.size}"
+        val choices = quizChoices[sign.signId].orEmpty()
+        val optionTexts = if (choices.isNotEmpty()) {
+            choices.map { it.choiceText }
+        } else {
+            val fallback = signs.map { it.gloss }.distinct().toMutableList()
+            if (!fallback.contains(sign.gloss)) fallback.add(sign.gloss)
+            fallback.take(3)
+        }
+        val progressText = "Quiz ${quizIndex + 1}/${signs.size}"
 
         state = state.copy(
-            options = options,
+            phase = LessonPhase.QUIZ,
+            signIndex = quizIndex,
+            signTotal = signs.size,
+            signGloss = "",
             videoUrl = sign.videoUrl1,
+            canPrevSign = false,
+            canNextSign = false,
+            canPrevVideo = false,
+            canNextVideo = false,
+            options = optionTexts,
             selected = null,
             isCorrect = null,
             showNext = false,
+            showStartQuiz = false,
             progress = progressText
         )
     }
 
     // timing the amount of time user learned from entering to exiting the lesson
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var startMs: Long? = null
     private var tickerJob: Job? = null
     private var committedMinutes: Int = 0

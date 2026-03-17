@@ -12,7 +12,7 @@ import ca.uwaterloo.helloasl.ui.navigations.HomeDestination
 import ca.uwaterloo.helloasl.ui.navigations.HomeNavEvent
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.async
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import kotlin.test.Test
@@ -48,8 +48,10 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun init_buildsStateFromModel() {
+    fun init_buildsStateFromModel() = runBlocking {
         val (vm, _, _) = makeVmLoggedInAsUser1()
+        vm.refresh()
+        delay(50)
 
         assertEquals("Yanjin", vm.state.userName)
         assertEquals("Unit 1: Basics", vm.state.moduleTitle)
@@ -62,13 +64,16 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun refresh_rebuildsStateFromLatestRepoData_afterDbMutation() {
+    fun refresh_rebuildsStateFromLatestRepoData_afterDbMutation() = runBlocking {
         val (vm, db, _) = makeVmLoggedInAsUser1()
         db.updateLearningGoals(minutesPerDay = 30, daysPerWeek = 6)
 
+        // Add learning minutes, which can also affect streak/weekly if goal met
         db.addLearningMinutes(5)
+        // Advance learning progress: from lesson 1 -> lesson 2
         db.updateLearningProgress()
         vm.refresh()
+        delay(50)
 
         assertEquals("Yanjin", vm.state.userName)
         assertEquals("Unit 1: Basics", vm.state.moduleTitle)
@@ -79,8 +84,10 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun state_computedProperties_matchExpected() {
+    fun state_computedProperties_matchExpected() = runBlocking {
         val (vm, _, _) = makeVmLoggedInAsUser1()
+        vm.refresh()
+        delay(50)
 
         assertEquals("Lesson 0 of 2", vm.state.lessonProgress)
         assertEquals(0f / 2f, vm.state.progress)

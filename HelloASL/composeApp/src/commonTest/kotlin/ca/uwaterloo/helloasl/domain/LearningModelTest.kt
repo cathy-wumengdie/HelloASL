@@ -10,6 +10,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import kotlinx.coroutines.runBlocking
 
 class LearningModelTest {
     private fun newModel(): Model {
@@ -27,7 +28,7 @@ class LearningModelTest {
     }
 
     @Test
-    fun `unlockNext lesson reflects in lock state`() {
+    fun `unlockNext lesson reflects in lock state`() = runBlocking {
         val model = newModel()
         assertTrue(model.isLessonLocked(2))
         model.unlockLesson(2)
@@ -35,7 +36,7 @@ class LearningModelTest {
     }
 
     @Test
-    fun `getSignsForLesson returns correct sign count`() {
+    fun `getSignsForLesson returns correct sign count`() = runBlocking {
         val model = newModel()
         val signs = model.getSignsForLesson(1)
         assertEquals(2, signs.size)
@@ -43,7 +44,7 @@ class LearningModelTest {
     }
 
     @Test
-    fun `toggleStar toggles starred state`() {
+    fun `toggleStar toggles starred state`() = runBlocking {
         val model = newModel()
         val signId = 1
         assertFalse(model.isStarred(signId))
