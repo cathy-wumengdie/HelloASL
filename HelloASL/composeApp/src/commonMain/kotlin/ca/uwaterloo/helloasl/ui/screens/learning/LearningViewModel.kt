@@ -4,6 +4,7 @@ import ca.uwaterloo.helloasl.domain.Model
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import ca.uwaterloo.helloasl.domain.learningModel.Lesson
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -34,11 +35,9 @@ class LearningViewModel(private val model: Model) {
         model.prepareLessonLocks()
         val modules = model.getModules()
         val lessons = model.getLessons()
-        val firstModuleId = modules.firstOrNull()?.moduleId
-        val lessonItems: List<LessonItem> = if (firstModuleId == null) {
-            emptyList()
-        } else {
-            model.getLessonsByModuleId(firstModuleId).map { lesson ->
+        val lessonItems: List<LessonItem> = lessons
+            .sortedWith(compareBy<Lesson> { it.moduleId }.thenBy { it.lessonId })
+            .map { lesson ->
                 LessonItem(
                     lessonId = lesson.lessonId,
                     title = lesson.title,
@@ -46,7 +45,6 @@ class LearningViewModel(private val model: Model) {
                     locked = model.isLessonLocked(lesson.lessonId)
                 )
             }
-        }
 
         return LearningUIState(
             starredCount = model.getStarredSigns().size,
