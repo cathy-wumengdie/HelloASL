@@ -10,12 +10,27 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import ca.uwaterloo.helloasl.ui.navigations.ProfileDestination
 import ca.uwaterloo.helloasl.ui.navigations.ProfileNavEvent
+import kotlinx.coroutines.*
 
-class ProfileViewModel ( private val model: Model) {
-    var state by mutableStateOf(buildState())
+class ProfileViewModel(private val model: Model) {
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    var state by mutableStateOf(
+        ProfileUiState(
+            userName = "",
+            avatarText = "",
+            wordsLearned = 0,
+            starredSigns = 0,
+            learningGoalPerDay = 0,
+            learningGoalPerWeek = 0
+        )
+    )
         private set
 
-    private fun buildState(): ProfileUiState {
+    init {
+        refresh()
+    }
+
+    private suspend fun buildState(): ProfileUiState {
         val user = model.getUser()
         val progressSummary = model.getProgressSummary()
         val learningProgress = model.getUserLearningProgress()
@@ -23,19 +38,23 @@ class ProfileViewModel ( private val model: Model) {
             userName = user.name,
             avatarText = user.avatarText,
             wordsLearned = learningProgress.wordsLearned,
-            starredSigns = learningProgress.starredSigns,
+            starredSigns = 0,       /* later after star implemented*/
             learningGoalPerDay = progressSummary.dailyProgress.dailyGoalMinutes,
             learningGoalPerWeek = progressSummary.weeklyProgress.weeklyGoalDays,
         )
     }
 
     fun refresh() {
-        state = buildState()
+        scope.launch {
+            state = buildState()
+        }
     }
 
     fun onSaveLearningGoals(minutesPerDay: Int, daysPerWeek: Int) {
-        model.setLearningGoals(minutesPerDay, daysPerWeek)
-        refresh()
+        scope.launch {
+            model.setLearningGoals(minutesPerDay, daysPerWeek)
+            state = buildState()
+        }
     }
 
     private val _navEvents = MutableSharedFlow<ProfileNavEvent>(
@@ -65,8 +84,12 @@ class ProfileViewModel ( private val model: Model) {
         _navEvents.tryEmit(ProfileNavEvent(ProfileDestination.LICENSE))
     }
 
-    fun onSignOut() {
-        model.logout()
-        _navEvents.tryEmit(ProfileNavEvent(ProfileDestination.SIGN_IN))
+    suspend fun onSignOut() {
+        val result = model.logout()
+        result.onSuccess {
+            _navEvents.tryEmit(ProfileNavEvent(ProfileDestination.SIGN_IN))
+        }.onFailure { e ->
+            println("Logout failed: ${e.message}")
+        }
     }
 }

@@ -16,22 +16,22 @@ class SupabaseLearningRepository(
 
     @Serializable
     private data class ModuleRow(
-        @SerialName("module_id") val moduleId: Int,
+        @SerialName("module_id") val moduleId: Long,
         val title: String,
         val category: String? = null
     )
 
     @Serializable
     private data class LessonRow(
-        @SerialName("lesson_id") val lessonId: Int,
-        @SerialName("module_id") val moduleId: Int,
+        @SerialName("lesson_id") val lessonId: Long,
+        @SerialName("module_id") val moduleId: Long,
         val title: String
     )
 
     @Serializable
     private data class SignRow(
-        @SerialName("sign_id") val signId: Int,
-        @SerialName("lesson_id") val lessonId: Int? = null,
+        @SerialName("sign_id") val signId: Long,
+        @SerialName("lesson_id") val lessonId: Long? = null,
         val gloss: String,
         @SerialName("video_url1") val videoUrl1: String,
         @SerialName("video_url2") val videoUrl2: String? = null
@@ -67,12 +67,17 @@ class SupabaseLearningRepository(
         }
     }
 
-    override suspend fun getLessonsByModuleId(moduleId: Int): List<Lesson> {
+    override suspend fun getLessonsByModuleId(moduleId: Long): List<Lesson> {
         val rows = supabase
             .from("Lesson")
             .select { filter { eq("module_id", moduleId) } }
             .decodeList<LessonRow>()
-        AppLogger.d("SupabaseLearningRepository", "getLessonsByModuleId moduleId=$moduleId rows=${rows.size}")
+
+        AppLogger.d(
+            "SupabaseLearningRepository",
+            "getLessonsByModuleId moduleId=$moduleId rows=${rows.size}"
+        )
+
         return rows.map { row ->
             Lesson(
                 lessonId = row.lessonId,
@@ -82,7 +87,7 @@ class SupabaseLearningRepository(
         }
     }
 
-    override suspend fun getModuleById(id: Int): Module {
+    override suspend fun getModuleById(id: Long): Module {
         val moduleRow = supabase
             .from("Module")
             .select { filter { eq("module_id", id) } }
@@ -112,11 +117,12 @@ class SupabaseLearningRepository(
         )
     }
 
-    override suspend fun getLessonById(id: Int): Lesson {
+    override suspend fun getLessonById(id: Long): Lesson {
         val lessonRow = supabase
             .from("Lesson")
             .select { filter { eq("lesson_id", id) } }
-            .decodeSingleOrNull<LessonRow>() ?: error("Lesson with id $id not found")
+            .decodeSingleOrNull<LessonRow>()
+            ?: error("Lesson with id $id not found")
 
         return Lesson(
             lessonId = lessonRow.lessonId,
@@ -125,7 +131,7 @@ class SupabaseLearningRepository(
         )
     }
 
-    override suspend fun getSignById(id: Int): ASLSign? {
+    override suspend fun getSignById(id: Long): ASLSign? {
         return supabase
             .from("ASLSign")
             .select { filter { eq("sign_id", id) } }
@@ -133,7 +139,7 @@ class SupabaseLearningRepository(
             ?.toDomain()
     }
 
-    override suspend fun getSignsByIds(ids: List<Int>): List<ASLSign> {
+    override suspend fun getSignsByIds(ids: List<Long>): List<ASLSign> {
         if (ids.isEmpty()) return emptyList()
         val rows = supabase
             .from("ASLSign")
@@ -143,16 +149,21 @@ class SupabaseLearningRepository(
         return rows.map { it.toDomain() }
     }
 
-    override suspend fun getSignsByLessonId(lessonId: Int): List<ASLSign> {
+    override suspend fun getSignsByLessonId(lessonId: Long): List<ASLSign> {
         val rows = supabase
             .from("ASLSign")
             .select { filter { eq("lesson_id", lessonId) } }
             .decodeList<SignRow>()
-        AppLogger.d("SupabaseLearningRepository", "getSignsByLessonId lessonId=$lessonId rows=${rows.size}")
+
+        AppLogger.d(
+            "SupabaseLearningRepository",
+            "getSignsByLessonId lessonId=$lessonId rows=${rows.size}"
+        )
+
         return rows.map { it.toDomain() }
     }
 
-    override suspend fun getQuizChoicesBySignIds(signIds: List<Int>): List<QuizChoice> {
+    override suspend fun getQuizChoicesBySignIds(signIds: List<Long>): List<QuizChoice> {
         if (signIds.isEmpty()) return emptyList()
         val rows = supabase
             .from("QuizChoice")

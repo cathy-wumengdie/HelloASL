@@ -4,7 +4,7 @@ import ca.uwaterloo.helloasl.domain.learningModel.Module
 import ca.uwaterloo.helloasl.domain.learningModel.Lesson
 
 data class LessonItem(
-    val lessonId: Int,
+    val lessonId: Long,
     val title: String,
     val signCount: Int,
     val locked: Boolean

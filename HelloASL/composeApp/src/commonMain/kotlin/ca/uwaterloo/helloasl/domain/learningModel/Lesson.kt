@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class Lesson(
-    val lessonId: Int,
-    val moduleId: Int,
+    val lessonId: Long,
+    val moduleId: Long,
     val title: String
 )

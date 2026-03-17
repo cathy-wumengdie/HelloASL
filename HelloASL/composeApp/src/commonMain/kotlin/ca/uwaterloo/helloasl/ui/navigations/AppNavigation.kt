@@ -1,5 +1,6 @@
 package ca.uwaterloo.helloasl.ui.navigations
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -8,9 +9,11 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import ca.uwaterloo.helloasl.domain.Model
 import ca.uwaterloo.helloasl.ui.screens.PermissionsGateScreen
+import ca.uwaterloo.helloasl.ui.screens.auth.AuthUiState
 import ca.uwaterloo.helloasl.ui.screens.auth.login.LoginViewModel
 import ca.uwaterloo.helloasl.ui.screens.auth.signup.SignupViewModel
 import ca.uwaterloo.helloasl.ui.screens.home.HomeViewModel
@@ -20,6 +23,7 @@ import ca.uwaterloo.helloasl.ui.screens.learning.LessonViewModel
 import ca.uwaterloo.helloasl.ui.screens.profile.ProfileViewModel
 import ca.uwaterloo.helloasl.ui.screens.star.StarViewModel
 import ca.uwaterloo.helloasl.ui.screens.translate.TranslateViewModel
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,22 +37,51 @@ fun AppNavigation(
     hasSeenPermissionGate: Boolean,
     onPermissionGateCompleted: () -> Unit
 ) {
+    val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
     var authRoute by rememberSaveable { mutableStateOf(AuthRoute.LOGIN) }
-    var isLoggedIn by rememberSaveable { mutableStateOf(false) }
+    var authState by remember { mutableStateOf<AuthUiState>(AuthUiState.Loading) }
 
-    if (!isLoggedIn) {
-        val loginVm = remember { LoginViewModel(model) }
-        val signupVm = remember { SignupViewModel(model) }
+    LaunchedEffect(Unit) {
+        authState =
+            if (model.isLoggedIn()) AuthUiState.LoggedIn
+            else AuthUiState.LoggedOut
+    }
 
-        AuthRouteHost(
-            model = model,
-            route = authRoute,
-            loginVm = loginVm,
-            signupVm = signupVm,
-            onRouteChange = { authRoute = it },
-            onAuthSuccess = { isLoggedIn = true }
-        )
-        return
+    when (authState) {
+        AuthUiState.Loading -> {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
+            return
+        }
+
+        AuthUiState.LoggedOut -> {
+            val loginVm = remember { LoginViewModel(model) }
+            val signupVm = remember { SignupViewModel(model) }
+
+            AuthRouteHost(
+                model = model,
+                route = authRoute,
+                loginVm = loginVm,
+                signupVm = signupVm,
+                onRouteChange = { authRoute = it },
+                onLoginSuccess = {
+                    authState =
+                        if (model.isLoggedIn()) AuthUiState.LoggedIn
+                        else AuthUiState.LoggedOut
+                },
+                onSignupSuccess = {
+                    authRoute = AuthRoute.LOGIN
+                }
+            )
+            return
+        }
+
+        AuthUiState.LoggedIn -> {}
     }
 
     if (!hasSeenPermissionGate) {
@@ -67,13 +100,11 @@ fun AppNavigation(
     val translateVm = remember { TranslateViewModel(model) }
     val profileVm = remember { ProfileViewModel(model) }
     val starVm = remember { StarViewModel(model) }
-
     val learningVm = remember { LearningViewModel(model) }
     val lessonVm = remember { LessonViewModel(model) }
 
     var selectedTab by rememberSaveable { mutableStateOf(MainTab.HOME) }
     var previousTab by rememberSaveable { mutableStateOf(MainTab.LEARNING) }
-
     var learningRoute by rememberSaveable { mutableStateOf(LearningInnerRoute.LEARNING_HOME) }
     var lessonTitle by rememberSaveable { mutableStateOf("") }
 
@@ -103,6 +134,7 @@ fun AppNavigation(
     }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             when (selectedTab) {
                 MainTab.HOME -> {
@@ -213,29 +245,28 @@ fun AppNavigation(
                 }
             }
         },
-
         bottomBar = {
             NavigationBar(containerColor = navBarColor) {
                 NavigationBarItem(
-                    selected = (selectedTab == MainTab.HOME),
+                    selected = selectedTab == MainTab.HOME,
                     onClick = { selectedTab = MainTab.HOME },
                     icon = { Icon(Icons.Filled.Home, contentDescription = "Home") },
                     colors = navBarIconColors
                 )
                 NavigationBarItem(
-                    selected = (selectedTab == MainTab.LEARNING),
+                    selected = selectedTab == MainTab.LEARNING,
                     onClick = { selectedTab = MainTab.LEARNING },
                     icon = { Icon(Icons.Filled.School, contentDescription = "Learning") },
                     colors = navBarIconColors
                 )
                 NavigationBarItem(
-                    selected = (selectedTab == MainTab.TRANSLATE),
+                    selected = selectedTab == MainTab.TRANSLATE,
                     onClick = { selectedTab = MainTab.TRANSLATE },
                     icon = { Icon(Icons.Filled.Translate, contentDescription = "Translate") },
                     colors = navBarIconColors
                 )
                 NavigationBarItem(
-                    selected = (selectedTab == MainTab.PROFILE),
+                    selected = selectedTab == MainTab.PROFILE,
                     onClick = { selectedTab = MainTab.PROFILE },
                     icon = { Icon(Icons.Filled.Person, contentDescription = "Profile") },
                     colors = navBarIconColors
@@ -243,7 +274,6 @@ fun AppNavigation(
             }
         }
     ) { padding ->
-
         Surface(
             modifier = Modifier
                 .fillMaxSize()
@@ -291,9 +321,18 @@ fun AppNavigation(
                     onAccount = { /* later */ },
                     onLicense = { /* later */ },
                     onSignOut = {
-                        model.logout()
-                        isLoggedIn = false
-                        authRoute = AuthRoute.LOGIN
+                        scope.launch {
+                            val result = model.logout()
+                            result.onSuccess {
+                                authState = AuthUiState.LoggedOut
+                                authRoute = AuthRoute.LOGIN
+                            }
+                            result.onFailure { e ->
+                                snackbarHostState.showSnackbar(
+                                    message = e.message ?: "Logout failed"
+                                )
+                            }
+                        }
                     }
                 )
 

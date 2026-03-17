@@ -18,7 +18,7 @@ enum class LearningDestination {
     STARRED
 }
 
-data class LearningNavEvent(val dest: LearningDestination, val lessonId: Int? = null)
+data class LearningNavEvent(val dest: LearningDestination, val lessonId: Long? = null)
 
 class LearningViewModel(private val model: Model) {
     var state by mutableStateOf(LearningUIState())
@@ -72,18 +72,20 @@ class LearningViewModel(private val model: Model) {
     fun onOpenStarred() {
         _navEvents.tryEmit(LearningNavEvent(LearningDestination.STARRED))
     }
-    fun onOpenLesson(lessonId: Int) {
+
+    fun onOpenLesson(lessonId: Long) {
         _navEvents.tryEmit(LearningNavEvent(LearningDestination.LESSON, lessonId = lessonId))
     }
-    fun onOpenAlphabet(lessonId: Int) {
+
+    fun onOpenAlphabet(lessonId: Long) {
         onOpenLesson(lessonId)
     }
 
-    fun onOpenGreetings(lessonId: Int) {
+    fun onOpenGreetings(lessonId: Long) {
         onOpenLesson(lessonId)
     }
 
-    fun unlockNext(completedLessonId: Int) {
+    fun unlockNext(completedLessonId: Long) {
         val lessonsList = state.lessonItems
         val currentIndex = lessonsList.indexOfFirst { it.lessonId == completedLessonId }
         if (currentIndex == -1) return

@@ -9,6 +9,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import ca.uwaterloo.helloasl.ui.components.ClickableSection
 import ca.uwaterloo.helloasl.ui.components.HelloASLCard
+import kotlinx.coroutines.launch
 
 @Composable
 fun LoginView(
@@ -17,6 +18,7 @@ fun LoginView(
     onLoginSuccess: () -> Unit
 ) {
     val state = viewModel.uiState.value
+    val scope = rememberCoroutineScope()
 
     Column(
         modifier = Modifier
@@ -54,12 +56,22 @@ fun LoginView(
 
                 Button(
                     onClick = {
-                        viewModel.onSignIn(onLoginSuccess)
+                        scope.launch {
+                            viewModel.onSignIn(onLoginSuccess)
+                        }
                     },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = !state.isLoading
                 ) {
-                    Text("Sign In")
+                    if (state.isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(18.dp),
+                            strokeWidth = 2.dp,
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
+                    } else {
+                        Text("Sign In")
+                    }
                 }
 
                 state.errorMessage?.let {

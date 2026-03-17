@@ -9,6 +9,7 @@ import ca.uwaterloo.helloasl.data.userRepository.MockUserRepository
 import ca.uwaterloo.helloasl.data.learningRepository.MockLearningRepository
 import ca.uwaterloo.helloasl.data.translateRepository.MockTranslateRepository
 import ca.uwaterloo.helloasl.data.progressTrackerRepository.MockProgressTrackerRepository
+import ca.uwaterloo.helloasl.data.starRepository.MockStarRepository
 import ca.uwaterloo.helloasl.domain.Model
 import ca.uwaterloo.helloasl.domain.Repositories
 import ca.uwaterloo.helloasl.ui.navigations.AppNavigation
@@ -29,13 +30,21 @@ fun App(
         val repositories = remember {
             val db = MockDB()
             Repositories(
-                auth = MockAuthRepository(db),
-                user = MockUserRepository(db),
-                learning = supabaseDependency?.learningRepository?: MockLearningRepository(db),
+                auth = supabaseDependency?.authRepository ?: MockAuthRepository(db),
+                user = supabaseDependency?.userRepository ?: MockUserRepository(db),
+                star = MockStarRepository(db),
+                learning = supabaseDependency?.learningRepository ?: MockLearningRepository(db),
                 translate = MockTranslateRepository(db),
-                progressTracker = MockProgressTrackerRepository(db),
+                progressTracker = supabaseDependency?.progressTrackerRepository ?: MockProgressTrackerRepository(db),
             )
         }
+
+        println("Auth repo in use: ${repositories.auth::class.simpleName}")
+        println("User repo in use: ${repositories.user::class.simpleName}")
+        println("Star repo in use: ${repositories.star::class.simpleName}")
+        println("Learning repo in use: ${repositories.learning::class.simpleName}")
+        println("Translate repo in use: ${repositories.translate::class.simpleName}")
+        println("ProgressTracker repo in use: ${repositories.progressTracker::class.simpleName}")
 
         val model = remember { Model(repositories) }
 

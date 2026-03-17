@@ -4,8 +4,8 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class ASLSign(
-    val signId: Int,
-    val lessonId: Int? = null,
+    val signId: Long,
+    val lessonId: Long? = null,
     val gloss: String,
     val videoUrl1: String,
     val videoUrl2: String? = null

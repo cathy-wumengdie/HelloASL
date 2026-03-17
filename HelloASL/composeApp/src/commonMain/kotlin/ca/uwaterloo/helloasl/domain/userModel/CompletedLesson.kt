@@ -1,6 +1,6 @@
 package ca.uwaterloo.helloasl.domain.userModel
 
-data class UserCredential (
+data class CompletedLesson(
     val userId: String,
-    val passwordHash: Int
+    val lessonId: Long
 )
