@@ -34,7 +34,7 @@ fun App(
                 user = supabaseDependency?.userRepository ?: MockUserRepository(db),
                 star = MockStarRepository(db),
                 learning = supabaseDependency?.learningRepository ?: MockLearningRepository(db),
-                translate = MockTranslateRepository(db),
+                translate = supabaseDependency?. translateRepository ?: MockTranslateRepository(db),
                 progressTracker = supabaseDependency?.progressTrackerRepository ?: MockProgressTrackerRepository(db),
             )
         }
