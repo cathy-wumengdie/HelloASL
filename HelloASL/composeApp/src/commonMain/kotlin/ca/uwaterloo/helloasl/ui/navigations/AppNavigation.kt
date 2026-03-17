@@ -64,7 +64,6 @@ fun AppNavigation(
             val signupVm = remember { SignupViewModel(model) }
 
             AuthRouteHost(
-                model = model,
                 route = authRoute,
                 loginVm = loginVm,
                 signupVm = signupVm,

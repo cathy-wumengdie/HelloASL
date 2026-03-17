@@ -9,7 +9,6 @@ import ca.uwaterloo.helloasl.ui.screens.auth.signup.SignupViewModel
 
 @Composable
 fun AuthRouteHost(
-    model: Model,
     route: AuthRoute,
     loginVm: LoginViewModel,
     signupVm: SignupViewModel,
@@ -20,13 +19,18 @@ fun AuthRouteHost(
     when (route) {
         AuthRoute.LOGIN -> LoginView(
             viewModel = loginVm,
-            onNavigateToSignup = { onRouteChange(AuthRoute.SIGNUP) },
+            onNavigateToSignup = {
+                signupVm.resetState()
+                onRouteChange(AuthRoute.SIGNUP)
+            },
             onLoginSuccess = onLoginSuccess
         )
 
         AuthRoute.SIGNUP -> SignupView(
             viewModel = signupVm,
-            onBackToLogin = { onRouteChange(AuthRoute.LOGIN) },
+            onBackToLogin = {
+                onRouteChange(AuthRoute.LOGIN)
+            },
             onSignupSuccess = onSignupSuccess
         )
     }

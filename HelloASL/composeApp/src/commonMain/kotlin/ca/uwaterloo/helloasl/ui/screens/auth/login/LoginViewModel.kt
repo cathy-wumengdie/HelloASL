@@ -25,11 +25,23 @@ class LoginViewModel(private val model: Model) {
         _uiState.value = _uiState.value.copy(password = value, errorMessage = null)
     }
 
+    fun resetState() {
+        _uiState.value = LoginUiState()
+    }
+
+    fun prepareAfterSignup(email: String) {
+        _uiState.value = LoginUiState(
+            email = email.trim(),
+            password = "",
+            isLoading = false,
+            errorMessage = null
+        )
+    }
+
     suspend fun onSignIn(onSuccess: () -> Unit) {
         val email = _uiState.value.email
         val password = _uiState.value.password
 
-        // fake auth logic for sprint demo
         if (email.isBlank() || password.isBlank()) {
             _uiState.value = _uiState.value.copy(
                 isLoading = false,
