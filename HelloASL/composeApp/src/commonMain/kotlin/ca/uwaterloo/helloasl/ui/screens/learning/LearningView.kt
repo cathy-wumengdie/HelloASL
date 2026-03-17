@@ -26,8 +26,7 @@ fun LearningView(
     vm: LearningViewModel
 ) {
     val state = vm.state
-    val moduleTitle = state.modules.firstOrNull()?.title ?: "Learning"
-    val lessons = state.lessonItems
+    val lessonItemById = state.lessonItems.associateBy { it.lessonId }
 
     LaunchedEffect(vm) {
         vm.navEvents.collectLatest { event ->
@@ -42,7 +41,6 @@ fun LearningView(
 
     val pageBg = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.28f)
     val cardBg = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.55f)
-    val innerBg = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.40f)
 
     Column(
         modifier = Modifier
@@ -69,18 +67,25 @@ fun LearningView(
             }
         }
 
-        // Module + lessons
-        HelloASLCard(cardColor = cardBg, elevationDp = 0.dp) {
-            Text(moduleTitle, style = MaterialTheme.typography.titleMedium)
-            Spacer(Modifier.height(10.dp))
+        // Modules + lessons
+        state.modules.forEach { module ->
+            val moduleLessons = state.lessons
+                .filter { it.moduleId == module.moduleId }
+                .sortedBy { it.lessonId }
+                .mapNotNull { lesson -> lessonItemById[lesson.lessonId] }
 
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                lessons.forEach { lesson ->
-                    LessonRow(lesson = lesson, enabled = !lesson.locked) {
-                        if (!lesson.locked) vm.onOpenLesson(lesson.lessonId)
+            HelloASLCard(cardColor = cardBg, elevationDp = 0.dp) {
+                Text(module.title, style = MaterialTheme.typography.titleMedium)
+                Spacer(Modifier.height(10.dp))
+
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    moduleLessons.forEach { lesson ->
+                        LessonRow(lesson = lesson, enabled = !lesson.locked) {
+                            if (!lesson.locked) vm.onOpenLesson(lesson.lessonId)
+                        }
                     }
                 }
             }

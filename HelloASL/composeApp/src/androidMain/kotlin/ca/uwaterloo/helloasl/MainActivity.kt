@@ -30,8 +30,8 @@ class MainActivity : ComponentActivity() {
             val scope = rememberCoroutineScope()
             val supabaseDependency = remember {
                 createSupabaseDependencyOrNull(
-                    url = "https://dbdwlwyemwjivrrvuzjz.supabase.co",
-                    anonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRiZHdsd3llbXdqaXZycnZ1emp6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyNDY5MDksImV4cCI6MjA4ODgyMjkwOX0.7OGwHi2A0oOFhFwEBZEK_PnC0fJDHFWfRvd1Dfbng7A"
+                    url = BuildConfig.SUPABASE_URL,
+                    anonKey = BuildConfig.SUPABASE_ANON_KEY
                 )
             }
 
