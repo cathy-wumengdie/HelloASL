@@ -4,16 +4,28 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import ca.uwaterloo.helloasl.domain.Model
-import ca.uwaterloo.helloasl.domain.translateModel.TranslateResult
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 class TranslateViewModel(private val model: Model) {
-
-    var state by mutableStateOf(
-        TranslateUiState(
-            searchHistory = model.getTranslateHistory()
-        )
-    )
+    var state by mutableStateOf(TranslateUiState())
         private set
+
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+
+    init {
+        refresh()
+    }
+
+    fun refresh() {
+        scope.launch {
+            state = state.copy(
+                searchHistory = model.getTranslateHistory()
+            )
+        }
+    }
 
     fun onSwitchMode(mode: TranslateMode) {
         state = state.copy(mode = mode, errorMessage = null)
@@ -30,40 +42,46 @@ class TranslateViewModel(private val model: Model) {
             return
         }
 
-        model.addTranslateHistory(q)
-        val result: TranslateResult? = model.translateWord(q)
+        scope.launch {
+            val result = model.translateWord(q)
 
-        state = state.copy(
-            searchHistory = model.getTranslateHistory(),
-            lastResult = result,
-            errorMessage = null
-        )
+            if (result != null) {
+                model.addTranslateHistory(q)
+            }
+
+            state = state.copy(
+                searchHistory = model.getTranslateHistory(),
+                lastResult = result,
+                errorMessage = if (result == null) "No result found." else null
+            )
+        }
     }
 
     fun onSelectHistoryItem(word: String) {
         state = state.copy(query = word, errorMessage = null)
-        onSearch()  // if you click on a word in the history, it will search the word for you
+        onSearch()
     }
 
-    // Sprint 2: turn camera preview on
     fun onStartCamera() {
         state = state.copy(isCameraRunning = true, errorMessage = null)
 
-        val reco = model.recognizeAsl()
-        state = state.copy(
-            recoText = reco.recognizedText,
-            confidence = reco.confidence
-        )
+        scope.launch {
+            val reco = model.recognizeAsl()
+            state = state.copy(
+                recoText = reco.recognizedText,
+                confidence = reco.confidence
+            )
+        }
     }
 
-    // Sprint 2: turn camera preview off
     fun onStopCamera() {
         state = state.copy(isCameraRunning = false, errorMessage = null)
     }
 
-    // For future use
     fun onClearHistory() {
-        model.clearTranslateHistory()
-        state = state.copy(searchHistory = emptyList(), errorMessage = null)
+        scope.launch {
+            model.clearTranslateHistory()
+            state = state.copy(searchHistory = emptyList(), errorMessage = null)
+        }
     }
 }

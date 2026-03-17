@@ -2,12 +2,12 @@ package ca.uwaterloo.helloasl.data.translateRepository
 
 import ca.uwaterloo.helloasl.domain.translateModel.AslRecognitionResult
 import ca.uwaterloo.helloasl.domain.translateModel.TranslateHistoryItem
-import ca.uwaterloo.helloasl.domain.translateModel.TranslateResult
+import ca.uwaterloo.helloasl.domain.learningModel.ASLSign
 
 interface TranslateRepository {
-    fun searchWord(word: String): TranslateResult?
-    fun getSearchHistory(): List<TranslateHistoryItem>
-    fun addHistory(word: String)
-    fun clearHistory()
-    fun recognizeAsl(): AslRecognitionResult  // For Sprint 2 only, no AI yet
+    suspend fun searchWord(word: String): ASLSign?
+    suspend fun getSearchHistory(): List<TranslateHistoryItem>
+    suspend fun addHistory(word: String)
+    suspend fun clearHistory()
+    suspend fun recognizeAsl(): AslRecognitionResult
 }
