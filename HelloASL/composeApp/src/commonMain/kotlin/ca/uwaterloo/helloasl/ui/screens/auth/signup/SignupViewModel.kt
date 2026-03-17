@@ -38,9 +38,13 @@ class SignupViewModel(private val model: Model) {
         _uiState.value = _uiState.value.copy(confirmPassword = value)
     }
 
+    fun resetState() {
+        _uiState.value = SignupUiState()
+    }
+
     suspend fun onCreateAccount(
         onSuccess: () -> Unit,
-        onNeedsVerification: () -> Unit
+        onNeedsVerification: (String) -> Unit
     ) {
         val state = _uiState.value
         val name = state.name.trim()
@@ -80,7 +84,7 @@ class SignupViewModel(private val model: Model) {
                     infoMessage = "Account created. Please verify your email before logging in.",
                     verificationEmailSent = true
                 )
-                onNeedsVerification()
+                onNeedsVerification(email)
             }
 
             is SignUpResult.Failure -> {

@@ -50,7 +50,10 @@ fun SignupView(
                     )
 
                     Button(
-                        onClick = onBackToLogin,
+                        onClick = {
+                            viewModel.resetState()
+                            onBackToLogin()
+                        },
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text("Back to Sign In")
@@ -92,7 +95,10 @@ fun SignupView(
                     Button(
                         onClick = {
                             scope.launch {
-                                viewModel.onCreateAccount(onSuccess = onSignupSuccess, onNeedsVerification = { })
+                                viewModel.onCreateAccount(
+                                    onSuccess = onSignupSuccess,
+                                    onNeedsVerification = { }
+                                )
                             }
                         },
                         modifier = Modifier.fillMaxWidth(),
@@ -124,14 +130,19 @@ fun SignupView(
             }
         }
 
-        Spacer(Modifier.height(16.dp))
+        if (!state.verificationEmailSent) {
+            Spacer(Modifier.height(16.dp))
 
-        ClickableSection(onClick = onBackToLogin) {
-            Text(
-                text = "Back to Sign In",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.secondary
-            )
+            ClickableSection(onClick = {
+                viewModel.resetState()
+                onBackToLogin()
+            }) {
+                Text(
+                    text = "Back to Sign In",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.secondary
+                )
+            }
         }
     }
 }
