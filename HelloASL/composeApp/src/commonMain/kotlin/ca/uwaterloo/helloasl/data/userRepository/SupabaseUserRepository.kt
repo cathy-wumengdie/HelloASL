@@ -254,6 +254,18 @@ class SupabaseUserRepository(
         return true
     }
 
+    override suspend fun getCompletedLessonIds(): Set<Long> {
+        val userId = requireUserId()
+        return supabase
+            .from("CompletedLesson")
+            .select {
+                filter { eq("user_id", userId) }
+            }
+            .decodeList<CompletedLessonRow>()
+            .map { it.lessonId }
+            .toSet()
+    }
+
     private suspend fun getLessonWordCount(lessonId: Long): Int {
         return supabase
             .from("ASLSign")

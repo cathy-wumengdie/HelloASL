@@ -34,15 +34,25 @@ class Model(
 
     private val lessonLocks: MutableMap<Long, Boolean> = mutableMapOf()
     private var lessonLocksInitialized = false
+    private var lessonLocksUserId: String? = null
 
     private suspend fun ensureLessonLocksInitialized() {
-        if (lessonLocksInitialized) return
+        val currentUserId = repos.user.getUserLearningProgress().userId
+        if (lessonLocksInitialized && lessonLocksUserId == currentUserId) return
 
-        val lessonsByModule = repos.learning.getLessons().groupBy { it.moduleId }
-        lessonsByModule.values.forEach { lessons ->
-            lessons.sortedBy { it.lessonId }.forEachIndexed { index, lesson ->
-                lessonLocks[lesson.lessonId] = index != 0
-            }
+        lessonLocks.clear()
+        lessonLocksUserId = currentUserId
+
+        val lessons = repos.learning.getLessons().sortedBy { it.lessonId }
+        val completedIds = repos.user.getCompletedLessonIds()
+        val maxCompleted = completedIds.maxOrNull() ?: 0L
+        val firstLessonId = lessons.firstOrNull()?.lessonId
+        val unlockThrough = if (maxCompleted > 0L) maxCompleted + 1 else 0L
+
+        lessons.forEach { lesson ->
+            val unlockedByCompletion = unlockThrough > 0L && lesson.lessonId <= unlockThrough
+            val unlockedAsFirst = maxCompleted == 0L && lesson.lessonId == firstLessonId
+            lessonLocks[lesson.lessonId] = !(unlockedByCompletion || unlockedAsFirst)
         }
 
         lessonLocksInitialized = true
