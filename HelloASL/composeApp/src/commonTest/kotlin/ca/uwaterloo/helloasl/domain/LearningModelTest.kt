@@ -56,4 +56,42 @@ class LearningModelTest {
         assertFalse(model.toggleStar(signId))
         assertFalse(model.isStarred(signId))
     }
+
+    @Test
+    fun `prepareLessonLocks unlocks only first lesson when none completed`() = runBlocking {
+        val model = newLoggedInModel()
+        model.prepareLessonLocks()
+        assertFalse(model.isLessonLocked(1))
+        assertTrue(model.isLessonLocked(2))
+    }
+
+    @Test
+    fun `prepareLessonLocks unlocks next lesson after max completed`() = runBlocking {
+        val db = MockDB()
+        val repos = Repositories(
+            auth = MockAuthRepository(db),
+            user = MockUserRepository(db),
+            star = MockStarRepository(db),
+            learning = MockLearningRepository(db),
+            translate = MockTranslateRepository(db),
+            progressTracker = MockProgressTrackerRepository(db)
+        )
+        val model = Model(repos)
+        model.login("erdolong@gmail.com", "abc")
+        model.prepareLessonLocks()
+        assertFalse(model.isLessonLocked(2))
+    }
+
+    @Test
+    fun `getQuizChoicesForSigns returns empty for empty input`() = runBlocking {
+        val model = newLoggedInModel()
+        val choices = model.getQuizChoicesForSigns(emptyList())
+        assertTrue(choices.isEmpty())
+    }
+
+    @Test
+    fun `getSignCountForLesson returns expected count`() = runBlocking {
+        val model = newLoggedInModel()
+        assertEquals(2, model.getSignCountForLesson(1))
+    }
 }
