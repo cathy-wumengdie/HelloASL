@@ -124,6 +124,68 @@ class SupabaseProgressTrackerRepository(
         return toDomain(finalRow)
     }
 
+    override suspend fun reevaluateProgressAfterGoalChange(
+        dailyGoalMinutes: Int,
+        weeklyGoalDays: Int
+    ): ProgressSummary {
+        require(dailyGoalMinutes >= 0) { "dailyGoalMinutes must be >= 0" }
+        require(weeklyGoalDays >= 0) { "weeklyGoalDays must be >= 0" }
+
+        val userId = requireUserId()
+        val today = today()
+
+        val current = getOrCreateRow(userId, today)
+        val base = refreshForDateOrWeek(current, today)
+
+        val dailyGoalCompletedNow =
+            dailyGoalMinutes > 0 && base.dailyMinutesLearned >= dailyGoalMinutes
+
+        val (newStreak, newLastDailyGoalCompletedDate) = updateDayStreak(
+            currentStreak = base.dayStreak,
+            lastDailyGoalCompletedDate = base.lastDailyGoalCompletedDate?.let(::parseDate),
+            today = today,
+            isDailyGoalCompleted = dailyGoalCompletedNow
+        )
+
+        val alreadyCreditedThisWeekToday =
+            base.lastWeeklyCreditedDate == today.toString()
+
+        val shouldCreditWeeklyDay =
+            dailyGoalCompletedNow && !alreadyCreditedThisWeekToday
+
+        val newWeeklyDaysCompleted =
+            if (shouldCreditWeeklyDay) base.weeklyDaysCompleted + 1 else base.weeklyDaysCompleted
+
+        val newLastWeeklyCreditedDate =
+            if (shouldCreditWeeklyDay) today.toString() else base.lastWeeklyCreditedDate
+
+        val updated = ProgressSummaryUpdateRow(
+            lastUpdateDate = today.toString(),
+            dailyMinutesLearned = base.dailyMinutesLearned,
+            lastDailyGoalCompletedDate = newLastDailyGoalCompletedDate?.toString(),
+            dailyGoalMinutes = dailyGoalMinutes,
+            weeklyDaysCompleted = newWeeklyDaysCompleted,
+            lastWeeklyCreditedDate = newLastWeeklyCreditedDate,
+            weeklyGoalDays = weeklyGoalDays,
+            dayStreak = newStreak
+        )
+
+        supabase.from("ProgressSummary").update(updated) {
+            filter { eq("user_id", userId) }
+        }
+
+        val finalRow = supabase
+            .from("ProgressSummary")
+            .select {
+                filter { eq("user_id", userId) }
+            }
+            .decodeList<ProgressSummaryRow>()
+            .firstOrNull()
+            ?: error("Updated ProgressSummary not found for user $userId")
+
+        return toDomain(finalRow)
+    }
+
     private fun requireUserId(): String {
         val session = supabase.auth.currentSessionOrNull()
             ?: error("No logged-in user")

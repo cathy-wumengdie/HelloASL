@@ -300,10 +300,13 @@ class TrackingModelTest {
     fun model_setLearningGoals_persistAcrossReads() = runTest {
         val (_, model) = makeLoggedInModel()
 
-        model.setLearningGoals(minutesPerDay = 15, daysPerWeek = 4)
+        val returned = model.setLearningGoals(minutesPerDay = 15, daysPerWeek = 4)
 
         val first = model.getProgressSummary()
         val second = model.getProgressSummary()
+
+        assertEquals(15, returned.dailyProgress.dailyGoalMinutes)
+        assertEquals(4, returned.weeklyProgress.weeklyGoalDays)
 
         assertEquals(15, first.dailyProgress.dailyGoalMinutes)
         assertEquals(4, first.weeklyProgress.weeklyGoalDays)
