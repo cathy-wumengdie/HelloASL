@@ -75,17 +75,6 @@ class ProfileViewModelTest {
             progressSummary = newProgressSummary
         }
 
-        fun updateLearningGoals(minutesPerDay: Int, daysPerWeek: Int) {
-            progressSummary = progressSummary.copy(
-                dailyProgress = progressSummary.dailyProgress.copy(
-                    dailyGoalMinutes = minutesPerDay
-                ),
-                weeklyProgress = progressSummary.weeklyProgress.copy(
-                    weeklyGoalDays = daysPerWeek
-                )
-            )
-        }
-
         override suspend fun getProgressSummary(): ProgressSummary = progressSummary
 
         override suspend fun addLearningMinutes(minutes: Int): ProgressSummary {
@@ -96,12 +85,26 @@ class ProfileViewModelTest {
             )
             return progressSummary
         }
+
+        override suspend fun reevaluateProgressAfterGoalChange(
+            dailyGoalMinutes: Int,
+            weeklyGoalDays: Int
+        ): ProgressSummary {
+            progressSummary = progressSummary.copy(
+                dailyProgress = progressSummary.dailyProgress.copy(
+                    dailyGoalMinutes = dailyGoalMinutes
+                ),
+                weeklyProgress = progressSummary.weeklyProgress.copy(
+                    weeklyGoalDays = weeklyGoalDays
+                )
+            )
+            return progressSummary
+        }
     }
 
     private class FakeUserRepository(
         private var user: User,
-        private var learningProgress: UserLearningProgress,
-        private val progressRepo: FakeProgressTrackerRepository
+        private var learningProgress: UserLearningProgress
     ) : UserRepository {
 
         var lastUpdateGoals: Pair<Int, Int>? = null
@@ -121,12 +124,13 @@ class ProfileViewModelTest {
 
         override suspend fun updateLearningGoals(minutesPerDay: Int, daysPerWeek: Int) {
             lastUpdateGoals = minutesPerDay to daysPerWeek
-            progressRepo.updateLearningGoals(minutesPerDay, daysPerWeek)
         }
 
         override suspend fun completeLesson(lessonId: Long): Boolean = true
 
         override suspend fun updateLearningProgress(): Boolean = true
+
+        override suspend fun getCompletedLessonIds(): Set<Long> = emptySet()
     }
 
     private data class Fixture(
@@ -155,7 +159,7 @@ class ProfileViewModelTest {
     ): Fixture {
         val db = MockDB()
         val progressRepo = FakeProgressTrackerRepository(progressSummary)
-        val userRepo = FakeUserRepository(user, learningProgress, progressRepo)
+        val userRepo = FakeUserRepository(user, learningProgress)
 
         val model = Model(
             Repositories(
