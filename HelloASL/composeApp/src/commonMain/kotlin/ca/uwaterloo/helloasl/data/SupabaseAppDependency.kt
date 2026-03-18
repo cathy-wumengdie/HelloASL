@@ -10,6 +10,8 @@ import ca.uwaterloo.helloasl.data.translateRepository.SupabaseTranslateRepositor
 import ca.uwaterloo.helloasl.data.translateRepository.TranslateRepository
 import ca.uwaterloo.helloasl.data.userRepository.SupabaseUserRepository
 import ca.uwaterloo.helloasl.data.userRepository.UserRepository
+import ca.uwaterloo.helloasl.data.starRepository.StarRepository
+import ca.uwaterloo.helloasl.data.starRepository.SupabaseStarRepository
 import io.github.jan.supabase.SupabaseClient
 
 class SupabaseAppDependency(
@@ -20,5 +22,6 @@ class SupabaseAppDependency(
     val userRepository: UserRepository = SupabaseUserRepository(client)
     val progressTrackerRepository: ProgressTrackerRepository = SupabaseProgressTrackerRepository(client)
     val translateRepository: TranslateRepository = SupabaseTranslateRepository(client)
+    val starRepository: StarRepository = SupabaseStarRepository(supabase = client)
 }
 

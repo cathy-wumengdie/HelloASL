@@ -50,10 +50,11 @@ class LearningModelTest {
     fun `toggleStar toggles starred state`() = runBlocking {
         val model = newLoggedInModel()
         val signId = 1L
+        val tagId = 1L
         assertFalse(model.isStarred(signId))
-        assertTrue(model.toggleStar(signId))
+        assertTrue(model.toggleStar(signId, tagId))
         assertTrue(model.isStarred(signId))
-        assertFalse(model.toggleStar(signId))
+        assertFalse(model.toggleStar(signId, tagId))
         assertFalse(model.isStarred(signId))
     }
 

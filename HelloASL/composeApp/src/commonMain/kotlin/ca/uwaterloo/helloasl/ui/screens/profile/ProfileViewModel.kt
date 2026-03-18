@@ -33,11 +33,12 @@ class ProfileViewModel(private val model: Model, private val scope: CoroutineSco
         val user = model.getUser()
         val progressSummary = model.getProgressSummary()
         val learningProgress = model.getUserLearningProgress()
+        val starredItems = model.getStarredItems()
         return ProfileUiState(
             userName = user.name,
             avatarText = user.avatarText,
             wordsLearned = learningProgress.wordsLearned,
-            starredSigns = 0,       /* later after star implemented*/
+            starredSigns = starredItems.size,
             learningGoalPerDay = progressSummary.dailyProgress.dailyGoalMinutes,
             learningGoalPerWeek = progressSummary.weeklyProgress.weeklyGoalDays,
         )

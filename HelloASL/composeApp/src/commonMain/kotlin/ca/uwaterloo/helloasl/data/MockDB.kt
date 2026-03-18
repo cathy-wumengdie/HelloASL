@@ -256,18 +256,34 @@ class MockDB {
         return AslRecognitionResult(recognizedText = "Hello", confidence = 0.86f)
     }
 
-    private val starredItems = mutableMapOf(
-        "1" to mutableListOf(
-            StarItem(id = "cat", label = "Cat"),
-            StarItem(id = "dog", label = "Dog"),
-            StarItem(id = "fish", label = "Fish")
-        )
-    )
-    fun getStarredItemsForUser(userId: String): List<StarItem> {
-        return starredItems[userId]?.toList() ?: emptyList()
-    }
-
-    fun removeStarForUser(userId: String, itemId: String) {
-        starredItems[userId]?.removeAll { it.id == itemId }
-    }
+//    private val starredItems = mutableMapOf(
+//        "1" to mutableListOf(
+//            StarItem(
+//                id = "cat",
+//                signId = L,
+//                label = "please",
+//                videoUrl = "videos/cat.mp4",
+//                tagName = "Favorites"
+//            ),
+//            StarItem(
+//                id = "dog",
+//                label = "hello",
+//                videoUrl = "videos/dog.mp4",
+//                tagName = "Practice"
+//            ),
+//            StarItem(
+//                id = "fish",
+//                label = "thank you",
+//                videoUrl = "videos/fish.mp4",
+//                tagName = "Review"
+//            )
+//        )
+//    )
+//    fun getStarredItemsForUser(userId: String): List<StarItem> {
+//        return starredItems[userId]?.toList() ?: emptyList()
+//    }
+//
+//    fun removeStarForUser(userId: String, itemId: String) {
+//        starredItems[userId]?.removeAll { it.id == itemId }
+//    }
 }

@@ -14,6 +14,7 @@ import ca.uwaterloo.helloasl.domain.Model
 import ca.uwaterloo.helloasl.domain.Repositories
 import ca.uwaterloo.helloasl.ui.navigations.AppNavigation
 import ca.uwaterloo.helloasl.ui.theme.HelloASLTheme
+import kotlinx.coroutines.launch
 
 @Composable
 fun App(
@@ -32,7 +33,7 @@ fun App(
             Repositories(
                 auth = supabaseDependency?.authRepository ?: MockAuthRepository(db),
                 user = supabaseDependency?.userRepository ?: MockUserRepository(db),
-                star = MockStarRepository(db),
+                star = supabaseDependency?.starRepository ?: MockStarRepository(db),
                 learning = supabaseDependency?.learningRepository ?: MockLearningRepository(db),
                 translate = supabaseDependency?. translateRepository ?: MockTranslateRepository(db),
                 progressTracker = supabaseDependency?.progressTrackerRepository ?: MockProgressTrackerRepository(db),
@@ -48,15 +49,82 @@ fun App(
 
         val model = remember { Model(repositories) }
 
-        AppNavigation(
-            model = model,
-            hasCameraHardware = hasCameraHardware,
-            cameraGranted = cameraGranted,
-            notificationGranted = notificationGranted,
-            requestCameraPermission = requestCameraPermission,
-            requestNotificationPermission = requestNotificationPermission,
-            hasSeenPermissionGate = hasSeenPermissionGate,
-            onPermissionGateCompleted = onPermissionGateCompleted
-        )
+        androidx.compose.foundation.layout.Box {
+
+            AppNavigation(
+                model = model,
+                hasCameraHardware = hasCameraHardware,
+                cameraGranted = cameraGranted,
+                notificationGranted = notificationGranted,
+                requestCameraPermission = requestCameraPermission,
+                requestNotificationPermission = requestNotificationPermission,
+                hasSeenPermissionGate = hasSeenPermissionGate,
+                onPermissionGateCompleted = onPermissionGateCompleted
+            )
+
+            if (model.tagDialogVisible) {
+                androidx.compose.material3.AlertDialog(
+                    onDismissRequest = { model.dismissTagDialog() },
+
+                    title = {
+                        androidx.compose.material3.Text("Add Tag")
+                    },
+
+                    text = {
+                        androidx.compose.foundation.layout.Column {
+                            model.availableStarTags.forEach { tag ->
+                                androidx.compose.material3.TextButton(
+                                    onClick = {
+                                        kotlinx.coroutines.CoroutineScope(
+                                            kotlinx.coroutines.Dispatchers.Main
+                                        ).launch {
+                                            model.confirmStarWithTag(tag.id)
+                                        }
+                                    }
+                                ) {
+                                    androidx.compose.material3.Text(tag.name)
+                                }
+                            }
+
+                            androidx.compose.material3.TextButton(
+                                onClick = {
+                                    model.showCreateTagInput = true
+                                }
+                            ) {
+                                androidx.compose.material3.Text("+ New Collection")
+                            }
+
+                            if (model.showCreateTagInput) {
+                                androidx.compose.material3.OutlinedTextField(
+                                    value = model.newTagName,
+                                    onValueChange = { model.newTagName = it },
+                                    label = { androidx.compose.material3.Text("Collection name") }
+                                )
+
+                                androidx.compose.material3.Button(
+                                    onClick = {
+                                        kotlinx.coroutines.CoroutineScope(
+                                            kotlinx.coroutines.Dispatchers.Main
+                                        ).launch {
+                                            println("CLICK CREATE: ${model.newTagName}")
+
+                                            model.createTag(model.newTagName)
+                                            model.showCreateTagInput = false
+                                            model.newTagName = ""
+                                        }
+                                    }
+                                ) {
+                                    androidx.compose.material3.Text("Create")
+                                }
+                            }
+                        }
+                    },
+
+
+
+                    confirmButton = {}
+                )
+            }
+        }
     }
 }

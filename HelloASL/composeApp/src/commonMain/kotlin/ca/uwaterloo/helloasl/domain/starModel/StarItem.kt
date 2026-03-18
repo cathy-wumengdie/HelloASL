@@ -1,7 +1,8 @@
 package ca.uwaterloo.helloasl.domain.starModel
 
 data class StarItem(
-    val id: String,
+    val signId: Long,
     val label: String,
-    val imageRes: String? = null
+    val videoUrl: String?,
+    val tagName: String
 )
