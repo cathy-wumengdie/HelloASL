@@ -8,4 +8,6 @@ interface ProgressTrackerRepository {
 
     /** Adds minutes to today’s learning minutes, and updates streak + weekly progress. Returns updated summary. */
     suspend fun addLearningMinutes(minutes: Int): ProgressSummary
+
+    suspend fun reevaluateProgressAfterGoalChange(dailyGoalMinutes: Int, weeklyGoalDays: Int): ProgressSummary
 }

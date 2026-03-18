@@ -64,8 +64,13 @@ class Model(
     suspend fun getUserLearningProgress(): UserLearningProgress =
         repos.user.getUserLearningProgress()
 
-    suspend fun setLearningGoals(minutesPerDay: Int, daysPerWeek: Int) =
+    suspend fun setLearningGoals(minutesPerDay: Int, daysPerWeek: Int): ProgressSummary {
         repos.user.updateLearningGoals(minutesPerDay, daysPerWeek)
+        return repos.progressTracker.reevaluateProgressAfterGoalChange(
+            dailyGoalMinutes = minutesPerDay,
+            weeklyGoalDays = daysPerWeek
+        )
+    }
 
     suspend fun signup(name: String, email: String, password: String): SignUpResult =
         repos.auth.signup(name, email, password)
