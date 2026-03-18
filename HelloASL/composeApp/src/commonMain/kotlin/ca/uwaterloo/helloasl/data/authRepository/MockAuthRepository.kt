@@ -8,6 +8,7 @@ import ca.uwaterloo.helloasl.domain.trackingModel.WeeklyProgress
 import ca.uwaterloo.helloasl.domain.userModel.User
 import ca.uwaterloo.helloasl.domain.userModel.UserCredential
 import ca.uwaterloo.helloasl.domain.userModel.UserLearningProgress
+import ca.uwaterloo.helloasl.domain.userModel.UserSession
 import java.util.Objects.hash
 import java.util.UUID
 
@@ -21,7 +22,7 @@ class MockAuthRepository(
     ): SignUpResult {
         return try {
             val cleanEmail = email.trim().lowercase()
-            if (db.getAllUsers().values.any { it.email.lowercase() == cleanEmail }) {
+            if (db.getAllUsers().values.any { it.email.trim().lowercase() == cleanEmail }) {
                 throw IllegalStateException("Email already exists")
             }
             val newUserId = UUID.randomUUID().toString()
@@ -75,7 +76,14 @@ class MockAuthRepository(
                     wordsLearned = 0
                 )
             )
-            SignUpResult.NeedsEmailVerification
+            db.setUserSession(
+                UserSession(
+                    userId = newUser.id,
+                    userName = newUser.name,
+                    email = newUser.email,
+                )
+            )
+            SignUpResult.Success
         } catch (e: Throwable) {
             SignUpResult.Failure(e)
         }
@@ -87,17 +95,23 @@ class MockAuthRepository(
     ): LoginResult {
         return try {
             val cleanEmail = email.trim().lowercase()
-            val user = db.getAllUsers().values.find { it.email.lowercase() == cleanEmail }
-                ?: throw IllegalStateException("User not found")
+            val user = db.getAllUsers().values.find {
+                it.email.trim().lowercase() == cleanEmail
+            } ?: throw IllegalStateException("User not found")
             val credential = db.getCredential(user.id)
                 ?: throw IllegalStateException("Credential not found")
             if (credential.passwordHash != hash(password)) {
                 throw IllegalStateException("Invalid password")
             }
 
-            // Mock now behaves like Supabase with email confirmation enabled:
-            // signup creates the user, but login is blocked until email is verified.
-            LoginResult.EmailNotVerified
+            db.setUserSession(
+                UserSession(
+                    userId = user.id,
+                    userName = user.name,
+                    email = user.email
+                )
+            )
+            LoginResult.Success
         } catch (e: Throwable) {
             LoginResult.Failure(e)
         }

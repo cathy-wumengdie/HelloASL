@@ -7,17 +7,13 @@ import ca.uwaterloo.helloasl.domain.Model
 import ca.uwaterloo.helloasl.ui.navigations.HomeDestination
 import ca.uwaterloo.helloasl.ui.navigations.HomeNavEvent
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 
-class HomeViewModel(private val model: Model) {
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
-
+class HomeViewModel(private val model: Model, private val scope: CoroutineScope) {
     var state by mutableStateOf(
         HomeUiState(
             userName = "",
@@ -92,27 +88,11 @@ class HomeViewModel(private val model: Model) {
 
     val navEvents: SharedFlow<HomeNavEvent> = _navEvents.asSharedFlow()
 
-    fun onDayStreak() {
-        _navEvents.tryEmit(HomeNavEvent(HomeDestination.DAY_STREAK))
-    }
-
-    fun onDailyGoals() {
-        _navEvents.tryEmit(HomeNavEvent(HomeDestination.DAILY_GOALS))
-    }
-
     fun onLearning() {
         _navEvents.tryEmit(HomeNavEvent(HomeDestination.LEARNING))
     }
 
-    fun onTakeQuiz() {
-        _navEvents.tryEmit(HomeNavEvent(HomeDestination.QUIZ))
-    }
-
     fun onTranslate() {
         _navEvents.tryEmit(HomeNavEvent(HomeDestination.TRANSLATE))
-    }
-
-    fun onNotifications() {
-        _navEvents.tryEmit(HomeNavEvent(HomeDestination.NOTIFICATIONS))
     }
 }

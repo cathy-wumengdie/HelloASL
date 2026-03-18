@@ -61,11 +61,7 @@ fun HomeView(vm: HomeViewModel) {
                 horizontalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 Row(
-                    modifier = Modifier.weight(0.9f).clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = ripple(),
-                        onClick = vm::onDayStreak
-                    ),
+                    modifier = Modifier.weight(0.9f),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text("🔥", fontSize = MaterialTheme.typography.titleLarge.fontSize)
@@ -78,11 +74,7 @@ fun HomeView(vm: HomeViewModel) {
                     )
                 }
                 Row(
-                    modifier = Modifier.weight(1.3f).clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = ripple(),
-                        onClick = vm::onDailyGoals
-                    ),
+                    modifier = Modifier.weight(1.3f),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.End
                 ) {
@@ -134,13 +126,6 @@ fun HomeView(vm: HomeViewModel) {
                             color = MaterialTheme.colorScheme.onSurface
                         )
                     }
-                    TextButton(onClick = vm::onTakeQuiz) {
-                        Text(
-                            "Take quiz",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
                 }
             }
             HelloASLCard(modifier = Modifier.weight(1f)) {
@@ -150,13 +135,6 @@ fun HomeView(vm: HomeViewModel) {
                             Icons.Filled.Translate,
                             contentDescription = "Translate",
                             modifier = Modifier.size(40.dp)
-                        )
-                    }
-                    TextButton(onClick = vm::onTranslate) {
-                        Text(
-                            "Translate ASL",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurface
                         )
                     }
                     TextButton(onClick = vm::onTranslate) {

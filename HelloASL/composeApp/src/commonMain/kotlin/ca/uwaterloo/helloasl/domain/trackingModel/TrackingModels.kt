@@ -8,7 +8,6 @@ data class DailyProgress(
     val lastDailyGoalCompletedDate: LocalDate?,     // prevents double counting, null = never learned yet
     val dailyGoalMinutes: Int
 ) {
-    val remainingMinutes: Int = (dailyGoalMinutes - minutesLearned).coerceAtLeast(0)
     val isDailyGoalMet: Boolean = dailyGoalMinutes > 0 && minutesLearned >= dailyGoalMinutes
 }
 
@@ -16,10 +15,7 @@ data class WeeklyProgress(
     val daysCompleted: Int,
     val lastCreditedDate: LocalDate?,    // prevents double counting, null = never learned this week yet
     val weeklyGoalDays: Int
-) {
-    val remainingDays: Int = (weeklyGoalDays - daysCompleted).coerceAtLeast(0)
-    val isWeeklyGoalMet: Boolean = daysCompleted >= weeklyGoalDays
-}
+)
 
 fun updateDayStreak(
     currentStreak: Int,

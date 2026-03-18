@@ -68,7 +68,7 @@ class MockDB {
     val modules: List<Module> = listOf(
         Module(
             moduleId = 1L,
-            title = "Unit 1: Basics",
+            title = "Basics",
             category = "Beginner"
         )
     )

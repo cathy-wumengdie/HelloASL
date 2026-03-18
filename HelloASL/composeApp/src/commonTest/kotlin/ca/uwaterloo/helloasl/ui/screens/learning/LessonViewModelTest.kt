@@ -4,23 +4,25 @@ import ca.uwaterloo.helloasl.data.MockDB
 import ca.uwaterloo.helloasl.data.authRepository.MockAuthRepository
 import ca.uwaterloo.helloasl.data.learningRepository.MockLearningRepository
 import ca.uwaterloo.helloasl.data.progressTrackerRepository.MockProgressTrackerRepository
+import ca.uwaterloo.helloasl.data.starRepository.MockStarRepository
 import ca.uwaterloo.helloasl.data.translateRepository.MockTranslateRepository
 import ca.uwaterloo.helloasl.data.userRepository.MockUserRepository
 import ca.uwaterloo.helloasl.domain.Model
 import ca.uwaterloo.helloasl.domain.Repositories
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
 
 class LessonViewModelTest {
-    private fun newVm(): Pair<LessonViewModel, Model> {
+    private suspend fun newVm(): Pair<LessonViewModel, Model> {
         val db = MockDB()
         val repos = Repositories(
             auth = MockAuthRepository(db),
             user = MockUserRepository(db),
+            star = MockStarRepository(db),
             learning = MockLearningRepository(db),
             translate = MockTranslateRepository(db),
             progressTracker = MockProgressTrackerRepository(db)
@@ -33,7 +35,7 @@ class LessonViewModelTest {
     @Test
     fun loadLessonShowsViewingState() = runBlocking {
         val (vm, _) = newVm()
-        vm.loadLesson(1)
+        vm.loadLesson(1L)
         delay(50)
         val state = vm.state
         assertEquals("Basic Greetings", state.title)
@@ -45,7 +47,7 @@ class LessonViewModelTest {
     @Test
     fun startQuizPopulatesOptionsAndProgress() = runBlocking {
         val (vm, _) = newVm()
-        vm.loadLesson(1)
+        vm.loadLesson(1L)
         delay(50)
         vm.onStartQuiz()
         val state = vm.state
@@ -57,7 +59,7 @@ class LessonViewModelTest {
     @Test
     fun correctAnswerShowsNextWhenNotLast() = runBlocking {
         val (vm, _) = newVm()
-        vm.loadLesson(1)
+        vm.loadLesson(1L)
         delay(50)
         vm.onStartQuiz()
         vm.onChoose("Hello")
@@ -67,22 +69,22 @@ class LessonViewModelTest {
     @Test
     fun lastQuestionCorrectFiresCompletionAndHidesNext() = runBlocking {
         val (vm, _) = newVm()
-        vm.loadLesson(1)
+        vm.loadLesson(1L)
         delay(50)
-        var completedId: Int? = null
+        var completedId: Long? = null
         vm.setOnLessonCompleted { completedId = it }
         vm.onStartQuiz()
         vm.onChoose("Hello")
         vm.onNext()
         vm.onChoose("Thanks")
-        assertEquals(1, completedId)
+        assertEquals(1L, completedId)
         assertFalse(vm.state.showNext)
     }
 
     @Test
     fun incorrectAnswerDoesNotShowNextAndAllowsRetry() = runBlocking {
         val (vm, _) = newVm()
-        vm.loadLesson(1)
+        vm.loadLesson(1L)
         delay(50)
         vm.onStartQuiz()
         vm.onChoose("Yes")
@@ -95,7 +97,7 @@ class LessonViewModelTest {
     @Test
     fun onNextStopsAtLastQuestion() = runBlocking {
         val (vm, _) = newVm()
-        vm.loadLesson(1)
+        vm.loadLesson(1L)
         delay(50)
         vm.onStartQuiz()
         vm.onChoose("Hello")

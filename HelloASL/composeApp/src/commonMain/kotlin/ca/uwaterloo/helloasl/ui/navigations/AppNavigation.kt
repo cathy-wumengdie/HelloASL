@@ -95,9 +95,9 @@ fun AppNavigation(
         return
     }
 
-    val homeVm = remember { HomeViewModel(model) }
+    val homeVm = remember { HomeViewModel(model, scope) }
     val translateVm = remember { TranslateViewModel(model) }
-    val profileVm = remember { ProfileViewModel(model) }
+    val profileVm = remember { ProfileViewModel(model, scope) }
     val starVm = remember { StarViewModel(model) }
     val learningVm = remember { LearningViewModel(model) }
     val lessonVm = remember { LessonViewModel(model) }

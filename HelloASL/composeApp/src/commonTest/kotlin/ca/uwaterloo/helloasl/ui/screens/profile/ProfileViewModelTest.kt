@@ -1,9 +1,11 @@
 package ca.uwaterloo.helloasl.ui.screens.profile
 
+import ca.uwaterloo.helloasl.MainDispatcherRule
 import ca.uwaterloo.helloasl.data.MockDB
-import ca.uwaterloo.helloasl.data.authRepository.AuthRepository
+import ca.uwaterloo.helloasl.data.authRepository.MockAuthRepository
 import ca.uwaterloo.helloasl.data.learningRepository.MockLearningRepository
-import ca.uwaterloo.helloasl.data.progressTrackerRepository.MockProgressTrackerRepository
+import ca.uwaterloo.helloasl.data.progressTrackerRepository.ProgressTrackerRepository
+import ca.uwaterloo.helloasl.data.starRepository.MockStarRepository
 import ca.uwaterloo.helloasl.data.translateRepository.MockTranslateRepository
 import ca.uwaterloo.helloasl.data.userRepository.UserRepository
 import ca.uwaterloo.helloasl.domain.Model
@@ -15,34 +17,36 @@ import ca.uwaterloo.helloasl.domain.userModel.User
 import ca.uwaterloo.helloasl.domain.userModel.UserLearningProgress
 import ca.uwaterloo.helloasl.ui.navigations.ProfileDestination
 import ca.uwaterloo.helloasl.ui.navigations.ProfileNavEvent
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withTimeout
 import kotlinx.datetime.LocalDate
+import org.junit.Rule
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class ProfileViewModelTest {
 
-    private val TODAY = LocalDate(2026, 3, 4)
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
 
-    private class FakeAuthRepository : AuthRepository {
-        override fun signup(name: String, email: String, password: String) = true
-        override fun login(email: String, password: String) = true
-        override fun logout() {}
-    }
+    private val today = LocalDate(2026, 3, 4)
 
-    private fun ps(
-        userId: Int,
+    private fun progressSummary(
+        userId: String,
         dailyGoalMinutes: Int,
         weeklyGoalDays: Int,
         minutesLearned: Int = 0,
         weeklyDaysCompleted: Int = 0,
         dayStreak: Int = 0,
-        date: LocalDate = TODAY,
+        date: LocalDate = today,
         lastDailyGoalCompletedDate: LocalDate? = null,
         lastCreditedDate: LocalDate? = null
     ): ProgressSummary {
@@ -63,32 +67,15 @@ class ProfileViewModelTest {
         )
     }
 
-    private class FakeUserRepository(
-        private var user: User,
-        private var learningProgress: UserLearningProgress,
+    private class FakeProgressTrackerRepository(
         private var progressSummary: ProgressSummary
-    ) : UserRepository {
+    ) : ProgressTrackerRepository {
 
-        var lastUpdateGoals: Pair<Int, Int>? = null
-            private set
-
-        fun setUser(newUser: User) { user = newUser }
-        fun setLearningProgress(newLearningProgress: UserLearningProgress) {
-            learningProgress = newLearningProgress
-        }
         fun setProgressSummary(newProgressSummary: ProgressSummary) {
             progressSummary = newProgressSummary
         }
 
-        override fun getUser(): User = user
-
-        override fun getUserLearningProgress(): UserLearningProgress = learningProgress
-
-        override fun updateLearningProgress(): Boolean = true
-
-        override fun updateLearningGoals(minutesPerDay: Int, daysPerWeek: Int) {
-            lastUpdateGoals = minutesPerDay to daysPerWeek
-
+        fun updateLearningGoals(minutesPerDay: Int, daysPerWeek: Int) {
             progressSummary = progressSummary.copy(
                 dailyProgress = progressSummary.dailyProgress.copy(
                     dailyGoalMinutes = minutesPerDay
@@ -99,162 +86,248 @@ class ProfileViewModelTest {
             )
         }
 
-        override fun updateWordsLearned(wordsLearned: Int) {
-            learningProgress = learningProgress.copy(wordsLearned = wordsLearned)
+        override suspend fun getProgressSummary(): ProgressSummary = progressSummary
+
+        override suspend fun addLearningMinutes(minutes: Int): ProgressSummary {
+            progressSummary = progressSummary.copy(
+                dailyProgress = progressSummary.dailyProgress.copy(
+                    minutesLearned = progressSummary.dailyProgress.minutesLearned + minutes
+                )
+            )
+            return progressSummary
         }
-
-        override fun getStarredItems() =
-            emptyList<ca.uwaterloo.helloasl.domain.starModel.StarItem>()
-
-        override fun removeStar(itemId: String) {}
     }
 
-    private fun makeVmWith(
-        user: User = User(id = 1, name = "Yanjin Xia", email = "yanjin@gmail.com"),
+    private class FakeUserRepository(
+        private var user: User,
+        private var learningProgress: UserLearningProgress,
+        private val progressRepo: FakeProgressTrackerRepository
+    ) : UserRepository {
+
+        var lastUpdateGoals: Pair<Int, Int>? = null
+            private set
+
+        fun setUser(newUser: User) {
+            user = newUser
+        }
+
+        fun setLearningProgress(newLearningProgress: UserLearningProgress) {
+            learningProgress = newLearningProgress
+        }
+
+        override suspend fun getUser(): User = user
+
+        override suspend fun getUserLearningProgress(): UserLearningProgress = learningProgress
+
+        override suspend fun updateLearningGoals(minutesPerDay: Int, daysPerWeek: Int) {
+            lastUpdateGoals = minutesPerDay to daysPerWeek
+            progressRepo.updateLearningGoals(minutesPerDay, daysPerWeek)
+        }
+
+        override suspend fun completeLesson(lessonId: Long): Boolean = true
+
+        override suspend fun updateLearningProgress(): Boolean = true
+    }
+
+    private data class Fixture(
+        val vm: ProfileViewModel,
+        val userRepo: FakeUserRepository,
+        val progressRepo: FakeProgressTrackerRepository,
+        val model: Model
+    )
+
+    private suspend fun makeVmWith(
+        scope: CoroutineScope,
+        user: User = User(id = "1", name = "Yanjin Xia", email = "yanjin@gmail.com"),
         learningProgress: UserLearningProgress = UserLearningProgress(
-            userId = 1,
-            moduleId = 1,
-            lessonId = 2,
-            wordsLearned = 40,
-            starredSigns = 12
+            userId = "1",
+            moduleId = 1L,
+            lessonId = 2L,
+            completedAllLessons = false,
+            wordsLearned = 40
         ),
-        progressSummary: ProgressSummary = ps(
-            userId = 1,
+        progressSummary: ProgressSummary = progressSummary(
+            userId = "1",
             dailyGoalMinutes = 15,
             weeklyGoalDays = 3,
             dayStreak = 7
         )
-    ): Triple<ProfileViewModel, FakeUserRepository, Model> {
+    ): Fixture {
         val db = MockDB()
-        db.login("yanjin@gmail.com", "1234")
-        val userRepo = FakeUserRepository(user, learningProgress, progressSummary)
+        val progressRepo = FakeProgressTrackerRepository(progressSummary)
+        val userRepo = FakeUserRepository(user, learningProgress, progressRepo)
+
         val model = Model(
             Repositories(
-                auth = FakeAuthRepository(),
+                auth = MockAuthRepository(db),
                 user = userRepo,
+                star = MockStarRepository(db),
                 learning = MockLearningRepository(db),
                 translate = MockTranslateRepository(db),
-                progressTracker = MockProgressTrackerRepository(db)
+                progressTracker = progressRepo
             )
         )
-        val vm = ProfileViewModel(model)
-        return Triple(vm, userRepo, model)
+
+        model.login("yanjin@gmail.com", "1234")
+
+        val vm = ProfileViewModel(model, scope)
+        return Fixture(vm, userRepo, progressRepo, model)
+    }
+
+    private suspend fun awaitOneNavEvent(vm: ProfileViewModel): ProfileNavEvent {
+        return withTimeout(500) { vm.navEvents.first() }
     }
 
     @Test
-    fun init_buildsStateFromModel() {
-        val (vm, _, _) = makeVmWith(
-            user = User(id = 1, name = "Alice Bob", email = "a@b.com"),
+    fun init_buildsStateFromModel() = runTest {
+        val fixture = makeVmWith(
+            scope = this,
+            user = User(id = "1", name = "Alice Bob", email = "a@b.com"),
             learningProgress = UserLearningProgress(
-                userId = 1,
-                moduleId = 1,
-                lessonId = 1,
-                wordsLearned = 99,
-                starredSigns = 5
+                userId = "1",
+                moduleId = 1L,
+                lessonId = 1L,
+                completedAllLessons = false,
+                wordsLearned = 99
             ),
-            progressSummary = ps(
-                userId = 1,
+            progressSummary = progressSummary(
+                userId = "1",
                 dailyGoalMinutes = 20,
                 weeklyGoalDays = 4,
                 dayStreak = 10
             )
         )
 
-        assertEquals("Alice Bob", vm.state.userName)
-        assertEquals("AB", vm.state.avatarText)
-        assertEquals(99, vm.state.wordsLearned)
-        assertEquals(5, vm.state.starredSigns)
+        advanceUntilIdle()
+
+        assertEquals("Alice Bob", fixture.vm.state.userName)
+        assertEquals("AB", fixture.vm.state.avatarText)
+        assertEquals(99, fixture.vm.state.wordsLearned)
+        assertEquals(0, fixture.vm.state.starredSigns)
+        assertEquals(20, fixture.vm.state.learningGoalPerDay)
+        assertEquals(4, fixture.vm.state.learningGoalPerWeek)
     }
 
     @Test
-    fun refresh_rebuildsStateFromLatestRepoData() {
-        val (vm, userRepo, _) = makeVmWith()
+    fun refresh_rebuildsStateFromLatestRepoData() = runTest {
+        val fixture = makeVmWith(this)
+        advanceUntilIdle()
 
-        userRepo.setUser(User(id = 1, name = "New Name", email = "n@uw.ca"))
-        userRepo.setLearningProgress(
+        fixture.userRepo.setUser(User(id = "1", name = "New Name", email = "n@uw.ca"))
+        fixture.userRepo.setLearningProgress(
             UserLearningProgress(
-                userId = 1,
-                moduleId = 2,
-                lessonId = 3,
-                wordsLearned = 123,
-                starredSigns = 77
+                userId = "1",
+                moduleId = 2L,
+                lessonId = 3L,
+                completedAllLessons = false,
+                wordsLearned = 123
             )
         )
-        userRepo.setProgressSummary(
-            ps(
-                userId = 1,
+        fixture.progressRepo.setProgressSummary(
+            progressSummary(
+                userId = "1",
                 dailyGoalMinutes = 30,
                 weeklyGoalDays = 6,
                 dayStreak = 1
             )
         )
 
-        vm.refresh()
+        fixture.vm.refresh()
+        advanceUntilIdle()
 
-        assertEquals("New Name", vm.state.userName)
-        assertEquals("NN", vm.state.avatarText)
-        assertEquals(123, vm.state.wordsLearned)
-        assertEquals(77, vm.state.starredSigns)
+        assertEquals("New Name", fixture.vm.state.userName)
+        assertEquals("NN", fixture.vm.state.avatarText)
+        assertEquals(123, fixture.vm.state.wordsLearned)
+        assertEquals(0, fixture.vm.state.starredSigns)
+        assertEquals(30, fixture.vm.state.learningGoalPerDay)
+        assertEquals(6, fixture.vm.state.learningGoalPerWeek)
     }
 
     @Test
-    fun onSaveLearningGoals_callsModelAndRefreshesState() {
-        val (vm, userRepo, _) = makeVmWith()
-        assertNull(userRepo.lastUpdateGoals)
+    fun onSaveLearningGoals_callsModelAndRefreshesState() = runTest {
+        val fixture = makeVmWith(this)
+        advanceUntilIdle()
 
-        vm.onSaveLearningGoals(minutesPerDay = 25, daysPerWeek = 5)
+        assertNull(fixture.userRepo.lastUpdateGoals)
 
-        assertEquals(25 to 5, userRepo.lastUpdateGoals)
+        fixture.vm.onSaveLearningGoals(minutesPerDay = 25, daysPerWeek = 5)
+        advanceUntilIdle()
+
+        assertEquals(25 to 5, fixture.userRepo.lastUpdateGoals)
+        assertEquals(25, fixture.vm.state.learningGoalPerDay)
+        assertEquals(5, fixture.vm.state.learningGoalPerWeek)
     }
 
-    private suspend fun awaitOneNavEvent(vm: ProfileViewModel): ProfileNavEvent =
-        withTimeout(500) { vm.navEvents.first() }
-
     @Test
-    fun onSettings_emitsSettingsDestination() = runBlocking {
-        val (vm, _, _) = makeVmWith()
-        val wait = async(start = CoroutineStart.UNDISPATCHED) { awaitOneNavEvent(vm) }
-        vm.onSettings()
+    fun onSettings_emitsSettingsDestination() = runTest {
+        val fixture = makeVmWith(this)
+        val wait = async(start = CoroutineStart.UNDISPATCHED) {
+            awaitOneNavEvent(fixture.vm)
+        }
+
+        fixture.vm.onSettings()
+
         assertEquals(ProfileDestination.SETTINGS, wait.await().dest)
     }
 
     @Test
-    fun onWordsLearned_emitsWordsLearnedDestination() = runBlocking {
-        val (vm, _, _) = makeVmWith()
-        val wait = async(start = CoroutineStart.UNDISPATCHED) { awaitOneNavEvent(vm) }
-        vm.onWordsLearned()
+    fun onWordsLearned_emitsWordsLearnedDestination() = runTest {
+        val fixture = makeVmWith(this)
+        val wait = async(start = CoroutineStart.UNDISPATCHED) {
+            awaitOneNavEvent(fixture.vm)
+        }
+
+        fixture.vm.onWordsLearned()
+
         assertEquals(ProfileDestination.WORDS_LEARNED, wait.await().dest)
     }
 
     @Test
-    fun onStarredSigns_emitsStarredSignsDestination() = runBlocking {
-        val (vm, _, _) = makeVmWith()
-        val wait = async(start = CoroutineStart.UNDISPATCHED) { awaitOneNavEvent(vm) }
-        vm.onStarredSigns()
+    fun onStarredSigns_emitsStarredSignsDestination() = runTest {
+        val fixture = makeVmWith(this)
+        val wait = async(start = CoroutineStart.UNDISPATCHED) {
+            awaitOneNavEvent(fixture.vm)
+        }
+
+        fixture.vm.onStarredSigns()
+
         assertEquals(ProfileDestination.STARRED_SIGNS, wait.await().dest)
     }
 
     @Test
-    fun onAccount_emitsAccountDestination() = runBlocking {
-        val (vm, _, _) = makeVmWith()
-        val wait = async(start = CoroutineStart.UNDISPATCHED) { awaitOneNavEvent(vm) }
-        vm.onAccount()
+    fun onAccount_emitsAccountDestination() = runTest {
+        val fixture = makeVmWith(this)
+        val wait = async(start = CoroutineStart.UNDISPATCHED) {
+            awaitOneNavEvent(fixture.vm)
+        }
+
+        fixture.vm.onAccount()
+
         assertEquals(ProfileDestination.ACCOUNT, wait.await().dest)
     }
 
     @Test
-    fun onLicense_emitsLicenseDestination() = runBlocking {
-        val (vm, _, _) = makeVmWith()
-        val wait = async(start = CoroutineStart.UNDISPATCHED) { awaitOneNavEvent(vm) }
-        vm.onLicense()
+    fun onLicense_emitsLicenseDestination() = runTest {
+        val fixture = makeVmWith(this)
+        val wait = async(start = CoroutineStart.UNDISPATCHED) {
+            awaitOneNavEvent(fixture.vm)
+        }
+
+        fixture.vm.onLicense()
+
         assertEquals(ProfileDestination.LICENSE, wait.await().dest)
     }
 
     @Test
-    fun onSignOut_emitsSignInDestination() = runBlocking {
-        val (vm, _, _) = makeVmWith()
-        val wait = async(start = CoroutineStart.UNDISPATCHED) { awaitOneNavEvent(vm) }
-        vm.onSignOut()
+    fun onSignOut_emitsSignInDestination() = runTest {
+        val fixture = makeVmWith(this)
+        val wait = async(start = CoroutineStart.UNDISPATCHED) {
+            awaitOneNavEvent(fixture.vm)
+        }
+
+        fixture.vm.onSignOut()
+        advanceUntilIdle()
+
         assertEquals(ProfileDestination.SIGN_IN, wait.await().dest)
     }
 }

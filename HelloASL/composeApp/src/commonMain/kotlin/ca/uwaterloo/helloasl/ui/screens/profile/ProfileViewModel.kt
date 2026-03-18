@@ -12,8 +12,7 @@ import ca.uwaterloo.helloasl.ui.navigations.ProfileDestination
 import ca.uwaterloo.helloasl.ui.navigations.ProfileNavEvent
 import kotlinx.coroutines.*
 
-class ProfileViewModel(private val model: Model) {
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+class ProfileViewModel(private val model: Model, private val scope: CoroutineScope) {
     var state by mutableStateOf(
         ProfileUiState(
             userName = "",
