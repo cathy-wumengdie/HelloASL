@@ -11,20 +11,6 @@ import ca.uwaterloo.helloasl.domain.starModel.StarRow
 class SupabaseStarRepository(
     private val supabase: SupabaseClient
 ) : StarRepository {
-//    @Serializable
-//    private data class StarRow(
-//        @SerialName("user_id") val userId: String,
-//        @SerialName("sign_id") val signId: Long,
-//        @SerialName("tag_id") val tagId: Long
-//    )
-
-    override fun getStarredItems(): List<StarItem> {
-        return emptyList()
-    }
-
-    override fun removeStar(itemId: String) {
-        // TODO later
-    }
 
     override suspend fun getStarredSignIds(userId: String): List<Long> {
         val rows = supabase

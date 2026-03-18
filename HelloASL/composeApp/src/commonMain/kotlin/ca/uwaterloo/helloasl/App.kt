@@ -15,6 +15,7 @@ import ca.uwaterloo.helloasl.domain.Repositories
 import ca.uwaterloo.helloasl.ui.navigations.AppNavigation
 import ca.uwaterloo.helloasl.ui.theme.HelloASLTheme
 import kotlinx.coroutines.launch
+import androidx.compose.ui.graphics.Color
 
 @Composable
 fun App(
@@ -65,6 +66,10 @@ fun App(
             if (model.tagDialogVisible) {
                 androidx.compose.material3.AlertDialog(
                     onDismissRequest = { model.dismissTagDialog() },
+
+                    containerColor = Color(0xFFFFF8E1),   // 🌼 浅黄背景
+                    titleContentColor = Color(0xFF5D4037), // 深棕（更高级）
+                    textContentColor = Color(0xFF6D4C41),
 
                     title = {
                         androidx.compose.material3.Text("Add Tag")

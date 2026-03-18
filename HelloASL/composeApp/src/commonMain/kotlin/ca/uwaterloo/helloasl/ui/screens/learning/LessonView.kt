@@ -21,6 +21,7 @@ import ca.uwaterloo.helloasl.ui.components.SignVideoPlayer
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
 import kotlinx.coroutines.delay
+import androidx.compose.ui.graphics.Color
 
 @Composable
 fun LessonView(
@@ -123,7 +124,8 @@ fun LessonView(
                                     Icons.Filled.Star
                                 else
                                     Icons.Filled.StarBorder,
-                                contentDescription = "Star"
+                                contentDescription = "Star",
+                                tint = if (state.isStarred) Color(0xFFFFC107) else Color.Gray
                             )
                         }
                     }

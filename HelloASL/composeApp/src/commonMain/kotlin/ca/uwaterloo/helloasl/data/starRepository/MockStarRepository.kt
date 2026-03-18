@@ -1,53 +1,41 @@
 package ca.uwaterloo.helloasl.data.starRepository
 
-import ca.uwaterloo.helloasl.data.MockDB
-import ca.uwaterloo.helloasl.domain.starModel.StarItem
 import ca.uwaterloo.helloasl.domain.starModel.StarTag
 import ca.uwaterloo.helloasl.domain.starModel.StarRow
+import ca.uwaterloo.helloasl.data.MockDB
 
-class MockStarRepository(private val db: MockDB) : StarRepository {
+class MockStarRepository(
+    private val db: MockDB
+) : StarRepository {
 
-    override fun getStarredItems(): List<StarItem> {
-//        val userId = db.getUserSession()?.userId ?: return emptyList()
-//        return db.getStarredItemsForUser(userId)
-        return emptyList()
-    }
+    private val starRows = mutableMapOf<String, MutableList<StarRow>>()
 
-    override fun removeStar(itemId: String) {
-//        val userId = db.getUserSession()?.userId ?: return
-//
-//        db.removeStarForUser(userId, itemId)
-//
-//        val progress = db.getUserLearningProgress(userId) ?: return
-//        val newCount = db.getStarredItemsForUser(userId).size
-
-//        db.putUserLearningProgress(
-//            userId,
-//            progress.copy(starredSigns = newCount)
-//        )
-    }
+    private val tags = mutableMapOf<String, MutableList<StarTag>>()
 
     override suspend fun getStarredSignIds(userId: String): List<Long> {
-        return emptyList()
+        return db.getStarredSignIds(userId)
     }
 
     override suspend fun addStar(userId: String, signId: Long, tagId: Long) {
-        // do nothing
+        db.addStarRow(
+            userId,
+            StarRow(userId, signId, tagId)
+        )
     }
 
     override suspend fun removeStar(userId: String, signId: Long) {
-        // do nothing
-    }
-
-    override suspend fun getTags(userId: String): List<StarTag> {
-        return emptyList()
-    }
-
-    override suspend fun createTag(userId: String, name: String): Boolean {
-        return false
+        db.removeStar(userId, signId)
     }
 
     override suspend fun getStarRows(userId: String): List<StarRow> {
-        return emptyList()
+        return db.getStarRows(userId)
+    }
+
+    override suspend fun getTags(userId: String): List<StarTag> {
+        return db.getTags(userId)
+    }
+
+    override suspend fun createTag(userId: String, name: String): Boolean {
+        return db.createTag(userId, name)
     }
 }
