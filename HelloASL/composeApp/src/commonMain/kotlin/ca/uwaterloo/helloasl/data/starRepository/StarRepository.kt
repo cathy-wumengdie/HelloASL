@@ -5,8 +5,6 @@ import ca.uwaterloo.helloasl.domain.starModel.StarTag
 import ca.uwaterloo.helloasl.domain.starModel.StarRow
 
 interface StarRepository {
-    fun getStarredItems(): List<StarItem>
-    fun removeStar(itemId: String)
     suspend fun getStarredSignIds(userId: String): List<Long>
     suspend fun addStar(userId: String, signId: Long, tagId: Long)
     suspend fun removeStar(userId: String, signId: Long)

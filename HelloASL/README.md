@@ -36,6 +36,14 @@ in your IDE’s toolbar or run it directly from the terminal:
   ```shell
   .\gradlew.bat :composeApp:run
   ```
+  
+
+### Connect to Supabase
+To connect to the database, add the following lines to your local.properties file:
+```shell
+SUPABASE_URL=https://dbdwlwyemwjivrrvuzjz.supabase.co
+SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRiZHdsd3llbXdqaXZycnZ1emp6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyNDY5MDksImV4cCI6MjA4ODgyMjkwOX0.7OGwHi2A0oOFhFwEBZEK_PnC0fJDHFWfRvd1Dfbng7A
+```
 
 ---
 

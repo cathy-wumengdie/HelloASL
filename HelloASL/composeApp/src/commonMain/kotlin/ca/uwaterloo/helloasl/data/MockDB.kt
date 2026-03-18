@@ -6,7 +6,7 @@ import ca.uwaterloo.helloasl.domain.userModel.*
 import kotlinx.datetime.*
 import ca.uwaterloo.helloasl.domain.learningModel.*
 import ca.uwaterloo.helloasl.domain.translateModel.*
-import ca.uwaterloo.helloasl.domain.starModel.StarItem
+import ca.uwaterloo.helloasl.domain.starModel.*
 import java.util.Objects.hash
 
 class MockDB {
@@ -256,34 +256,74 @@ class MockDB {
         return AslRecognitionResult(recognizedText = "Hello", confidence = 0.86f)
     }
 
-//    private val starredItems = mutableMapOf(
-//        "1" to mutableListOf(
-//            StarItem(
-//                id = "cat",
-//                signId = L,
-//                label = "please",
-//                videoUrl = "videos/cat.mp4",
-//                tagName = "Favorites"
-//            ),
-//            StarItem(
-//                id = "dog",
-//                label = "hello",
-//                videoUrl = "videos/dog.mp4",
-//                tagName = "Practice"
-//            ),
-//            StarItem(
-//                id = "fish",
-//                label = "thank you",
-//                videoUrl = "videos/fish.mp4",
-//                tagName = "Review"
-//            )
-//        )
-//    )
-//    fun getStarredItemsForUser(userId: String): List<StarItem> {
-//        return starredItems[userId]?.toList() ?: emptyList()
-//    }
-//
-//    fun removeStarForUser(userId: String, itemId: String) {
-//        starredItems[userId]?.removeAll { it.id == itemId }
-//    }
+    private val starRows = mutableMapOf<String, MutableList<StarRow>>()
+    private val tags = mutableMapOf<String, MutableList<StarTag>>()
+    private val signMap = mutableMapOf<Long, Pair<String, String?>>()
+
+    fun addStarRow(userId: String, row: StarRow) {
+        val list = starRows.getOrPut(userId) { mutableListOf() }
+        list.add(row)
+    }
+
+    fun removeStar(userId: String, signId: Long) {
+        val list = starRows[userId] ?: return
+        list.removeAll { it.signId == signId }
+    }
+
+    fun getStarRows(userId: String): List<StarRow> {
+        return starRows[userId]?.toList() ?: emptyList()
+    }
+
+    fun getStarredSignIds(userId: String): List<Long> {
+        return starRows[userId]?.map { it.signId } ?: emptyList()
+    }
+
+    fun addTag(userId: String, tag: StarTag) {
+        val list = tags.getOrPut(userId) { mutableListOf() }
+        list.add(tag)
+    }
+
+    fun getTags(userId: String): List<StarTag> {
+        return tags[userId]?.toList() ?: emptyList()
+    }
+
+    fun createTag(userId: String, name: String): Boolean {
+        val userTags = tags.getOrPut(userId) { mutableListOf() }
+
+        if (userTags.any { it.name == name }) return false
+
+        val newId = (userTags.maxOfOrNull { it.id } ?: 0L) + 1
+
+        userTags.add(
+            StarTag(
+                id = newId,
+                name = name,
+                userId = userId
+            )
+        )
+
+        return true
+    }
+
+    fun addSign(signId: Long, label: String, videoUrl: String?) {
+        signMap[signId] = label to videoUrl
+    }
+
+    fun getStarItems(userId: String): List<StarItem> {
+        val rows = getStarRows(userId)
+        val userTags = getTags(userId).associateBy { it.id }
+
+        return rows.mapNotNull { row ->
+            val sign = signMap[row.signId] ?: return@mapNotNull null
+            val tag = userTags[row.tagId]
+
+            StarItem(
+                signId = row.signId,
+                label = sign.first,
+                videoUrl = sign.second,
+                tagName = tag?.name ?: "Unknown"
+            )
+        }
+    }
+
 }
