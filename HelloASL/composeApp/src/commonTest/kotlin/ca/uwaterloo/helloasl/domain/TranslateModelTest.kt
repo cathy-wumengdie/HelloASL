@@ -7,10 +7,14 @@ import ca.uwaterloo.helloasl.data.progressTrackerRepository.MockProgressTrackerR
 import ca.uwaterloo.helloasl.data.starRepository.MockStarRepository
 import ca.uwaterloo.helloasl.data.translateRepository.MockTranslateRepository
 import ca.uwaterloo.helloasl.data.userRepository.MockUserRepository
-import kotlin.test.*
+import kotlinx.coroutines.test.runTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 internal class TranslateModelTest {
-    private fun makeModel(): Pair<MockDB, Model> {
+    private fun makeModel(): Model {
         val db = MockDB()
         val repos = Repositories(
             auth = MockAuthRepository(db),
@@ -20,12 +24,12 @@ internal class TranslateModelTest {
             translate = MockTranslateRepository(db),
             progressTracker = MockProgressTrackerRepository(db)
         )
-        return db to Model(repos)
+        return Model(repos)
     }
 
     @Test
-    fun addTranslateHistory_then_getTranslateHistory_returns_newest_first() {
-        val (db, model) = makeModel()
+    fun addTranslateHistory_then_getTranslateHistory_returns_newest_first() = runTest {
+        val model = makeModel()
 
         model.clearTranslateHistory()
         model.addTranslateHistory("Hello")
@@ -37,17 +41,18 @@ internal class TranslateModelTest {
     }
 
     @Test
-    fun translateWord_returns_result_object() {
-        val (db, model) = makeModel()
+    fun translateWord_returns_asl_sign() = runTest {
+        val model = makeModel()
 
         val result = model.translateWord("hello")
         assertNotNull(result)
-        assertTrue(result.query.isNotBlank())
+        assertEquals("Hello", result.gloss)
+        assertTrue(result.videoUrl1.isNotBlank())
     }
 
     @Test
-    fun recognizeAsl_returns_text_and_confidence() {
-        val (db, model) = makeModel()
+    fun recognizeAsl_returns_text_and_confidence() = runTest {
+        val model = makeModel()
 
         val reco = model.recognizeAsl()
         assertTrue(reco.recognizedText.isNotBlank())
