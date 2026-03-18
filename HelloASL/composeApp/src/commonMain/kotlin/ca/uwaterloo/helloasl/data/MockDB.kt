@@ -218,25 +218,23 @@ class MockDB {
         userSession = null
     }
 
-    // ------ Translate ------ (Fake, for Sprint 2 only)
-    private val translateDictionary: Map<String, TranslateResult> = mapOf(
-        "hello" to TranslateResult(query = "hello", videoUrls = listOf("files/video/hello.mp4")),
-        "thanks" to TranslateResult(query = "thanks", videoUrls = listOf("files/video/thankyou.mp4")),
-        "thank you" to TranslateResult(query = "thank you", videoUrls = listOf("files/video/thankyou.mp4")),
-        "yes" to TranslateResult(query = "yes", videoUrls = listOf("files/video/yes.mp4")),
-        "no" to TranslateResult(query = "no", videoUrls = listOf("files/video/no.mp4"))
-    )
-
+    // ------ Translate ------
     private var nextHistoryId = 1
     private val translateHistory = mutableListOf(
         TranslateHistoryItem(id = nextHistoryId++, query = "Hello"),
         TranslateHistoryItem(id = nextHistoryId++, query = "Thanks")
     )
 
-    fun searchWord(word: String): TranslateResult? {
-        val key = word.trim().lowercase()
+    // Making use of Learning's ASL signs
+    fun searchWord(word: String): ASLSign? {
+        val key = word.trim()
         if (key.isBlank()) return null
-        return translateDictionary[key] ?: TranslateResult(query = word.trim())
+
+        return when (key.lowercase()) {
+            // "thank you" and "thanks" map to the same ASL sign
+            "thank you" -> signs.firstOrNull { it.gloss.equals("Thanks", ignoreCase = true) }
+            else -> signs.firstOrNull { it.gloss.equals(key, ignoreCase = true) }
+        }
     }
 
     fun getTranslateSearchHistory(): List<TranslateHistoryItem> {

@@ -159,19 +159,19 @@ class Model(
     suspend fun addLearningMinutes(minutes: Int): ProgressSummary =
         repos.progressTracker.addLearningMinutes(minutes)
 
-    fun translateWord(word: String): TranslateResult? =
+    suspend fun translateWord(word: String): ASLSign? =
         repos.translate.searchWord(word)
 
-    fun getTranslateHistory(): List<TranslateHistoryItem> =
+    suspend fun getTranslateHistory(): List<TranslateHistoryItem> =
         repos.translate.getSearchHistory()
 
-    fun addTranslateHistory(word: String) =
+    suspend fun addTranslateHistory(word: String) =
         repos.translate.addHistory(word)
 
-    fun clearTranslateHistory() =
+    suspend fun clearTranslateHistory() =
         repos.translate.clearHistory()
 
-    fun recognizeAsl(): AslRecognitionResult =
+    suspend fun recognizeAsl(): AslRecognitionResult =
         repos.translate.recognizeAsl()
 
     fun getStarredItems(): List<StarItem> {
