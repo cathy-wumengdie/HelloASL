@@ -59,6 +59,7 @@ kotlin {
         commonTest.dependencies {
             implementation(libs.kotlin.test)
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
         }
         androidInstrumentedTest.dependencies {
             implementation("androidx.compose.ui:ui-test-junit4:1.7.3")

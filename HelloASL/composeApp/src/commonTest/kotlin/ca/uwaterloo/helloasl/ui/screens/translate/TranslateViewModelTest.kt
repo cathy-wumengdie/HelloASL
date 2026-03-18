@@ -4,6 +4,7 @@ import ca.uwaterloo.helloasl.data.MockDB
 import ca.uwaterloo.helloasl.data.authRepository.MockAuthRepository
 import ca.uwaterloo.helloasl.data.learningRepository.MockLearningRepository
 import ca.uwaterloo.helloasl.data.progressTrackerRepository.MockProgressTrackerRepository
+import ca.uwaterloo.helloasl.data.starRepository.MockStarRepository
 import ca.uwaterloo.helloasl.data.translateRepository.MockTranslateRepository
 import ca.uwaterloo.helloasl.data.userRepository.MockUserRepository
 import ca.uwaterloo.helloasl.domain.Model
@@ -16,6 +17,7 @@ internal class TranslateViewModelTest {
         val model = Model ( Repositories(
             auth = MockAuthRepository(db),
             user = MockUserRepository(db),
+            star = MockStarRepository(db),
             translate = MockTranslateRepository(db),
             learning = MockLearningRepository(db),
             progressTracker = MockProgressTrackerRepository(db)

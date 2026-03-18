@@ -4,10 +4,16 @@ import ca.uwaterloo.helloasl.data.MockDB
 import ca.uwaterloo.helloasl.data.authRepository.MockAuthRepository
 import ca.uwaterloo.helloasl.data.learningRepository.MockLearningRepository
 import ca.uwaterloo.helloasl.data.progressTrackerRepository.MockProgressTrackerRepository
+import ca.uwaterloo.helloasl.data.starRepository.MockStarRepository
 import ca.uwaterloo.helloasl.data.translateRepository.MockTranslateRepository
 import ca.uwaterloo.helloasl.data.userRepository.MockUserRepository
-import ca.uwaterloo.helloasl.domain.userModel.*
-import kotlin.test.*
+import ca.uwaterloo.helloasl.domain.userModel.User
+import kotlinx.coroutines.runBlocking
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class UserModelTest {
     private fun makeModel(): Pair<MockDB, Model> {
@@ -15,9 +21,10 @@ class UserModelTest {
         val repos = Repositories(
             auth = MockAuthRepository(db),
             user = MockUserRepository(db),
+            star = MockStarRepository(db),
             learning = MockLearningRepository(db),
             translate = MockTranslateRepository(db),
-            progressTracker = MockProgressTrackerRepository(db),
+            progressTracker = MockProgressTrackerRepository(db)
         )
         return db to Model(repos)
     }
@@ -25,72 +32,88 @@ class UserModelTest {
     @Test
     fun getUser_throws_when_not_logged_in() {
         val (_, model) = makeModel()
-        assertFailsWith<IllegalStateException> {
-            model.getUser()
+
+        runBlocking {
+            assertFailsWith<IllegalStateException> {
+                model.getUser()
+            }
         }
     }
 
     @Test
     fun getUser_returns_logged_in_user() {
         val (_, model) = makeModel()
-        val ok = model.login(email = "yanjin@gmail.com", password = "1234")
-        assertEquals(true, ok)
 
-        val user = model.getUser()
-        assertEquals(1, user.id)
-        assertEquals("Yanjin", user.name)
-        assertEquals("yanjin@gmail.com", user.email)
+        runBlocking {
+            model.login(email = "yanjin@gmail.com", password = "1234")
+
+            val user = model.getUser()
+            assertEquals("1", user.id)
+            assertEquals("Yanjin", user.name)
+            assertEquals("yanjin@gmail.com", user.email)
+        }
     }
 
     @Test
     fun getUserLearningProgress_returns_progress_for_logged_in_user() {
         val (_, model) = makeModel()
-        model.login("yanjin@gmail.com", "1234")
 
-        val learningProgress = model.getUserLearningProgress()
-        assertEquals(1, learningProgress.userId)
-        assertEquals(1, learningProgress.moduleId)
-        assertEquals(1, learningProgress.lessonId)
-        assertEquals(0, learningProgress.wordsLearned)
-        assertEquals(12, learningProgress.starredSigns)
+        runBlocking {
+            model.login("yanjin@gmail.com", "1234")
+
+            val learningProgress = model.getUserLearningProgress()
+            assertEquals("1", learningProgress.userId)
+            assertEquals(1L, learningProgress.moduleId)
+            assertEquals(1L, learningProgress.lessonId)
+            assertEquals(0, learningProgress.wordsLearned)
+            assertFalse(learningProgress.completedAllLessons)
+        }
     }
 
     @Test
     fun getProgressSummary_returns_summary_for_logged_in_user() {
         val (_, model) = makeModel()
-        model.login("yanjin@gmail.com", "1234")
 
-        val summary = model.getProgressSummary()
-        assertEquals(1, summary.userId)
-        assertEquals(15, summary.dailyProgress.dailyGoalMinutes)
-        assertEquals(3, summary.weeklyProgress.weeklyGoalDays)
-        assertEquals(7, summary.dayStreak)
+        runBlocking {
+            model.login("yanjin@gmail.com", "1234")
+
+            val summary = model.getProgressSummary()
+            assertEquals("1", summary.userId)
+            assertEquals(15, summary.dailyProgress.dailyGoalMinutes)
+            assertEquals(3, summary.weeklyProgress.weeklyGoalDays)
+            assertEquals(7, summary.dayStreak)
+        }
     }
 
     @Test
     fun setLearningGoals_updates_progress_summary_values() {
         val (_, model) = makeModel()
-        model.login("yanjin@gmail.com", "1234")
 
-        model.setLearningGoals(minutesPerDay = 20, daysPerWeek = 5)
+        runBlocking {
+            model.login("yanjin@gmail.com", "1234")
+            model.setLearningGoals(minutesPerDay = 20, daysPerWeek = 5)
 
-        val updated = model.getProgressSummary()
-        assertEquals(20, updated.dailyProgress.dailyGoalMinutes)
-        assertEquals(5, updated.weeklyProgress.weeklyGoalDays)
+            val updated = model.getProgressSummary()
+            assertEquals(20, updated.dailyProgress.dailyGoalMinutes)
+            assertEquals(5, updated.weeklyProgress.weeklyGoalDays)
+        }
     }
 
     @Test
     fun setLearningGoals_throws_when_not_logged_in() {
         val (_, model) = makeModel()
-        assertFailsWith<IllegalStateException> {
-            model.setLearningGoals(20, 5)
+
+        runBlocking {
+            assertFailsWith<IllegalStateException> {
+                model.setLearningGoals(20, 5)
+            }
         }
     }
 
     @Test
     fun avatarText_single_name_returns_first_letter_uppercase() {
         val user = User(
-            id = 1,
+            id = "1",
             name = "yanjin",
             email = "yanjin@gmail.com"
         )
@@ -100,7 +123,7 @@ class UserModelTest {
     @Test
     fun avatarText_single_letter_name() {
         val user = User(
-            id = 1,
+            id = "1",
             name = "a",
             email = "a@gmail.com"
         )
@@ -110,7 +133,7 @@ class UserModelTest {
     @Test
     fun avatarText_empty_name_returns_empty_string() {
         val user = User(
-            id = 1,
+            id = "1",
             name = "   ",
             email = "test@gmail.com"
         )
@@ -120,7 +143,7 @@ class UserModelTest {
     @Test
     fun avatarText_three_word_name_uses_first_and_last_handles_extra_space() {
         val user = User(
-            id = 1,
+            id = "1",
             name = "Yanjin    Mei    Xia",
             email = "yanjin@gmail.com"
         )
@@ -128,15 +151,14 @@ class UserModelTest {
     }
 
     @Test
-    fun getNumberOfWordsLearned_return() {
-        val (db, model) = makeModel()
-        val ok = db.login("yanjin@gmail.com", "1234")
-        assertTrue(ok)
+    fun isLoggedIn_becomes_true_after_login() {
+        val (_, model) = makeModel()
 
-        // Put user at Module 1, Lesson 3 so finished Lesson 1 and 2
-        // Should include signs from lessons 1 and 2 => 4 signs total.
-        db.updateLearningProgress()
-        db.updateLearningProgress()
-        assertEquals(4, model.getNumberOfWordsLearned())
+        runBlocking {
+            assertFalse(model.isLoggedIn())
+
+            model.login("yanjin@gmail.com", "1234")
+            assertTrue(model.isLoggedIn())
+        }
     }
 }

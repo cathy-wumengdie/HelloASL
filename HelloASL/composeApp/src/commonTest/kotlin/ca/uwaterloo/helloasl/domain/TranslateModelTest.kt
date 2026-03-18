@@ -4,6 +4,7 @@ import ca.uwaterloo.helloasl.data.MockDB
 import ca.uwaterloo.helloasl.data.authRepository.MockAuthRepository
 import ca.uwaterloo.helloasl.data.learningRepository.MockLearningRepository
 import ca.uwaterloo.helloasl.data.progressTrackerRepository.MockProgressTrackerRepository
+import ca.uwaterloo.helloasl.data.starRepository.MockStarRepository
 import ca.uwaterloo.helloasl.data.translateRepository.MockTranslateRepository
 import ca.uwaterloo.helloasl.data.userRepository.MockUserRepository
 import kotlin.test.*
@@ -14,6 +15,7 @@ internal class TranslateModelTest {
         val repos = Repositories(
             auth = MockAuthRepository(db),
             user = MockUserRepository(db),
+            star = MockStarRepository(db),
             learning = MockLearningRepository(db),
             translate = MockTranslateRepository(db),
             progressTracker = MockProgressTrackerRepository(db)

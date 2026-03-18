@@ -4,32 +4,35 @@ import ca.uwaterloo.helloasl.data.MockDB
 import ca.uwaterloo.helloasl.data.authRepository.MockAuthRepository
 import ca.uwaterloo.helloasl.data.learningRepository.MockLearningRepository
 import ca.uwaterloo.helloasl.data.progressTrackerRepository.MockProgressTrackerRepository
+import ca.uwaterloo.helloasl.data.starRepository.MockStarRepository
 import ca.uwaterloo.helloasl.data.translateRepository.MockTranslateRepository
 import ca.uwaterloo.helloasl.data.userRepository.MockUserRepository
+import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
-import kotlinx.coroutines.runBlocking
 
 class LearningModelTest {
-    private fun newModel(): Model {
+    private suspend fun newLoggedInModel(): Model {
         val db = MockDB()
         val repos = Repositories(
             auth = MockAuthRepository(db),
             user = MockUserRepository(db),
+            star = MockStarRepository(db),
             learning = MockLearningRepository(db),
             translate = MockTranslateRepository(db),
             progressTracker = MockProgressTrackerRepository(db)
         )
-        val model = Model(repos)
-        model.login("yanjin@gmail.com", "1234")
-        return model
+        return Model(repos).also {
+            it.login("yanjin@gmail.com", "1234")
+        }
     }
 
     @Test
-    fun `unlockNext lesson reflects in lock state`() = runBlocking {
-        val model = newModel()
+    fun `unlock next lesson reflects in lock state`() = runBlocking {
+        val model = newLoggedInModel()
+        model.prepareLessonLocks()
         assertTrue(model.isLessonLocked(2))
         model.unlockLesson(2)
         assertFalse(model.isLessonLocked(2))
@@ -37,7 +40,7 @@ class LearningModelTest {
 
     @Test
     fun `getSignsForLesson returns correct sign count`() = runBlocking {
-        val model = newModel()
+        val model = newLoggedInModel()
         val signs = model.getSignsForLesson(1)
         assertEquals(2, signs.size)
         assertEquals("Hello", signs.first().gloss)
@@ -45,8 +48,8 @@ class LearningModelTest {
 
     @Test
     fun `toggleStar toggles starred state`() = runBlocking {
-        val model = newModel()
-        val signId = 1
+        val model = newLoggedInModel()
+        val signId = 1L
         assertFalse(model.isStarred(signId))
         assertTrue(model.toggleStar(signId))
         assertTrue(model.isStarred(signId))
