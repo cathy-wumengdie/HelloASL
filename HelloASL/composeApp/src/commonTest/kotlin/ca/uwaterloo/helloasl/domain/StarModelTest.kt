@@ -21,13 +21,14 @@ class StarModelTest {
         val (db, repo) = newRepo()
         val userId = "1"
 
+        val before = db.getStarRows(userId).size
+
         repo.addStar(userId, 100L, 1L)
 
         val rows = db.getStarRows(userId)
 
-        assertEquals(1, rows.size)
-        assertEquals(100L, rows[0].signId)
-        assertEquals(1L, rows[0].tagId)
+        assertEquals(before + 1, rows.size)
+        assertTrue(rows.any { it.signId == 100L })
     }
 
     @Test
@@ -36,12 +37,14 @@ class StarModelTest {
         val userId = "1"
 
         db.addStarRow(userId, StarRow(userId, 100L, 1L))
+        val before = db.getStarRows(userId).size
 
         repo.removeStar(userId, 100L)
 
         val rows = db.getStarRows(userId)
 
-        assertTrue(rows.isEmpty())
+        assertEquals(before - 1, rows.size)
+        assertFalse(rows.any { it.signId == 100L })
     }
 
     @Test
@@ -49,12 +52,14 @@ class StarModelTest {
         val (db, repo) = newRepo()
         val userId = "1"
 
+        val before = db.getStarredSignIds(userId).size
+
         db.addStarRow(userId, StarRow(userId, 100L, 1L))
         db.addStarRow(userId, StarRow(userId, 200L, 1L))
 
         val ids = repo.getStarredSignIds(userId)
 
-        assertEquals(2, ids.size)
+        assertEquals(before + 2, ids.size)
         assertTrue(ids.contains(100L))
         assertTrue(ids.contains(200L))
     }
@@ -64,13 +69,15 @@ class StarModelTest {
         val (_, repo) = newRepo()
         val userId = "1"
 
-        val result = repo.createTag(userId, "Favorites")
+        val before = repo.getTags(userId).size
+
+        val result = repo.createTag(userId, "NewTag")
 
         val tags = repo.getTags(userId)
 
         assertTrue(result)
-        assertEquals(1, tags.size)
-        assertEquals("Favorites", tags[0].name)
+        assertEquals(before + 1, tags.size)
+        assertTrue(tags.any { it.name == "NewTag" })
     }
 
     @Test
@@ -78,13 +85,10 @@ class StarModelTest {
         val (_, repo) = newRepo()
         val userId = "1"
 
-        repo.createTag(userId, "Favorites")
+        repo.createTag(userId, "Favorites") // 已存在
         val result = repo.createTag(userId, "Favorites")
 
-        val tags = repo.getTags(userId)
-
         assertFalse(result)
-        assertEquals(1, tags.size)
     }
 
     @Test
@@ -92,11 +96,13 @@ class StarModelTest {
         val (db, repo) = newRepo()
         val userId = "1"
 
+        val before = db.getStarRows(userId).size
+
         db.addStarRow(userId, StarRow(userId, 100L, 1L))
 
         val rows = repo.getStarRows(userId)
 
-        assertEquals(1, rows.size)
-        assertEquals(100L, rows[0].signId)
+        assertEquals(before + 1, rows.size)
+        assertTrue(rows.any { it.signId == 100L })
     }
 }

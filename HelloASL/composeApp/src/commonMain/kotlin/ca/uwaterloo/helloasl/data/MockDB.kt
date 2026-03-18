@@ -256,9 +256,67 @@ class MockDB {
         return AslRecognitionResult(recognizedText = "Hello", confidence = 0.86f)
     }
 
-    private val starRows = mutableMapOf<String, MutableList<StarRow>>()
-    private val tags = mutableMapOf<String, MutableList<StarTag>>()
-    private val signMap = mutableMapOf<Long, Pair<String, String?>>()
+    private val starRows = mutableMapOf(
+        "1" to mutableListOf(
+            StarRow(
+                userId = "1",
+                signId = 1L,
+                tagId = 1L
+            ),
+            StarRow(
+                userId = "1",
+                signId = 2L,
+                tagId = 2L
+            )
+        ),
+
+        "2" to mutableListOf(
+            StarRow(
+                userId = "2",
+                signId = 3L,
+                tagId = 1L
+            )
+        ),
+
+        "3" to mutableListOf()
+    )
+
+    private val tags = mutableMapOf(
+        "1" to mutableListOf(
+            StarTag(
+                id = 1L,
+                name = "Favorites",
+                userId = "1"
+            ),
+            StarTag(
+                id = 2L,
+                name = "Practice",
+                userId = "1"
+            ),
+            StarTag(
+                id = 3L,
+                name = "Review Later",
+                userId = "1"
+            )
+        ),
+
+        "2" to mutableListOf(
+            StarTag(
+                id = 1L,
+                name = "Favorites",
+                userId = "2"
+            )
+        ),
+
+        "3" to mutableListOf(
+            StarTag(
+                id = 1L,
+                name = "Favorites",
+                userId = "3"
+            )
+        )
+    )
+
 
     fun addStarRow(userId: String, row: StarRow) {
         val list = starRows.getOrPut(userId) { mutableListOf() }
@@ -304,26 +362,4 @@ class MockDB {
 
         return true
     }
-
-    fun addSign(signId: Long, label: String, videoUrl: String?) {
-        signMap[signId] = label to videoUrl
-    }
-
-    fun getStarItems(userId: String): List<StarItem> {
-        val rows = getStarRows(userId)
-        val userTags = getTags(userId).associateBy { it.id }
-
-        return rows.mapNotNull { row ->
-            val sign = signMap[row.signId] ?: return@mapNotNull null
-            val tag = userTags[row.tagId]
-
-            StarItem(
-                signId = row.signId,
-                label = sign.first,
-                videoUrl = sign.second,
-                tagName = tag?.name ?: "Unknown"
-            )
-        }
-    }
-
 }

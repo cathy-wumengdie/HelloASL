@@ -207,7 +207,7 @@ class ProfileViewModelTest {
         assertEquals("Alice Bob", fixture.vm.state.userName)
         assertEquals("AB", fixture.vm.state.avatarText)
         assertEquals(99, fixture.vm.state.wordsLearned)
-        assertEquals(0, fixture.vm.state.starredSigns)
+        assertEquals(2, fixture.vm.state.starredSigns)
         assertEquals(20, fixture.vm.state.learningGoalPerDay)
         assertEquals(4, fixture.vm.state.learningGoalPerWeek)
     }
@@ -242,7 +242,7 @@ class ProfileViewModelTest {
         assertEquals("New Name", fixture.vm.state.userName)
         assertEquals("NN", fixture.vm.state.avatarText)
         assertEquals(123, fixture.vm.state.wordsLearned)
-        assertEquals(0, fixture.vm.state.starredSigns)
+        assertEquals(2, fixture.vm.state.starredSigns)
         assertEquals(30, fixture.vm.state.learningGoalPerDay)
         assertEquals(6, fixture.vm.state.learningGoalPerWeek)
     }
