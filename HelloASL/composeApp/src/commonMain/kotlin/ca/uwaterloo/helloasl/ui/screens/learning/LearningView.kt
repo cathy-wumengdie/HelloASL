@@ -39,6 +39,10 @@ fun LearningView(
         }
     }
 
+    LaunchedEffect(Unit) {
+        vm.refresh()
+    }
+
     val pageBg = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.28f)
     val cardBg = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.55f)
 

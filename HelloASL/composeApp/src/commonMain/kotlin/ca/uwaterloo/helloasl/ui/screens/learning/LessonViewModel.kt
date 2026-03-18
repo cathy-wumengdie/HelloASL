@@ -134,15 +134,31 @@ class LessonViewModel(private val model: Model) {
         rebuildQuiz()
     }
 
+    fun refreshCurrentStarState() {
+        val sign = signs.getOrNull(viewingIndex) ?: return
+        state = state.copy(isStarred = model.isStarred(sign.signId))
+    }
+
     fun onStar() {
         val sign = signs.getOrNull(viewingIndex) ?: return
-        model.toggleStar(sign.signId)
+
+        scope.launch {
+            if (model.isStarred(sign.signId)) {
+                model.toggleStar(sign.signId, 0L)
+                refreshCurrentStarState()
+            } else {
+                model.requestStarWithTag(sign.signId)
+            }
+        }
     }
 
     fun loadLesson(lessonId: Long) {
         this.lessonId = lessonId
         scope.launch {
             val loadedSigns = model.getSignsForLesson(lessonId)
+
+            model.loadStarredFromRepo()
+
             val loadedChoices = model.getQuizChoicesForSigns(
                 loadedSigns.map { it.signId }
             )
@@ -180,7 +196,7 @@ class LessonViewModel(private val model: Model) {
             )
             return
         }
-
+        val isStarred = model.isStarred(sign.signId)
         val videoUrl = if (videoIndex == 1) sign.videoUrl2 ?: sign.videoUrl1 else sign.videoUrl1
         val hasAltVideo = sign.videoUrl2 != null
         val progressText = "Sign ${viewingIndex + 1}/${signs.size}"
@@ -200,7 +216,8 @@ class LessonViewModel(private val model: Model) {
             isCorrect = null,
             showNext = false,
             showStartQuiz = viewingIndex == signs.lastIndex,
-            progress = progressText
+            progress = progressText,
+            isStarred = isStarred
         )
     }
 

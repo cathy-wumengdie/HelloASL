@@ -16,6 +16,10 @@ import ca.uwaterloo.helloasl.domain.starModel.*
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import kotlinx.coroutines.*
 
 data class Repositories(
     val auth: AuthRepository,
@@ -31,6 +35,17 @@ class Model(
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) {
     private val starredSignIds: MutableSet<Long> = mutableSetOf()
+    var pendingStarSignId: Long? by mutableStateOf(null)
+        private set
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    var showCreateTagInput by mutableStateOf(false)
+    var newTagName by mutableStateOf("")
+
+    var tagDialogVisible: Boolean by mutableStateOf(false)
+        private set
+
+    var availableStarTags: List<StarTag> by mutableStateOf(emptyList())
+        private set
 
     private val lessonLocks: MutableMap<Long, Boolean> = mutableMapOf()
     private var lessonLocksInitialized = false
@@ -126,7 +141,9 @@ class Model(
     }
 
     suspend fun getStarredSigns(): List<ASLSign> = withContext(ioDispatcher) {
-        repos.learning.getSignsByIds(starredSignIds.toList())
+        val user = repos.user.getUser()
+        val ids = repos.star.getStarredSignIds(user.id)
+        repos.learning.getSignsByIds(ids)
     }
 
     suspend fun getQuizChoicesForSigns(signIds: List<Long>): Map<Long, List<QuizChoice>> =
@@ -154,13 +171,19 @@ class Model(
 
     fun isStarred(signId: Long): Boolean = signId in starredSignIds
 
-    fun toggleStar(signId: Long): Boolean =
-        if (starredSignIds.remove(signId)) {
+    suspend fun toggleStar(signId: Long, tagId: Long): Boolean {
+        val userId = repos.user.getUser().id
+
+        return if (starredSignIds.contains(signId)) {
+            starredSignIds.remove(signId)
+            repos.star.removeStar(userId, signId)
             false
         } else {
             starredSignIds.add(signId)
+            repos.star.addStar(userId, signId, tagId)
             true
         }
+    }
 
     fun nextIndex(current: Int, total: Int): Int =
         if (total <= 0) 0 else (current + 1).coerceAtMost(total - 1)
@@ -189,11 +212,92 @@ class Model(
     suspend fun recognizeAsl(): AslRecognitionResult =
         repos.translate.recognizeAsl()
 
-    fun getStarredItems(): List<StarItem> {
-        return repos.star.getStarredItems()
+    suspend fun removeStar(userId: String, signId: Long) {
+        repos.star.removeStar(userId, signId)
     }
 
-    fun removeStar(itemId: String) {
-        repos.star.removeStar(itemId)
+    fun loadStarred(signIds: List<Long>) {
+        starredSignIds.clear()
+        starredSignIds.addAll(signIds)
+    }
+
+    suspend fun loadStarredFromRepo() = withContext(ioDispatcher) {
+        val user = repos.user.getUser()
+        val ids = repos.star.getStarredSignIds(user.id)
+
+        starredSignIds.clear()
+        starredSignIds.addAll(ids)
+    }
+
+    fun requestStarWithTag(signId: Long) {
+        pendingStarSignId = signId
+
+        scope.launch {
+            val userId = repos.user.getUser().id
+            availableStarTags = repos.star.getTags(userId)
+
+            tagDialogVisible = true
+        }
+    }
+
+    fun dismissTagDialog() {
+        tagDialogVisible = false
+        pendingStarSignId = null
+        availableStarTags = emptyList()
+    }
+
+    suspend fun confirmStarWithTag(tagId: Long): Boolean {
+        val signId = pendingStarSignId ?: return false
+        val userId = repos.user.getUser().id
+
+        val result = if (starredSignIds.contains(signId)) {
+            starredSignIds.remove(signId)
+            repos.star.removeStar(userId, signId)
+            false
+        } else {
+            starredSignIds.add(signId)
+            repos.star.addStar(userId, signId, tagId)
+            true
+        }
+
+        tagDialogVisible = false
+        pendingStarSignId = null
+
+        return result
+    }
+
+    suspend fun createTag(name: String) {
+        val userId = repos.user.getUser().id
+        repos.star.createTag(userId, name)
+        availableStarTags = repos.star.getTags(userId)
+    }
+
+    suspend fun getStarredItems(): List<StarItem> {
+        val userId = getCurrentUserId()
+
+        val rows = repos.star.getStarRows(userId)
+        val signs = repos.learning.getSignsByIds(rows.map { it.signId })
+        val tags = repos.star.getTags(userId)
+
+        val signMap = signs.associateBy { it.signId }
+        val tagMap = tags.associateBy { it.id }
+
+        return rows.mapNotNull { row ->
+            val sign = signMap[row.signId]
+            val tag = tagMap[row.tagId]
+
+            if (sign != null && tag != null) {
+                StarItem(
+                    signId = row.signId,
+                    label = sign.gloss,
+                    videoUrl = sign.videoUrl1,
+                    tagName = tag.name
+                )
+            } else null
+        }
+    }
+
+    suspend fun getCurrentUserId(): String {
+        return repos.user.getUser().id
     }
 }

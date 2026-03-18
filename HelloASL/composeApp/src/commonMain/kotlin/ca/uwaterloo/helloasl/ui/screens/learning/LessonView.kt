@@ -18,6 +18,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import ca.uwaterloo.helloasl.ui.components.HelloASLCard
 import ca.uwaterloo.helloasl.ui.components.SignVideoPlayer
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.StarBorder
+import kotlinx.coroutines.delay
 
 @Composable
 fun LessonView(
@@ -29,6 +32,16 @@ fun LessonView(
     DisposableEffect(Unit) { onDispose { vm.onExitLesson() } }
 
     val state = vm.state
+
+    LaunchedEffect(state.phase) {
+        if (state.phase == LessonPhase.VIEWING) {
+            while (true) {
+                vm.refreshCurrentStarState()
+                delay(300)
+            }
+        }
+    }
+
     val pageBg = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.22f)
     val cardBg = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.40f)
     val solidBg = MaterialTheme.colorScheme.secondary
@@ -94,7 +107,26 @@ fun LessonView(
         when (state.phase) {
             LessonPhase.VIEWING -> {
                 if (state.signGloss.isNotBlank()) {
-                    Text(state.signGloss, style = MaterialTheme.typography.titleMedium)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            state.signGloss,
+                            style = MaterialTheme.typography.titleMedium
+                        )
+
+                        IconButton(onClick = { vm.onStar() }) {
+                            Icon(
+                                imageVector = if (state.isStarred)
+                                    Icons.Filled.Star
+                                else
+                                    Icons.Filled.StarBorder,
+                                contentDescription = "Star"
+                            )
+                        }
+                    }
                 }
 
                 Row(

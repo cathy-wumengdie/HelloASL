@@ -21,5 +21,6 @@ data class LessonUIState(
     val isCorrect: Boolean? = null,
     val showNext: Boolean = false,
     val showStartQuiz: Boolean = false,
-    val progress: String = ""
+    val progress: String = "",
+    val isStarred: Boolean = false
 )
