@@ -35,7 +35,8 @@ fun AppNavigation(
     requestCameraPermission: () -> Unit,
     requestNotificationPermission: () -> Unit,
     hasSeenPermissionGate: Boolean,
-    onPermissionGateCompleted: () -> Unit
+    onPermissionGateCompleted: () -> Unit,
+    onLoginSuccessSyncDeviceToken: suspend () -> Unit
 ) {
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -83,6 +84,12 @@ fun AppNavigation(
         AuthUiState.LoggedIn -> {}
     }
 
+    LaunchedEffect(authState) {
+        if (authState == AuthUiState.LoggedIn) {
+            onLoginSuccessSyncDeviceToken()
+        }
+    }
+
     if (!hasSeenPermissionGate) {
         PermissionsGateScreen(
             hasCameraHardware = hasCameraHardware,
@@ -93,6 +100,17 @@ fun AppNavigation(
             onContinue = { onPermissionGateCompleted() }
         )
         return
+    }
+
+    LaunchedEffect(authState, hasSeenPermissionGate) {
+        if (authState == AuthUiState.LoggedIn && hasSeenPermissionGate) {
+            println("Triggering send-missed-reminder")
+            runCatching {
+                model.triggerSendMissedReminder()
+            }.onFailure {
+                println("Failed to trigger missed reminder: ${it.message}")
+            }
+        }
     }
 
     val homeVm = remember { HomeViewModel(model, scope) }

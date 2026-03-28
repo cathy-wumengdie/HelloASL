@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "622264600037",
+    "project_id": "helloasl-19f6e",
+    "storage_bucket": "helloasl-19f6e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:622264600037:android:4f02d8b37862eeb4431b0c",
+        "android_client_info": {
+          "package_name": "ca.uwaterloo.helloasl"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDcljbXseJrw3KlOA4Ggt4E6ew0z2vzBYk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

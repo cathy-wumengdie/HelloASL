@@ -4,6 +4,7 @@ import ca.uwaterloo.helloasl.data.authRepository.AuthRepository
 import ca.uwaterloo.helloasl.data.authRepository.SupabaseAuthRepository
 import ca.uwaterloo.helloasl.data.learningRepository.LearningRepository
 import ca.uwaterloo.helloasl.data.learningRepository.SupabaseLearningRepository
+import ca.uwaterloo.helloasl.data.notificationRepository.SupabaseNotificationRepository
 import ca.uwaterloo.helloasl.data.progressTrackerRepository.ProgressTrackerRepository
 import ca.uwaterloo.helloasl.data.progressTrackerRepository.SupabaseProgressTrackerRepository
 import ca.uwaterloo.helloasl.data.translateRepository.SupabaseTranslateRepository
@@ -15,13 +16,15 @@ import ca.uwaterloo.helloasl.data.starRepository.SupabaseStarRepository
 import io.github.jan.supabase.SupabaseClient
 
 class SupabaseAppDependency(
-    client: SupabaseClient
+    client: SupabaseClient,
+    anonKey: String
 ) {
     val learningRepository: LearningRepository = SupabaseLearningRepository(client)
     val authRepository: AuthRepository = SupabaseAuthRepository(client)
     val userRepository: UserRepository = SupabaseUserRepository(client)
     val progressTrackerRepository: ProgressTrackerRepository = SupabaseProgressTrackerRepository(client)
     val translateRepository: TranslateRepository = SupabaseTranslateRepository(client)
-    val starRepository: StarRepository = SupabaseStarRepository(supabase = client)
+    val starRepository: StarRepository = SupabaseStarRepository(client)
+    val notificationRepository: SupabaseNotificationRepository = SupabaseNotificationRepository(client, anonKey)
 }
 

@@ -16,6 +16,7 @@ import ca.uwaterloo.helloasl.ui.navigations.AppNavigation
 import ca.uwaterloo.helloasl.ui.theme.HelloASLTheme
 import kotlinx.coroutines.launch
 import androidx.compose.ui.graphics.Color
+import ca.uwaterloo.helloasl.data.notificationRepository.MockNotificationRepository
 
 @Composable
 fun App(
@@ -26,7 +27,8 @@ fun App(
     requestNotificationPermission: () -> Unit,
     hasSeenPermissionGate: Boolean,
     onPermissionGateCompleted: () -> Unit,
-    supabaseDependency: SupabaseAppDependency? = null
+    supabaseDependency: SupabaseAppDependency? = null,
+    onLoginSuccessSyncDeviceToken: suspend () -> Unit
 ) {
     HelloASLTheme {
         val repositories = remember {
@@ -38,6 +40,7 @@ fun App(
                 learning = supabaseDependency?.learningRepository ?: MockLearningRepository(db),
                 translate = supabaseDependency?. translateRepository ?: MockTranslateRepository(db),
                 progressTracker = supabaseDependency?.progressTrackerRepository ?: MockProgressTrackerRepository(db),
+                notification = supabaseDependency?.notificationRepository ?: MockNotificationRepository()
             )
         }
 
@@ -47,6 +50,7 @@ fun App(
         println("Learning repo in use: ${repositories.learning::class.simpleName}")
         println("Translate repo in use: ${repositories.translate::class.simpleName}")
         println("ProgressTracker repo in use: ${repositories.progressTracker::class.simpleName}")
+        println("Notification repo in use: ${repositories.notification::class.simpleName}")
 
         val model = remember { Model(repositories) }
 
@@ -60,7 +64,8 @@ fun App(
                 requestCameraPermission = requestCameraPermission,
                 requestNotificationPermission = requestNotificationPermission,
                 hasSeenPermissionGate = hasSeenPermissionGate,
-                onPermissionGateCompleted = onPermissionGateCompleted
+                onPermissionGateCompleted = onPermissionGateCompleted,
+                onLoginSuccessSyncDeviceToken = onLoginSuccessSyncDeviceToken,
             )
 
             if (model.tagDialogVisible) {

@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -15,15 +16,21 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.lifecycleScope
 import ca.uwaterloo.helloasl.data.SupabaseAppDependency
 import ca.uwaterloo.helloasl.data.SupabaseClientFactory
 import data.HelloAslDataStore
 import kotlinx.coroutines.launch
-import ca.uwaterloo.helloasl.App
+import ca.uwaterloo.helloasl.data.notificationRepository.AndroidTokenSyncer
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val supabase = SupabaseClientFactory.create(
+            BuildConfig.SUPABASE_URL,
+            BuildConfig.SUPABASE_ANON_KEY
+        )
 
         setContent {
             val context = LocalContext.current
@@ -170,7 +177,17 @@ class MainActivity : ComponentActivity() {
                         store.setHasSeenPermissionGate(true)
                     }
                 },
-                supabaseDependency = supabaseDependency
+                supabaseDependency = supabaseDependency,
+                onLoginSuccessSyncDeviceToken = {
+                    try {
+                        AndroidTokenSyncer.syncCurrentToken(
+                            context = this@MainActivity,
+                            supabase = supabase
+                        )
+                    } catch (e: Exception) {
+                        Log.e("HelloASL_FCM", "Failed to sync token after login", e)
+                    }
+                }
             )
         }
     }
@@ -179,5 +196,5 @@ class MainActivity : ComponentActivity() {
 private fun createSupabaseDependencyOrNull(url: String, anonKey: String): SupabaseAppDependency? {
     if (url.isBlank() || anonKey.isBlank()) return null
     val client = SupabaseClientFactory.create(url, anonKey)
-    return SupabaseAppDependency(client)
+    return SupabaseAppDependency(client, anonKey)
 }

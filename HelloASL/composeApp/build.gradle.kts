@@ -8,6 +8,7 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.composeHotReload)
+    alias(libs.plugins.googleServices)
     kotlin("plugin.serialization") version "2.3.0"
 }
 
@@ -42,6 +43,7 @@ kotlin {
             implementation("io.github.jan-tennert.supabase:postgrest-kt")
             implementation("io.github.jan-tennert.supabase:realtime-kt")
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
+            implementation("io.github.jan-tennert.supabase:functions-kt")
         }
         androidMain.dependencies {
             implementation(libs.compose.uiToolingPreview)
@@ -50,6 +52,8 @@ kotlin {
             implementation("androidx.media3:media3-exoplayer:1.2.1")
             implementation("androidx.media3:media3-ui:1.2.1")
             implementation("io.ktor:ktor-client-android:3.0.0")
+            implementation(project.dependencies.platform("com.google.firebase:firebase-bom:33.12.0"))
+            implementation("com.google.firebase:firebase-messaging-ktx")
         }
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)
