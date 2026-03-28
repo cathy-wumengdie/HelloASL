@@ -9,6 +9,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import ca.uwaterloo.helloasl.ui.components.ClickableSection
 import ca.uwaterloo.helloasl.ui.components.HelloASLCard
+import ca.uwaterloo.helloasl.ui.components.PasswordTextField
 import kotlinx.coroutines.launch
 
 @Composable
@@ -19,6 +20,7 @@ fun SignupView(
 ) {
     val state = viewModel.uiState.value
     val scope = rememberCoroutineScope()
+    var passwordVisible by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -76,19 +78,17 @@ fun SignupView(
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    OutlinedTextField(
+                    PasswordTextField(
                         value = state.password,
                         onValueChange = viewModel::onPasswordChange,
-                        label = { Text("Password") },
-                        visualTransformation = PasswordVisualTransformation(),
+                        label = "Password",
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    OutlinedTextField(
+                    PasswordTextField(
                         value = state.confirmPassword,
                         onValueChange = viewModel::onConfirmPasswordChange,
-                        label = { Text("Confirm Password") },
-                        visualTransformation = PasswordVisualTransformation(),
+                        label = "Confirm Password",
                         modifier = Modifier.fillMaxWidth()
                     )
 

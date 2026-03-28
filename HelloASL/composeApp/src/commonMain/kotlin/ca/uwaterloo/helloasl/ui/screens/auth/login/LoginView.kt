@@ -1,14 +1,19 @@
 package ca.uwaterloo.helloasl.ui.screens.auth.login
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import ca.uwaterloo.helloasl.ui.components.ClickableSection
 import ca.uwaterloo.helloasl.ui.components.HelloASLCard
+import ca.uwaterloo.helloasl.ui.components.PasswordTextField
 import kotlinx.coroutines.launch
 
 @Composable
@@ -19,6 +24,7 @@ fun LoginView(
 ) {
     val state = viewModel.uiState.value
     val scope = rememberCoroutineScope()
+    var passwordVisible by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -46,11 +52,10 @@ fun LoginView(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                OutlinedTextField(
+                PasswordTextField(
                     value = state.password,
                     onValueChange = viewModel::onPasswordChange,
-                    label = { Text("Password") },
-                    visualTransformation = PasswordVisualTransformation(),
+                    label = "Password",
                     modifier = Modifier.fillMaxWidth()
                 )
 
