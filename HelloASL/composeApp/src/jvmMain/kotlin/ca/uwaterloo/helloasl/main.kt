@@ -1,11 +1,11 @@
 package ca.uwaterloo.helloasl
 
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import ca.uwaterloo.helloasl.data.SupabaseAppDependency
 import ca.uwaterloo.helloasl.data.SupabaseClientFactory
+import ca.uwaterloo.helloasl.ui.components.DesktopCameraController
 
 fun main() = application {
     val supabaseUrl = System.getProperty("SUPABASE_URL")
@@ -23,13 +23,17 @@ fun main() = application {
         onCloseRequest = ::exitApplication,
         title = "helloasl",
     ) {
-        val hasSeenPermissionGate = remember { mutableStateOf(true) }
+        val hasSeenPermissionGate = remember { mutableStateOf(false) }
+        val desktopCameraController = remember { DesktopCameraController() }
 
         App(
-            hasCameraHardware = false,
-            cameraGranted = false,
+            hasCameraHardware = desktopCameraController.hasCameraHardware,
+            cameraGranted = desktopCameraController.cameraGranted,
+            cameraErrorMessage = desktopCameraController.cameraErrorMessage,
             notificationGranted = false,
-            requestCameraPermission = {},
+            requestCameraPermission = {
+                desktopCameraController.requestCameraPermission()
+            },
             requestNotificationPermission = {},
             hasSeenPermissionGate = hasSeenPermissionGate.value,
             onPermissionGateCompleted = {

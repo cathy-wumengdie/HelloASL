@@ -31,6 +31,7 @@ fun AppNavigation(
     model: Model,
     hasCameraHardware: Boolean,
     cameraGranted: Boolean,
+    cameraErrorMessage: String?,
     notificationGranted: Boolean,
     requestCameraPermission: () -> Unit,
     requestNotificationPermission: () -> Unit,
@@ -94,6 +95,7 @@ fun AppNavigation(
         PermissionsGateScreen(
             hasCameraHardware = hasCameraHardware,
             cameraGranted = cameraGranted,
+            cameraErrorMessage = cameraErrorMessage,
             notificationGranted = notificationGranted,
             onRequestCamera = requestCameraPermission,
             onRequestNotifications = requestNotificationPermission,

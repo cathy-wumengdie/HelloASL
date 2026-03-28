@@ -22,6 +22,7 @@ import ca.uwaterloo.helloasl.data.notificationRepository.MockNotificationReposit
 fun App(
     hasCameraHardware: Boolean,
     cameraGranted: Boolean,
+    cameraErrorMessage: String?,
     notificationGranted: Boolean,
     requestCameraPermission: () -> Unit,
     requestNotificationPermission: () -> Unit,
@@ -60,6 +61,7 @@ fun App(
                 model = model,
                 hasCameraHardware = hasCameraHardware,
                 cameraGranted = cameraGranted,
+                cameraErrorMessage = cameraErrorMessage,
                 notificationGranted = notificationGranted,
                 requestCameraPermission = requestCameraPermission,
                 requestNotificationPermission = requestNotificationPermission,

@@ -75,6 +75,7 @@ kotlin {
             implementation("org.openjfx:javafx-controls:21.0.2:$javafxPlatform")
             implementation("org.openjfx:javafx-media:21.0.2:$javafxPlatform")
             implementation("org.openjfx:javafx-swing:21.0.2:$javafxPlatform")
+            implementation("org.bytedeco:javacv-platform:1.5.13")
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -152,6 +153,19 @@ compose.desktop {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "ca.uwaterloo.helloasl"
             packageVersion = "1.0.0"
+
+            macOS {
+                bundleID = "ca.uwaterloo.helloasl"
+                infoPlist {
+                    extraKeysRawXml = """
+                        <key>NSCameraUsageDescription</key>
+                        <string>HelloASL uses the camera for ASL to English translation.</string>
+                        
+                        <key>NSCameraUseContinuityCameraDeviceType</key>
+                        <true/>
+                    """.trimIndent()
+                }
+            }
         }
     }
 }

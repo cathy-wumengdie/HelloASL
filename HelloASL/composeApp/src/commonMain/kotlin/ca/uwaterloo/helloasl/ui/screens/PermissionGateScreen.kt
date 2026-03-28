@@ -15,6 +15,7 @@ import ca.uwaterloo.helloasl.ui.components.HelloASLCard
 fun PermissionsGateScreen(
     hasCameraHardware: Boolean,
     cameraGranted: Boolean,
+    cameraErrorMessage: String?,
     notificationGranted: Boolean,
     onRequestCamera: () -> Unit,
     onRequestNotifications: () -> Unit,
@@ -57,23 +58,35 @@ fun PermissionsGateScreen(
                 Spacer(Modifier.height(8.dp))
 
                 Text(
-                    text = if (hasCameraHardware)
-                        "Needed for ASL -> English translation."
-                    else
-                        "This device has no camera. ASL -> English will be disabled.",
+                    text = when {
+                        cameraErrorMessage != null ->
+                            "Camera unavailable on this desktop build."
+                        hasCameraHardware ->
+                            "Needed for ASL -> English translation."
+                        else ->
+                            "This device has no camera. ASL -> English will be disabled."
+                    },
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
                 Spacer(Modifier.height(12.dp))
 
+                val statusText = when {
+                    cameraGranted -> "Allowed"
+                    cameraErrorMessage != null -> "Unavailable"
+                    !hasCameraHardware -> "Not available"
+                    else -> "Not allowed"
+                }
+
+                val canRequest =
+                    cameraErrorMessage == null &&
+                            hasCameraHardware &&
+                            !cameraGranted
+
                 PermissionFooter(
-                    statusText = when {
-                        !hasCameraHardware -> "Not available"
-                        cameraGranted -> "Allowed"
-                        else -> "Not allowed"
-                    },
-                    actionText = if (!hasCameraHardware || cameraGranted) null else "Allow",
-                    onAction = if (!hasCameraHardware || cameraGranted) null else onRequestCamera
+                    statusText = statusText,
+                    actionText = if (canRequest) "Allow" else null,
+                    onAction = if (canRequest) onRequestCamera else null
                 )
             }
 
