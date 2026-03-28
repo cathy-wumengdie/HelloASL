@@ -1,13 +1,51 @@
 package ca.uwaterloo.helloasl
 
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
+import ca.uwaterloo.helloasl.data.SupabaseAppDependency
+import ca.uwaterloo.helloasl.data.SupabaseClientFactory
 
 fun main() = application {
+    val supabaseUrl = System.getProperty("SUPABASE_URL")
+        ?: error("Missing SUPABASE_URL")
+
+    val supabaseAnonKey = System.getProperty("SUPABASE_ANON_KEY")
+        ?: error("Missing SUPABASE_ANON_KEY")
+
+    val supabaseDependency = createSupabaseDependencyOrNull(
+        supabaseUrl,
+        supabaseAnonKey
+    ) ?: error("Failed to create Supabase dependency")
+
     Window(
         onCloseRequest = ::exitApplication,
         title = "helloasl",
     ) {
-        App()
+        val hasSeenPermissionGate = remember { mutableStateOf(true) }
+
+        App(
+            hasCameraHardware = false,
+            cameraGranted = false,
+            notificationGranted = false,
+            requestCameraPermission = {},
+            requestNotificationPermission = {},
+            hasSeenPermissionGate = hasSeenPermissionGate.value,
+            onPermissionGateCompleted = {
+                hasSeenPermissionGate.value = true
+            },
+            supabaseDependency = supabaseDependency,
+            onLoginSuccessSyncDeviceToken = {}
+        )
     }
+}
+
+private fun createSupabaseDependencyOrNull(
+    url: String,
+    anonKey: String
+): SupabaseAppDependency? {
+    if (url.isBlank() || anonKey.isBlank()) return null
+    val client = SupabaseClientFactory.create(url, anonKey)
+    return SupabaseAppDependency(client, anonKey)
 }

@@ -59,6 +59,22 @@ kotlin {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutinesSwing)
             implementation("io.ktor:ktor-client-cio:3.0.0")
+
+            val osName = System.getProperty("os.name").lowercase()
+            val osArch = System.getProperty("os.arch").lowercase()
+
+            val javafxPlatform = when {
+                osName.contains("mac") && (osArch.contains("aarch64") || osArch.contains("arm")) -> "mac-aarch64"
+                osName.contains("mac") -> "mac"
+                osName.contains("win") -> "win"
+                else -> "linux"
+            }
+
+            implementation("org.openjfx:javafx-base:21.0.2:$javafxPlatform")
+            implementation("org.openjfx:javafx-graphics:21.0.2:$javafxPlatform")
+            implementation("org.openjfx:javafx-controls:21.0.2:$javafxPlatform")
+            implementation("org.openjfx:javafx-media:21.0.2:$javafxPlatform")
+            implementation("org.openjfx:javafx-swing:21.0.2:$javafxPlatform")
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -138,4 +154,9 @@ compose.desktop {
             packageVersion = "1.0.0"
         }
     }
+}
+
+tasks.withType<JavaExec>().configureEach {
+    systemProperty("SUPABASE_URL", localProps.getProperty("SUPABASE_URL", ""))
+    systemProperty("SUPABASE_ANON_KEY", localProps.getProperty("SUPABASE_ANON_KEY", ""))
 }
