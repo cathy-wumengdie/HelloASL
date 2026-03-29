@@ -37,7 +37,7 @@ fun AppNavigation(
     requestNotificationPermission: () -> Unit,
     hasSeenPermissionGate: Boolean,
     onPermissionGateCompleted: () -> Unit,
-    onLoginSuccessSyncDeviceToken: suspend () -> Unit
+    onLoginSuccessSyncDeviceToken: suspend () -> Boolean
 ) {
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -85,9 +85,32 @@ fun AppNavigation(
         AuthUiState.LoggedIn -> {}
     }
 
+    var tokenSyncCompleted by remember(authState) { mutableStateOf(false) }
+    var hasStartedTokenSync by remember(authState) { mutableStateOf(false) }
+    var missedReminderTriggered by remember(authState) { mutableStateOf(false) }
+
     LaunchedEffect(authState) {
-        if (authState == AuthUiState.LoggedIn) {
-            onLoginSuccessSyncDeviceToken()
+        if (authState != AuthUiState.LoggedIn) {
+            tokenSyncCompleted = false
+            hasStartedTokenSync = false
+            missedReminderTriggered = false
+            return@LaunchedEffect
+        }
+
+        if (!hasStartedTokenSync) {
+            hasStartedTokenSync = true
+            runCatching {
+                val synced = onLoginSuccessSyncDeviceToken()
+                tokenSyncCompleted = synced
+                if (!synced) {
+                    hasStartedTokenSync = false
+                }
+            }.onFailure {
+                println("Token sync failed: ${it.message}")
+                it.printStackTrace()
+                hasStartedTokenSync = false
+                tokenSyncCompleted = false
+            }
         }
     }
 
@@ -104,13 +127,22 @@ fun AppNavigation(
         return
     }
 
-    LaunchedEffect(authState, hasSeenPermissionGate) {
-        if (authState == AuthUiState.LoggedIn && hasSeenPermissionGate) {
-            println("Triggering send-missed-reminder")
+    LaunchedEffect(authState, hasSeenPermissionGate, notificationGranted, tokenSyncCompleted) {
+        if (
+            authState == AuthUiState.LoggedIn &&
+            hasSeenPermissionGate &&
+            notificationGranted &&
+            tokenSyncCompleted &&
+            !missedReminderTriggered
+        ) {
+            missedReminderTriggered = true
+
             runCatching {
                 model.triggerSendMissedReminder()
             }.onFailure {
-                println("Failed to trigger missed reminder: ${it.message}")
+                println("Missed reminder failed: ${it.message}")
+                it.printStackTrace()
+                missedReminderTriggered = false
             }
         }
     }

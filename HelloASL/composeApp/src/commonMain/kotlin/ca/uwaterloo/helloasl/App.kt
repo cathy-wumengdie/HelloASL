@@ -29,7 +29,7 @@ fun App(
     hasSeenPermissionGate: Boolean,
     onPermissionGateCompleted: () -> Unit,
     supabaseDependency: SupabaseAppDependency? = null,
-    onLoginSuccessSyncDeviceToken: suspend () -> Unit
+    onLoginSuccessSyncDeviceToken: suspend () -> Boolean,
 ) {
     HelloASLTheme {
         val repositories = remember {

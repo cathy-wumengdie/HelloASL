@@ -35,10 +35,7 @@ class MainActivity : ComponentActivity() {
             val context = LocalContext.current
             val scope = rememberCoroutineScope()
             val supabaseDependency = remember {
-                createSupabaseDependencyOrNull(
-                    url = BuildConfig.SUPABASE_URL,
-                    anonKey = BuildConfig.SUPABASE_ANON_KEY
-                )
+                SupabaseAppDependency(supabase, BuildConfig.SUPABASE_ANON_KEY)
             }
 
             // ---- DataStore ----
@@ -200,15 +197,10 @@ class MainActivity : ComponentActivity() {
                         )
                     } catch (e: Exception) {
                         Log.e("HelloASL_FCM", "Failed to sync token after login", e)
+                        false
                     }
                 }
             )
         }
     }
-}
-
-private fun createSupabaseDependencyOrNull(url: String, anonKey: String): SupabaseAppDependency? {
-    if (url.isBlank() || anonKey.isBlank()) return null
-    val client = SupabaseClientFactory.create(url, anonKey)
-    return SupabaseAppDependency(client, anonKey)
 }

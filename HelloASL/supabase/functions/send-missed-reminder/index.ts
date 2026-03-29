@@ -134,34 +134,66 @@ Deno.serve(async (req) => {
       parsed = { raw: rawText };
     }
 
-    if (sendRes.ok) {
-      const { error: upsertError } = await adminClient
-          .from("NotificationHistory")
-          .upsert(
-              {
-                user_id: user.id,
-                notification_type: "daily_reminder",
-                sent_date: today,
-              },
-              {
-                onConflict: "user_id,notification_type",
-              }
-          );
+    const result = parsed as {
+      success?: boolean;
+      message?: string;
+      sent?: number;
+      failed?: number;
+      results?: unknown[];
+    };
 
-      if (upsertError) {
-        throw new Error(
-            `Send-missed-reminder: Failed to update notification history: ${upsertError.message}`
+    const sentCount = typeof result?.sent === "number" ? result.sent : 0;
+
+    if (!sendRes.ok) {
+      return Response.json(
+          {
+            success: false,
+            status: sendRes.status,
+            result: parsed,
+          },
+          { status: sendRes.status }
+      );
+    }
+
+    if (sentCount <= 0) {
+      return Response.json(
+          {
+            success: true,
+            status: sendRes.status,
+            skipped: true,
+            reason: "No notification delivered",
+            result: parsed,
+          },
+          { status: 200 }
+      );
+    }
+
+    const { error: upsertError } = await adminClient
+        .from("NotificationHistory")
+        .upsert(
+            {
+              user_id: user.id,
+              notification_type: "daily_reminder",
+              sent_date: today,
+            },
+            {
+              onConflict: "user_id,notification_type",
+            }
         );
-      }
+
+    if (upsertError) {
+      throw new Error(
+          `Send-missed-reminder: Failed to update notification history: ${upsertError.message}`
+      );
     }
 
     return Response.json(
         {
-          success: sendRes.ok,
+          success: true,
           status: sendRes.status,
           result: parsed,
         },
-        { status: sendRes.ok ? 200 : sendRes.status }
+        { status: 200 }
     );
   } catch (e) {
     return Response.json(
