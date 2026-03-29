@@ -16,7 +16,7 @@ import ca.uwaterloo.helloasl.ui.navigations.AppNavigation
 import ca.uwaterloo.helloasl.ui.theme.HelloASLTheme
 import kotlinx.coroutines.launch
 import androidx.compose.ui.graphics.Color
-import ca.uwaterloo.helloasl.data.notificationRepository.MockNotificationRepository
+import ca.uwaterloo.helloasl.data.notificationRepository.NoOpNotificationRepository
 
 @Composable
 fun App(
@@ -41,7 +41,7 @@ fun App(
                 learning = supabaseDependency?.learningRepository ?: MockLearningRepository(db),
                 translate = supabaseDependency?. translateRepository ?: MockTranslateRepository(db),
                 progressTracker = supabaseDependency?.progressTrackerRepository ?: MockProgressTrackerRepository(db),
-                notification = supabaseDependency?.notificationRepository ?: MockNotificationRepository()
+                notification = supabaseDependency?.notificationRepository ?: NoOpNotificationRepository
             )
         }
 

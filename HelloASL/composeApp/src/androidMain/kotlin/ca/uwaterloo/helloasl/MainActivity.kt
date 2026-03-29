@@ -57,6 +57,8 @@ class MainActivity : ComponentActivity() {
                             PackageManager.PERMISSION_GRANTED
                 )
             }
+            var cameraErrorMessage by remember { mutableStateOf<String?>(null) }
+
 
             var notificationGranted by remember {
                 mutableStateOf(
@@ -85,6 +87,11 @@ class MainActivity : ComponentActivity() {
                             ) == PackageManager.PERMISSION_GRANTED
                         if (cameraGranted) hasAskedCameraOnce = false
                         if (notificationGranted) hasAskedNotifOnce = false
+                        cameraErrorMessage = when {
+                            !hasCameraHardware -> "This device does not have a camera."
+                            cameraGranted -> null
+                            else -> cameraErrorMessage
+                        }
                     }
                 }
                 lifecycleOwner.lifecycle.addObserver(observer)
@@ -98,6 +105,8 @@ class MainActivity : ComponentActivity() {
                 ActivityResultContracts.RequestPermission()
             ) { granted ->
                 cameraGranted = granted
+                cameraErrorMessage =
+                    if (granted) null else "Camera permission was denied."
             }
 
             val notificationLauncher = rememberLauncherForActivityResult(
@@ -119,7 +128,9 @@ class MainActivity : ComponentActivity() {
                 settingsLauncher.launch(intent)
             }
             val requestCameraOrOpenSettings = {
-                if (!cameraGranted) {
+                if (!hasCameraHardware) {
+                    cameraErrorMessage = "This device does not have a camera."
+                } else if (!cameraGranted) {
                     val shouldShowRationale =
                         ActivityCompat.shouldShowRequestPermissionRationale(
                             this@MainActivity,
@@ -128,11 +139,14 @@ class MainActivity : ComponentActivity() {
 
                     if (!hasAskedCameraOnce || shouldShowRationale) {
                         hasAskedCameraOnce = true
+                        cameraErrorMessage = null
                         cameraLauncher.launch(Manifest.permission.CAMERA)
                     } else {
-                        // Asked before + no rationale => likely "Don't ask again" -> open settings
+                        cameraErrorMessage = "Camera permission was denied. Please enable it in Settings."
                         openAppSettings()
                     }
+                } else {
+                    cameraErrorMessage = null
                 }
             }
 
@@ -158,6 +172,7 @@ class MainActivity : ComponentActivity() {
             App(
                 hasCameraHardware = hasCameraHardware,
                 cameraGranted = cameraGranted,
+                cameraErrorMessage = cameraErrorMessage,
                 notificationGranted = notificationGranted,
 
                 requestCameraPermission = {

@@ -24,7 +24,10 @@ type HistoryRow = {
 Deno.serve(async (req) => {
   try {
     if (req.method !== "POST") {
-      return Response.json({ error: "Send-missed-reminder: Method not allowed" }, { status: 405 });
+      return Response.json(
+          { error: "Send-missed-reminder: Method not allowed" },
+          { status: 405 }
+      );
     }
 
     const authHeader = req.headers.get("Authorization");
@@ -35,7 +38,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Client scoped to the signed-in user
     const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       global: {
         headers: {
@@ -50,28 +52,43 @@ Deno.serve(async (req) => {
     } = await userClient.auth.getUser();
 
     if (userError || !user) {
-      return Response.json({ error: "Send-missed-reminder: Unauthorized" }, { status: 401 });
+      return Response.json(
+          { error: "Send-missed-reminder: Unauthorized" },
+          { status: 401 }
+      );
     }
 
-    // Service-role client for DB reads
     const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     const now = new Date();
 
-    // Adjust this to your desired reminder hour
+    const today = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "America/Toronto",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(now);
+
+    const currentHour = Number(
+        new Intl.DateTimeFormat("en-US", {
+          timeZone: "America/Toronto",
+          hour: "2-digit",
+          hour12: false,
+        }).format(now)
+    );
+
     const reminderHour = 9;
 
-    // If you want a specific timezone, replace with your own logic later.
-    const currentHour = now.getHours();
     if (currentHour < reminderHour) {
       return Response.json({
         success: true,
         skipped: true,
         reason: "Too early",
+        currentHour,
+        today,
+        timezone: "America/Toronto",
       });
     }
-
-    const today = now.toISOString().slice(0, 10);
 
     const { data: history, error: historyError } = await adminClient
         .from("NotificationHistory")
@@ -81,7 +98,9 @@ Deno.serve(async (req) => {
         .maybeSingle<HistoryRow>();
 
     if (historyError) {
-      throw new Error(`Send-missed-reminder: Failed to check notification history: ${historyError.message}`);
+      throw new Error(
+          `Send-missed-reminder: Failed to check notification history: ${historyError.message}`
+      );
     }
 
     if (history?.sent_date === today) {
@@ -113,6 +132,27 @@ Deno.serve(async (req) => {
       parsed = JSON.parse(rawText);
     } catch {
       parsed = { raw: rawText };
+    }
+
+    if (sendRes.ok) {
+      const { error: upsertError } = await adminClient
+          .from("NotificationHistory")
+          .upsert(
+              {
+                user_id: user.id,
+                notification_type: "daily_reminder",
+                sent_date: today,
+              },
+              {
+                onConflict: "user_id,notification_type",
+              }
+          );
+
+      if (upsertError) {
+        throw new Error(
+            `Send-missed-reminder: Failed to update notification history: ${upsertError.message}`
+        );
+      }
     }
 
     return Response.json(

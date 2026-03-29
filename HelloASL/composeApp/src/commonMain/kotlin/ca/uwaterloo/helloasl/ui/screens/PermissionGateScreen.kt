@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import ca.uwaterloo.helloasl.getPlatform
 import ca.uwaterloo.helloasl.ui.components.HelloASLCard
 
 @Composable
@@ -21,6 +22,7 @@ fun PermissionsGateScreen(
     onRequestNotifications: () -> Unit,
     onContinue: () -> Unit
 ) {
+    val platform = getPlatform()
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
@@ -90,33 +92,35 @@ fun PermissionsGateScreen(
                 )
             }
 
-            Spacer(Modifier.height(12.dp))
-
-            HelloASLCard(
-                modifier = Modifier.fillMaxWidth(),
-                cardColor = MaterialTheme.colorScheme.surfaceContainer
-            ) {
-                Spacer(Modifier.height(4.dp))
-
-                PermissionCardHeader(
-                    icon = { Icon(Icons.Filled.Notifications, contentDescription = null) },
-                    title = "Notifications"
-                )
-
-                Spacer(Modifier.height(8.dp))
-
-                Text(
-                    text = "Get reminders for learning goals, streaks and your learning progress.",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-
+            if (platform.isAndroid) {
                 Spacer(Modifier.height(12.dp))
 
-                PermissionFooter(
-                    statusText = if (notificationGranted) "Allowed" else "Not allowed",
-                    actionText = if (notificationGranted) null else "Allow",
-                    onAction = if (notificationGranted) null else onRequestNotifications
-                )
+                HelloASLCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    cardColor = MaterialTheme.colorScheme.surfaceContainer
+                ) {
+                    Spacer(Modifier.height(4.dp))
+
+                    PermissionCardHeader(
+                        icon = { Icon(Icons.Filled.Notifications, contentDescription = null) },
+                        title = "Notifications"
+                    )
+
+                    Spacer(Modifier.height(8.dp))
+
+                    Text(
+                        text = "Get reminders for learning goals, streaks and your learning progress.",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    Spacer(Modifier.height(12.dp))
+
+                    PermissionFooter(
+                        statusText = if (notificationGranted) "Allowed" else "Not allowed",
+                        actionText = if (notificationGranted) null else "Allow",
+                        onAction = if (notificationGranted) null else onRequestNotifications
+                    )
+                }
             }
 
             Spacer(Modifier.height(28.dp))
