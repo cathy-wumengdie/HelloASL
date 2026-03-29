@@ -40,7 +40,7 @@ fun main() = application {
                 hasSeenPermissionGate.value = true
             },
             supabaseDependency = supabaseDependency,
-            onLoginSuccessSyncDeviceToken = {}
+            onLoginSuccessSyncDeviceToken = {true}
         )
     }
 }
