@@ -62,20 +62,94 @@ class TranslateViewModel(private val model: Model) {
         onSearch()
     }
 
-    fun onStartCamera() {
-        state = state.copy(isCameraRunning = true, errorMessage = null)
-
-        scope.launch {
-            val reco = model.recognizeAsl()
-            state = state.copy(
-                recoText = reco.recognizedText,
-                confidence = reco.confidence
-            )
-        }
+    fun onStartPreview() {
+        state = state.copy(
+            isPreviewActive = true,
+            errorMessage = null
+        )
     }
 
-    fun onStopCamera() {
-        state = state.copy(isCameraRunning = false, errorMessage = null)
+    fun onStopPreview() {
+        state = state.copy(
+            isPreviewActive = false,
+            isRecording = false,
+            errorMessage = null
+        )
+    }
+
+    fun onStartRecording() {
+        if (!state.isPreviewActive) {
+            state = state.copy(errorMessage = "Start the camera first.")
+            return
+        }
+
+        state = state.copy(
+            isRecording = true,
+            recoText = "",
+            confidence = 0f,
+            errorMessage = null
+        )
+    }
+
+    fun onStopRecording() {
+        state = state.copy(
+            isRecording = false,
+            errorMessage = null
+        )
+    }
+
+    fun onRecordingSaved(videoUri: String) {
+        state = state.copy(
+            isRecording = false,
+            recordedVideoUri = videoUri,
+            errorMessage = null
+        )
+    }
+
+    fun onRecordingError(message: String) {
+        state = state.copy(
+            isRecording = false,
+            errorMessage = message
+        )
+    }
+
+    fun onClearRecording() {
+        state = state.copy(
+            recordedVideoUri = null,
+            recoText = "",
+            confidence = 0f,
+            isRecognizing = false,
+            errorMessage = null
+        )
+    }
+
+    fun onInterpretRecording() {
+        val uri = state.recordedVideoUri
+        if (uri.isNullOrBlank()) {
+            state = state.copy(errorMessage = "Please record a video first.")
+            return
+        }
+
+        state = state.copy(
+            isRecognizing = true,
+            errorMessage = null
+        )
+
+        scope.launch {
+            try {
+                val reco = model.recognizeAslFromVideo(uri)
+                state = state.copy(
+                    recoText = reco.recognizedText,
+                    confidence = reco.confidence,
+                    isRecognizing = false
+                )
+            } catch (e: Exception) {
+                state = state.copy(
+                    isRecognizing = false,
+                    errorMessage = e.message ?: "Failed to interpret recording."
+                )
+            }
+        }
     }
 
     fun onClearHistory() {

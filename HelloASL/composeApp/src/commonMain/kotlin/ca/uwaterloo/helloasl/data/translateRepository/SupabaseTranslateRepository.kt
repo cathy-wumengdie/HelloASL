@@ -86,7 +86,7 @@ class SupabaseTranslateRepository(
             }
     }
 
-    override suspend fun recognizeAsl(): AslRecognitionResult {
+    override suspend fun recognizeAslFromVideo(videoUri: String): AslRecognitionResult {
         return AslRecognitionResult(
             recognizedText = "Hello",
             confidence = 0.86f
