@@ -89,7 +89,7 @@ fun StarView(vm: StarViewModel) {
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .aspectRatio(1f)
-                                .clickable(enabled = false) {} // 防止误关闭
+                                .clickable(enabled = false) {}
                         )
                     }
 
