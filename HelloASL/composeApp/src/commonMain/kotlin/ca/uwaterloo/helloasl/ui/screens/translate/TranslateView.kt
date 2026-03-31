@@ -247,6 +247,8 @@ private fun AslToEnUI(
     onRecordingSaved: (String) -> Unit,
     onRecordingError: (String) -> Unit,
 ) {
+    var showPreview by remember { mutableStateOf(false) }
+
     Spacer(Modifier.height(16.dp))
 
     if (!hasCameraHardware) {
@@ -262,12 +264,16 @@ private fun AslToEnUI(
         )
         Spacer(Modifier.height(16.dp))
     } else {
-        Spacer(Modifier.height(40.dp))
+        Spacer(Modifier.height(24.dp))
     }
 
     HelloASLCard(modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp)) {
-            Text("Translate ASL to English", style = MaterialTheme.typography.titleLarge)
+            Text(
+                "Translate ASL to English",
+                style = MaterialTheme.typography.titleLarge
+            )
+
             Spacer(Modifier.height(12.dp))
 
             val cameraReady = hasCameraHardware && cameraGranted
@@ -275,158 +281,154 @@ private fun AslToEnUI(
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(220.dp),
-                shape = MaterialTheme.shapes.medium,
-                tonalElevation = 1.dp
+                    .aspectRatio(3f / 4f),
+                shape = RoundedCornerShape(20.dp),
+                tonalElevation = 2.dp,
+                shadowElevation = 6.dp,
+                color = MaterialTheme.colorScheme.surfaceContainerLow
             ) {
                 if (cameraReady && state.isPreviewActive) {
                     VideoRecorder(
                         modifier = Modifier.fillMaxSize(),
                         isPreviewActive = state.isPreviewActive,
                         isRecording = state.isRecording,
-                        onVideoSaved = { uri ->
-                            onRecordingSaved(uri)
-                        },
-                        onError = { message ->
-                            onRecordingError(message)
-                        }
+                        onVideoSaved = onRecordingSaved,
+                        onError = onRecordingError
                     )
                 } else {
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(
-                            imageVector = Icons.Filled.Videocam,
-                            contentDescription = "Camera",
-                            modifier = Modifier.size(64.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Videocam,
+                                contentDescription = "Camera",
+                                modifier = Modifier.size(72.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+
+                            Spacer(Modifier.height(12.dp))
+
+                            Text(
+                                text = when {
+                                    !hasCameraHardware -> "Camera unavailable"
+                                    !cameraGranted -> "Camera permission needed"
+                                    else -> "Start the camera to record a sign"
+                                },
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(14.dp))
+
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = {
+                            when {
+                                !cameraGranted -> onRequestCameraPermission()
+                                state.isPreviewActive -> onStopPreview()
+                                else -> onStartPreview()
+                            }
+                        },
+                        enabled = hasCameraHardware && !state.isRecording,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Text(
+                            text = when {
+                                !hasCameraHardware -> "No Camera"
+                                !cameraGranted -> "Grant Permission"
+                                state.isPreviewActive -> "Stop Camera"
+                                else -> "Start Camera"
+                            },
+                            maxLines = 1
+                        )
+                    }
+
+                    Button(
+                        onClick = {
+                            if (state.isRecording) onStopRecording() else onStartRecording()
+                        },
+                        enabled = hasCameraHardware &&
+                                cameraGranted &&
+                                state.isPreviewActive,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Text(
+                            text = if (state.isRecording) "Stop Recording" else "Record Video",
+                            maxLines = 1
                         )
                     }
                 }
-            }
 
-            Spacer(Modifier.height(12.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                OutlinedButton(
-                    onClick = {
-                        when {
-                            !cameraGranted -> onRequestCameraPermission()
-                            state.isPreviewActive -> onStopPreview()
-                            else -> onStartPreview()
-                        }
-                    },
-                    enabled = hasCameraHardware,
-                    modifier = Modifier.weight(1f)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Text(
-                        when {
-                            !hasCameraHardware -> "No Camera"
-                            !cameraGranted -> "Grant Permission"
-                            state.isPreviewActive -> "Stop Preview"
-                            else -> "Start Preview"
-                        }
-                    )
-                }
+                    OutlinedButton(
+                        onClick = { showPreview = true },
+                        enabled = !state.recordedVideoUri.isNullOrBlank(),
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Text("Preview", maxLines = 1)
+                    }
 
-                Button(
-                    onClick = {
-                        if (state.isRecording) onStopRecording() else onStartRecording()
-                    },
-                    enabled = hasCameraHardware &&
-                            cameraGranted &&
-                            state.isPreviewActive,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text(if (state.isRecording) "Stop" else "Record")
-                }
-            }
+                    Button(
+                        onClick = onInterpretRecording,
+                        enabled = !state.recordedVideoUri.isNullOrBlank() && !state.isRecognizing,
+                        modifier = Modifier.weight(1.2f),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Text(
+                            text = if (state.isRecognizing) "Interpreting..." else "Interpret",
+                            maxLines = 1
+                        )
+                    }
 
-            Spacer(Modifier.height(8.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                OutlinedButton(
-                    onClick = onInterpretRecording,
-                    enabled = !state.recordedVideoUri.isNullOrBlank() && !state.isRecognizing,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text(if (state.isRecognizing) "Interpreting..." else "Interpret")
-                }
-
-                OutlinedButton(
-                    onClick = onClearRecording,
-                    enabled = !state.recordedVideoUri.isNullOrBlank(),
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text("Clear")
-                }
-
-                // Preview / Playback button
-                var showPreview by remember { mutableStateOf(false) }
-
-                OutlinedButton(
-                    onClick = { showPreview = true },
-                    enabled = !state.recordedVideoUri.isNullOrBlank(),
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text("Preview")
-                }
-
-                if (showPreview) {
-                    val uri = state.recordedVideoUri
-                    if (!uri.isNullOrBlank()) {
-                        Dialog(onDismissRequest = { showPreview = false }) {
-                            Surface(
-                                shape = MaterialTheme.shapes.medium,
-                                tonalElevation = 4.dp,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(360.dp)
-                            ) {
-                                Column(Modifier.fillMaxSize()) {
-                                    SignVideoPlayer(
-                                        resourcePath = uri,
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .weight(1f)
-                                    )
-
-                                    OutlinedButton(
-                                        onClick = { showPreview = false },
-                                        modifier = Modifier
-                                            .align(Alignment.CenterHorizontally)
-                                            .padding(12.dp)
-                                    ) {
-                                        Text("Close")
-                                    }
-                                }
-                            }
-                        }
-                    } else {
-                        // No URI — just close the dialog
-                        showPreview = false
+                    TextButton(
+                        onClick = onClearRecording,
+                        enabled = !state.recordedVideoUri.isNullOrBlank() && !state.isRecording,
+                        modifier = Modifier.weight(0.8f)
+                    ) {
+                        Text("Clear", maxLines = 1)
                     }
                 }
             }
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(14.dp))
 
-            Text(
-                text = when {
-                    state.isRecording -> "Recording in progress..."
-                    !state.recordedVideoUri.isNullOrBlank() -> "Video recorded and ready."
-                    state.isPreviewActive -> "Camera preview is active."
-                    else -> "Camera is idle."
-                },
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(14.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerLow
+            ) {
+                Text(
+                    text = when {
+                        state.isRecording -> "Recording in progress..."
+                        !state.recordedVideoUri.isNullOrBlank() -> "Video recorded and ready."
+                        state.isPreviewActive -> "Camera preview is active."
+                        else -> "Camera is idle."
+                    },
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp)
+                )
+            }
 
             state.errorMessage?.let {
                 Spacer(Modifier.height(12.dp))
@@ -438,6 +440,62 @@ private fun AslToEnUI(
         }
     }
 
+    if (showPreview) {
+        val uri = state.recordedVideoUri
+        if (!uri.isNullOrBlank()) {
+            Dialog(onDismissRequest = { showPreview = false }) {
+                Surface(
+                    shape = RoundedCornerShape(24.dp),
+                    tonalElevation = 6.dp,
+                    shadowElevation = 10.dp,
+                    color = MaterialTheme.colorScheme.surface,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp)
+                        .height(500.dp)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                "Recorded Preview",
+                                style = MaterialTheme.typography.titleMedium
+                            )
+
+                            TextButton(onClick = { showPreview = false }) {
+                                Text("Close")
+                            }
+                        }
+
+                        Spacer(Modifier.height(12.dp))
+
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f),
+                            shape = RoundedCornerShape(18.dp),
+                            color = MaterialTheme.colorScheme.surfaceContainerLow
+                        ) {
+                            SignVideoPlayer(
+                                resourcePath = uri,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
+                    }
+                }
+            }
+        } else {
+            showPreview = false
+        }
+    }
+
     Spacer(Modifier.height(16.dp))
 
     HelloASLCard(modifier = Modifier.fillMaxWidth()) {
@@ -446,8 +504,7 @@ private fun AslToEnUI(
             Spacer(Modifier.height(8.dp))
 
             Text(
-                text = if (state.recoText.isBlank()) "No result yet."
-                else state.recoText,
+                text = if (state.recoText.isBlank()) "No result yet." else state.recoText,
                 style = MaterialTheme.typography.titleLarge
             )
         }
