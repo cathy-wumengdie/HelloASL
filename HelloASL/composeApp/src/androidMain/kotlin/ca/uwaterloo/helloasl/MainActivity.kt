@@ -20,6 +20,9 @@ import ca.uwaterloo.helloasl.data.SupabaseAppDependency
 import ca.uwaterloo.helloasl.data.SupabaseClientFactory
 import data.HelloAslDataStore
 import kotlinx.coroutines.launch
+import ca.uwaterloo.helloasl.App
+import ca.uwaterloo.helloasl.data.translateRepository.AndroidVideoRecognitionService
+import ca.uwaterloo.helloasl.data.translateRepository.VideoRecognitionService
 import ca.uwaterloo.helloasl.data.notificationRepository.AndroidTokenSyncer
 
 class MainActivity : ComponentActivity() {
@@ -35,7 +38,7 @@ class MainActivity : ComponentActivity() {
             val context = LocalContext.current
             val scope = rememberCoroutineScope()
             val supabaseDependency = remember {
-                SupabaseAppDependency(supabase, BuildConfig.SUPABASE_ANON_KEY)
+                SupabaseAppDependency(supabase, BuildConfig.SUPABASE_ANON_KEY, videoRecognitionService = AndroidVideoRecognitionService(context.applicationContext))
             }
 
             // ---- DataStore ----
@@ -206,4 +209,17 @@ class MainActivity : ComponentActivity() {
             )
         }
     }
+}
+
+private fun createSupabaseDependencyOrNull(
+    url: String,
+    anonKey: String,
+    videoRecognitionService: VideoRecognitionService? = null
+): SupabaseAppDependency? {
+    if (url.isBlank() || anonKey.isBlank()) return null
+    val client = SupabaseClientFactory.create(url, anonKey)
+    return SupabaseAppDependency(
+        client = client,
+        videoRecognitionService = videoRecognitionService
+    )
 }
