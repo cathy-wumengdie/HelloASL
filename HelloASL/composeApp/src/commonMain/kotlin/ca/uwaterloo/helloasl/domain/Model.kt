@@ -19,6 +19,7 @@ import kotlinx.coroutines.withContext
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import ca.uwaterloo.helloasl.data.notificationRepository.NotificationRepository
 import kotlinx.coroutines.*
 
 data class Repositories(
@@ -27,7 +28,8 @@ data class Repositories(
     val user: UserRepository,
     val learning: LearningRepository,
     val translate: TranslateRepository,
-    val progressTracker: ProgressTrackerRepository
+    val progressTracker: ProgressTrackerRepository,
+    val notification: NotificationRepository
 )
 
 class Model(
@@ -299,5 +301,9 @@ class Model(
 
     suspend fun getCurrentUserId(): String {
         return repos.user.getUser().id
+    }
+
+    suspend fun triggerSendMissedReminder() {
+        repos.notification.triggerSendMissedReminder()
     }
 }

@@ -67,39 +67,46 @@ fun LessonView(
             elevationDp = 0.dp
         ) {
             val videoUrl = state.videoUrl
-            Box(modifier = Modifier.fillMaxWidth()) {
-                if (videoUrl != null) {
-                    SignVideoPlayer(
-                        resourcePath = videoUrl,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(220.dp)
-                    )
-                } else {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(220.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(Icons.Filled.PlayArrow, contentDescription = null)
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
+                Box(
+                    modifier = Modifier
+                        .widthIn(max = 520.dp)
+                        .fillMaxWidth()
+                        .aspectRatio(4f / 3f)
+                ) {
+                    if (videoUrl != null) {
+                        SignVideoPlayer(
+                            resourcePath = videoUrl,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    } else {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(Icons.Filled.PlayArrow, contentDescription = null)
+                        }
                     }
-                }
 
-                if (state.canPrevVideo) {
-                    IconButton(
-                        onClick = { vm.onPrevVideo() },
-                        modifier = Modifier.align(Alignment.CenterStart)
-                    ) {
-                        Icon(Icons.Filled.ChevronLeft, contentDescription = "Previous video")
+                    if (state.canPrevVideo) {
+                        IconButton(
+                            onClick = { vm.onPrevVideo() },
+                            modifier = Modifier.align(Alignment.CenterStart)
+                        ) {
+                            Icon(Icons.Filled.ChevronLeft, contentDescription = "Previous video")
+                        }
                     }
-                }
-                if (state.canNextVideo) {
-                    IconButton(
-                        onClick = { vm.onNextVideo() },
-                        modifier = Modifier.align(Alignment.CenterEnd)
-                    ) {
-                        Icon(Icons.Filled.ChevronRight, contentDescription = "Next video")
+
+                    if (state.canNextVideo) {
+                        IconButton(
+                            onClick = { vm.onNextVideo() },
+                            modifier = Modifier.align(Alignment.CenterEnd)
+                        ) {
+                            Icon(Icons.Filled.ChevronRight, contentDescription = "Next video")
+                        }
                     }
                 }
             }

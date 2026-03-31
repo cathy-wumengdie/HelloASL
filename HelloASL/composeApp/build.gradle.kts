@@ -8,6 +8,7 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.composeHotReload)
+    alias(libs.plugins.googleServices)
     kotlin("plugin.serialization") version "2.3.0"
 }
 
@@ -42,6 +43,7 @@ kotlin {
             implementation("io.github.jan-tennert.supabase:postgrest-kt")
             implementation("io.github.jan-tennert.supabase:realtime-kt")
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
+            implementation("io.github.jan-tennert.supabase:functions-kt")
         }
         androidMain.dependencies {
             implementation(libs.compose.uiToolingPreview)
@@ -50,11 +52,30 @@ kotlin {
             implementation("androidx.media3:media3-exoplayer:1.2.1")
             implementation("androidx.media3:media3-ui:1.2.1")
             implementation("io.ktor:ktor-client-android:3.0.0")
+            implementation(project.dependencies.platform("com.google.firebase:firebase-bom:33.12.0"))
+            implementation("com.google.firebase:firebase-messaging-ktx")
         }
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutinesSwing)
             implementation("io.ktor:ktor-client-cio:3.0.0")
+
+            val osName = System.getProperty("os.name").lowercase()
+            val osArch = System.getProperty("os.arch").lowercase()
+
+            val javafxPlatform = when {
+                osName.contains("mac") && (osArch.contains("aarch64") || osArch.contains("arm")) -> "mac-aarch64"
+                osName.contains("mac") -> "mac"
+                osName.contains("win") -> "win"
+                else -> "linux"
+            }
+
+            implementation("org.openjfx:javafx-base:21.0.2:$javafxPlatform")
+            implementation("org.openjfx:javafx-graphics:21.0.2:$javafxPlatform")
+            implementation("org.openjfx:javafx-controls:21.0.2:$javafxPlatform")
+            implementation("org.openjfx:javafx-media:21.0.2:$javafxPlatform")
+            implementation("org.openjfx:javafx-swing:21.0.2:$javafxPlatform")
+            implementation("org.bytedeco:javacv-platform:1.5.13")
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -132,6 +153,24 @@ compose.desktop {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "ca.uwaterloo.helloasl"
             packageVersion = "1.0.0"
+
+            macOS {
+                bundleID = "ca.uwaterloo.helloasl"
+                infoPlist {
+                    extraKeysRawXml = """
+                        <key>NSCameraUsageDescription</key>
+                        <string>HelloASL uses the camera for ASL to English translation.</string>
+                        
+                        <key>NSCameraUseContinuityCameraDeviceType</key>
+                        <true/>
+                    """.trimIndent()
+                }
+            }
         }
     }
+}
+
+tasks.withType<JavaExec>().configureEach {
+    systemProperty("SUPABASE_URL", localProps.getProperty("SUPABASE_URL", ""))
+    systemProperty("SUPABASE_ANON_KEY", localProps.getProperty("SUPABASE_ANON_KEY", ""))
 }

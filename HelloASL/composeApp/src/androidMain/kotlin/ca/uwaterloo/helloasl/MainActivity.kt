@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -19,20 +20,22 @@ import ca.uwaterloo.helloasl.data.SupabaseAppDependency
 import ca.uwaterloo.helloasl.data.SupabaseClientFactory
 import data.HelloAslDataStore
 import kotlinx.coroutines.launch
-import ca.uwaterloo.helloasl.App
+import ca.uwaterloo.helloasl.data.notificationRepository.AndroidTokenSyncer
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        val supabase = SupabaseClientFactory.create(
+            BuildConfig.SUPABASE_URL,
+            BuildConfig.SUPABASE_ANON_KEY
+        )
+
         setContent {
             val context = LocalContext.current
             val scope = rememberCoroutineScope()
             val supabaseDependency = remember {
-                createSupabaseDependencyOrNull(
-                    url = BuildConfig.SUPABASE_URL,
-                    anonKey = BuildConfig.SUPABASE_ANON_KEY
-                )
+                SupabaseAppDependency(supabase, BuildConfig.SUPABASE_ANON_KEY)
             }
 
             // ---- DataStore ----
@@ -51,6 +54,8 @@ class MainActivity : ComponentActivity() {
                             PackageManager.PERMISSION_GRANTED
                 )
             }
+            var cameraErrorMessage by remember { mutableStateOf<String?>(null) }
+
 
             var notificationGranted by remember {
                 mutableStateOf(
@@ -79,6 +84,11 @@ class MainActivity : ComponentActivity() {
                             ) == PackageManager.PERMISSION_GRANTED
                         if (cameraGranted) hasAskedCameraOnce = false
                         if (notificationGranted) hasAskedNotifOnce = false
+                        cameraErrorMessage = when {
+                            !hasCameraHardware -> "This device does not have a camera."
+                            cameraGranted -> null
+                            else -> cameraErrorMessage
+                        }
                     }
                 }
                 lifecycleOwner.lifecycle.addObserver(observer)
@@ -92,6 +102,8 @@ class MainActivity : ComponentActivity() {
                 ActivityResultContracts.RequestPermission()
             ) { granted ->
                 cameraGranted = granted
+                cameraErrorMessage =
+                    if (granted) null else "Camera permission was denied."
             }
 
             val notificationLauncher = rememberLauncherForActivityResult(
@@ -113,7 +125,9 @@ class MainActivity : ComponentActivity() {
                 settingsLauncher.launch(intent)
             }
             val requestCameraOrOpenSettings = {
-                if (!cameraGranted) {
+                if (!hasCameraHardware) {
+                    cameraErrorMessage = "This device does not have a camera."
+                } else if (!cameraGranted) {
                     val shouldShowRationale =
                         ActivityCompat.shouldShowRequestPermissionRationale(
                             this@MainActivity,
@@ -122,11 +136,14 @@ class MainActivity : ComponentActivity() {
 
                     if (!hasAskedCameraOnce || shouldShowRationale) {
                         hasAskedCameraOnce = true
+                        cameraErrorMessage = null
                         cameraLauncher.launch(Manifest.permission.CAMERA)
                     } else {
-                        // Asked before + no rationale => likely "Don't ask again" -> open settings
+                        cameraErrorMessage = "Camera permission was denied. Please enable it in Settings."
                         openAppSettings()
                     }
+                } else {
+                    cameraErrorMessage = null
                 }
             }
 
@@ -152,6 +169,7 @@ class MainActivity : ComponentActivity() {
             App(
                 hasCameraHardware = hasCameraHardware,
                 cameraGranted = cameraGranted,
+                cameraErrorMessage = cameraErrorMessage,
                 notificationGranted = notificationGranted,
 
                 requestCameraPermission = {
@@ -170,14 +188,19 @@ class MainActivity : ComponentActivity() {
                         store.setHasSeenPermissionGate(true)
                     }
                 },
-                supabaseDependency = supabaseDependency
+                supabaseDependency = supabaseDependency,
+                onLoginSuccessSyncDeviceToken = {
+                    try {
+                        AndroidTokenSyncer.syncCurrentToken(
+                            context = this@MainActivity,
+                            supabase = supabase
+                        )
+                    } catch (e: Exception) {
+                        Log.e("HelloASL_FCM", "Failed to sync token after login", e)
+                        false
+                    }
+                }
             )
         }
     }
-}
-
-private fun createSupabaseDependencyOrNull(url: String, anonKey: String): SupabaseAppDependency? {
-    if (url.isBlank() || anonKey.isBlank()) return null
-    val client = SupabaseClientFactory.create(url, anonKey)
-    return SupabaseAppDependency(client)
 }

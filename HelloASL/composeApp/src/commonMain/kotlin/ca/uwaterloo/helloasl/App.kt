@@ -16,17 +16,20 @@ import ca.uwaterloo.helloasl.ui.navigations.AppNavigation
 import ca.uwaterloo.helloasl.ui.theme.HelloASLTheme
 import kotlinx.coroutines.launch
 import androidx.compose.ui.graphics.Color
+import ca.uwaterloo.helloasl.data.notificationRepository.NoOpNotificationRepository
 
 @Composable
 fun App(
     hasCameraHardware: Boolean,
     cameraGranted: Boolean,
+    cameraErrorMessage: String?,
     notificationGranted: Boolean,
     requestCameraPermission: () -> Unit,
     requestNotificationPermission: () -> Unit,
     hasSeenPermissionGate: Boolean,
     onPermissionGateCompleted: () -> Unit,
-    supabaseDependency: SupabaseAppDependency? = null
+    supabaseDependency: SupabaseAppDependency? = null,
+    onLoginSuccessSyncDeviceToken: suspend () -> Boolean,
 ) {
     HelloASLTheme {
         val repositories = remember {
@@ -38,6 +41,7 @@ fun App(
                 learning = supabaseDependency?.learningRepository ?: MockLearningRepository(db),
                 translate = supabaseDependency?. translateRepository ?: MockTranslateRepository(db),
                 progressTracker = supabaseDependency?.progressTrackerRepository ?: MockProgressTrackerRepository(db),
+                notification = supabaseDependency?.notificationRepository ?: NoOpNotificationRepository
             )
         }
 
@@ -47,6 +51,7 @@ fun App(
         println("Learning repo in use: ${repositories.learning::class.simpleName}")
         println("Translate repo in use: ${repositories.translate::class.simpleName}")
         println("ProgressTracker repo in use: ${repositories.progressTracker::class.simpleName}")
+        println("Notification repo in use: ${repositories.notification::class.simpleName}")
 
         val model = remember { Model(repositories) }
 
@@ -56,11 +61,13 @@ fun App(
                 model = model,
                 hasCameraHardware = hasCameraHardware,
                 cameraGranted = cameraGranted,
+                cameraErrorMessage = cameraErrorMessage,
                 notificationGranted = notificationGranted,
                 requestCameraPermission = requestCameraPermission,
                 requestNotificationPermission = requestNotificationPermission,
                 hasSeenPermissionGate = hasSeenPermissionGate,
-                onPermissionGateCompleted = onPermissionGateCompleted
+                onPermissionGateCompleted = onPermissionGateCompleted,
+                onLoginSuccessSyncDeviceToken = onLoginSuccessSyncDeviceToken,
             )
 
             if (model.tagDialogVisible) {

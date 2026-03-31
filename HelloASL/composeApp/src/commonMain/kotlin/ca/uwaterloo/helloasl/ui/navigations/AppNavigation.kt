@@ -31,11 +31,13 @@ fun AppNavigation(
     model: Model,
     hasCameraHardware: Boolean,
     cameraGranted: Boolean,
+    cameraErrorMessage: String?,
     notificationGranted: Boolean,
     requestCameraPermission: () -> Unit,
     requestNotificationPermission: () -> Unit,
     hasSeenPermissionGate: Boolean,
-    onPermissionGateCompleted: () -> Unit
+    onPermissionGateCompleted: () -> Unit,
+    onLoginSuccessSyncDeviceToken: suspend () -> Boolean
 ) {
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -83,16 +85,66 @@ fun AppNavigation(
         AuthUiState.LoggedIn -> {}
     }
 
+    var tokenSyncCompleted by remember(authState) { mutableStateOf(false) }
+    var hasStartedTokenSync by remember(authState) { mutableStateOf(false) }
+    var missedReminderTriggered by remember(authState) { mutableStateOf(false) }
+
+    LaunchedEffect(authState) {
+        if (authState != AuthUiState.LoggedIn) {
+            tokenSyncCompleted = false
+            hasStartedTokenSync = false
+            missedReminderTriggered = false
+            return@LaunchedEffect
+        }
+
+        if (!hasStartedTokenSync) {
+            hasStartedTokenSync = true
+            runCatching {
+                val synced = onLoginSuccessSyncDeviceToken()
+                tokenSyncCompleted = synced
+                if (!synced) {
+                    hasStartedTokenSync = false
+                }
+            }.onFailure {
+                println("Token sync failed: ${it.message}")
+                it.printStackTrace()
+                hasStartedTokenSync = false
+                tokenSyncCompleted = false
+            }
+        }
+    }
+
     if (!hasSeenPermissionGate) {
         PermissionsGateScreen(
             hasCameraHardware = hasCameraHardware,
             cameraGranted = cameraGranted,
+            cameraErrorMessage = cameraErrorMessage,
             notificationGranted = notificationGranted,
             onRequestCamera = requestCameraPermission,
             onRequestNotifications = requestNotificationPermission,
             onContinue = { onPermissionGateCompleted() }
         )
         return
+    }
+
+    LaunchedEffect(authState, hasSeenPermissionGate, notificationGranted, tokenSyncCompleted) {
+        if (
+            authState == AuthUiState.LoggedIn &&
+            hasSeenPermissionGate &&
+            notificationGranted &&
+            tokenSyncCompleted &&
+            !missedReminderTriggered
+        ) {
+            missedReminderTriggered = true
+
+            runCatching {
+                model.triggerSendMissedReminder()
+            }.onFailure {
+                println("Missed reminder failed: ${it.message}")
+                it.printStackTrace()
+                missedReminderTriggered = false
+            }
+        }
     }
 
     val homeVm = remember { HomeViewModel(model, scope) }
