@@ -266,6 +266,18 @@ class SupabaseUserRepository(
             .toSet()
     }
 
+    override suspend fun updateUserName(userId: String, newName: String) {
+        supabase.from("Profiles").update(
+            {
+                set("name", newName)
+            }
+        ) {
+            filter {
+                eq("user_id", userId)
+            }
+        }
+    }
+
     private suspend fun getLessonWordCount(lessonId: Long): Int {
         return supabase
             .from("ASLSign")

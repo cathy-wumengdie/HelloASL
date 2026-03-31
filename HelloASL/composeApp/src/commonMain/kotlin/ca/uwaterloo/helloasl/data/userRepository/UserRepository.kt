@@ -9,4 +9,5 @@ interface UserRepository {
     suspend fun updateLearningGoals(minutesPerDay: Int, daysPerWeek: Int)
     suspend fun completeLesson(lessonId: Long): Boolean
     suspend fun getCompletedLessonIds(): Set<Long>
+    suspend fun updateUserName(userId: String, newName: String)
 }

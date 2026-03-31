@@ -20,9 +20,25 @@ class ProfileViewModel(private val model: Model, private val scope: CoroutineSco
             wordsLearned = 0,
             starredSigns = 0,
             learningGoalPerDay = 0,
-            learningGoalPerWeek = 0
+            learningGoalPerWeek = 0,
+            email = "",
         )
     )
+        private set
+
+    var passwordError by mutableStateOf<String?>(null)
+        private set
+
+    var isPasswordLoading by mutableStateOf(false)
+        private set
+
+    var passwordSuccess by mutableStateOf(false)
+        private set
+
+    var nameError by mutableStateOf<String?>(null)
+        private set
+
+    var nameSuccess by mutableStateOf(false)
         private set
 
     init {
@@ -41,6 +57,7 @@ class ProfileViewModel(private val model: Model, private val scope: CoroutineSco
             starredSigns = starredItems.size,
             learningGoalPerDay = progressSummary.dailyProgress.dailyGoalMinutes,
             learningGoalPerWeek = progressSummary.weeklyProgress.weeklyGoalDays,
+            email = user.email
         )
     }
 
@@ -80,16 +97,77 @@ class ProfileViewModel(private val model: Model, private val scope: CoroutineSco
         _navEvents.tryEmit(ProfileNavEvent(ProfileDestination.ACCOUNT))
     }
 
-    fun onLicense() {
-        _navEvents.tryEmit(ProfileNavEvent(ProfileDestination.LICENSE))
-    }
-
     suspend fun onSignOut() {
         val result = model.logout()
         result.onSuccess {
             _navEvents.tryEmit(ProfileNavEvent(ProfileDestination.SIGN_IN))
         }.onFailure { e ->
             println("Logout failed: ${e.message}")
+        }
+    }
+
+    fun onEditName(newName: String) {
+        scope.launch {
+            nameError = null
+            nameSuccess = false
+
+            val result = model.updateName(newName)
+
+            result.onSuccess {
+                nameSuccess = true
+            }.onFailure { e ->
+                nameError = e.message ?: "Failed to update name"
+            }
+        }
+    }
+
+    fun onEditPassword(current: String, new: String) {
+        scope.launch {
+            val user = model.getUser()
+
+            isPasswordLoading = true
+            passwordError = null
+            passwordSuccess = false
+
+            val result = model.changePassword(
+                email = user.email,
+                currentPassword = current,
+                newPassword = new
+            )
+
+            isPasswordLoading = false
+
+            result.onSuccess {
+                passwordSuccess = true
+            }.onFailure { e ->
+                passwordError = mapError(e)
+            }
+        }
+    }
+
+    private fun mapError(e: Throwable): String {
+        val msg = e.message ?: ""
+
+        return when {
+            msg.contains("Invalid login", ignoreCase = true) ->
+                "Current password is incorrect"
+
+            msg.contains("timeout", ignoreCase = true) ->
+                "Request timed out, please try again"
+
+            msg.contains("Unable to resolve host", ignoreCase = true) ->
+                "No internet connection"
+
+            msg.contains("weak_password", ignoreCase = true) ->
+                "Password must be at least 6 characters"
+
+            msg.contains("Current password incorrect", ignoreCase = true) ->
+                "Current password incorrect"
+
+            else -> {
+                println("Password update failed: ${e.message}")
+                "Failed to update password"
+            }
         }
     }
 }

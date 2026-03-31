@@ -306,4 +306,37 @@ class Model(
     suspend fun triggerSendMissedReminder() {
         repos.notification.triggerSendMissedReminder()
     }
+
+    suspend fun changePassword(
+        email: String,
+        currentPassword: String,
+        newPassword: String
+    ): Result<Unit> {
+        return try {
+            val loginResult = repos.auth.login(email, currentPassword)
+
+            if (loginResult is LoginResult.Failure) {
+                return Result.failure(Exception("Current password incorrect"))
+            }
+
+            repos.auth.updatePassword(newPassword)
+
+            Result.success(Unit)
+
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun updateName(newName: String): Result<Unit> {
+        return try {
+            val user = repos.user.getUser()
+
+            repos.user.updateUserName(user.id, newName)
+
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }
