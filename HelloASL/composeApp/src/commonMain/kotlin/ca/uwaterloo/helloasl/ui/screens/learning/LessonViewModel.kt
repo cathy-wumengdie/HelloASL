@@ -147,9 +147,25 @@ class LessonViewModel(private val model: Model) {
                 model.toggleStar(sign.signId, 0L)
                 refreshCurrentStarState()
             } else {
+                showStarPopup(sign.signId)
                 model.requestStarWithTag(sign.signId)
             }
         }
+    }
+
+    fun showStarPopup(signId: Long) {
+        state = state.copy(
+            isStarPopupVisible = true,
+            pendingStarSignId = signId
+        )
+    }
+
+    fun dismissStarPopup() {
+        state = state.copy(
+            isStarPopupVisible = false,
+            pendingStarSignId = null
+        )
+        refreshCurrentStarState()
     }
 
     fun loadLesson(lessonId: Long) {

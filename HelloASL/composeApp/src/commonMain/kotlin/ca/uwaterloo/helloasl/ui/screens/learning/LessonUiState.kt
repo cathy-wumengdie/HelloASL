@@ -22,5 +22,7 @@ data class LessonUIState(
     val showNext: Boolean = false,
     val showStartQuiz: Boolean = false,
     val progress: String = "",
-    val isStarred: Boolean = false
+    val isStarred: Boolean = false,
+    val isStarPopupVisible: Boolean = false,
+    val pendingStarSignId: Long? = null
 )

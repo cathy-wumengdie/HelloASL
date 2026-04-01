@@ -33,7 +33,8 @@ private const val TAG = "SignVideoPlayer"
 @Composable
 actual fun SignVideoPlayer(
     resourcePath: String,
-    modifier: Modifier
+    modifier: Modifier,
+    dimmed: Boolean,
 ) {
     val context = LocalContext.current
 

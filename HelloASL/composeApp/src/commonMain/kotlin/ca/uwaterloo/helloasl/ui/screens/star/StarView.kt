@@ -16,6 +16,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -117,12 +118,14 @@ fun StarView(vm: StarViewModel) {
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         item.videoUrl?.let { videoUrl ->
-                            SignVideoPlayer(
-                                resourcePath = videoUrl,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .heightIn(min = 220.dp, max = 420.dp)
-                            )
+                            key(videoUrl) {
+                                SignVideoPlayer(
+                                    resourcePath = videoUrl,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .heightIn(min = 220.dp, max = 420.dp)
+                                )
+                            }
                         }
 
                         Spacer(modifier = Modifier.height(18.dp))
