@@ -30,15 +30,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import ca.uwaterloo.helloasl.getPlatform
 import ca.uwaterloo.helloasl.ui.components.ClickableSection
 import ca.uwaterloo.helloasl.ui.components.HelloASLCard
 import ca.uwaterloo.helloasl.ui.components.NumberWheelPicker
 import ca.uwaterloo.helloasl.ui.components.PasswordTextField
 import ca.uwaterloo.helloasl.ui.utils.cameraNoHardwareMessage
-import ca.uwaterloo.helloasl.ui.utils.cameraUnavailableMessage
-import com.russhwolf.settings.Settings
 import kotlinx.coroutines.launch
 
 @Composable
@@ -614,12 +611,11 @@ fun SettingsScreen(
                 Spacer(Modifier.height(8.dp))
 
                 val noCameraText = cameraNoHardwareMessage(platform, osName)
-                val desktopOnlyMessage = cameraUnavailableMessage(platform, osName)
 
                 Text(
                     text = when {
-                        cameraErrorMessage != null ->
-                            desktopOnlyMessage
+                        platform.isDesktop ->
+                            noCameraText
                         hasCameraHardware ->
                             "Needed for ASL -> English translation."
                         else ->
@@ -632,13 +628,15 @@ fun SettingsScreen(
 
                 val statusText = when {
                     cameraGranted -> "Allowed"
-                    cameraErrorMessage != null -> "Unavailable"
+                    cameraErrorMessage != null &&
+                            !cameraErrorMessage.lowercase().contains("denied") -> "Unavailable"
                     !hasCameraHardware -> "Not available"
                     else -> "Not allowed"
                 }
 
                 val showAction =
-                    cameraErrorMessage == null &&
+                    (cameraErrorMessage == null ||
+                            cameraErrorMessage.lowercase().contains("denied")) &&
                             hasCameraHardware
 
                 SettingsFooter(
