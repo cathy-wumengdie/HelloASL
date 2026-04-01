@@ -1,207 +1,235 @@
 package ca.uwaterloo.helloasl.ui.components
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
-import androidx.compose.ui.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.SwingPanel
-import androidx.compose.ui.unit.dp
 import javafx.application.Platform
 import javafx.embed.swing.JFXPanel
-import javafx.geometry.Pos
 import javafx.scene.Scene
-import javafx.scene.control.Button
-import javafx.scene.layout.*
-import javafx.scene.media.*
-import javafx.util.Duration
-import java.io.File
+import javafx.scene.layout.StackPane
+import javafx.scene.media.Media
+import javafx.scene.media.MediaPlayer
+import javafx.scene.media.MediaView
+import java.awt.BorderLayout
+import java.awt.FlowLayout
+import javax.swing.JButton
+import javax.swing.JPanel
+import androidx.compose.foundation.background
+
+private fun logFx(message: String) {
+    println("[DesktopJavaFxPlayer] $message")
+}
+
+private class DesktopFxVideoState {
+    var swingRoot: JPanel? = null
+    var jfxPanel: JFXPanel? = null
+    var mediaPlayer: MediaPlayer? = null
+    var initializedScene: Boolean = false
+    var currentUrl: String? = null
+    var isReady: Boolean = false
+    var isPlaying: Boolean = false
+    var playButton: JButton? = null
+    var pauseButton: JButton? = null
+}
+
+private fun updateButtons(state: DesktopFxVideoState) {
+    val playButton = state.playButton ?: return
+    val pauseButton = state.pauseButton ?: return
+
+    playButton.isEnabled = state.isReady && !state.isPlaying
+    pauseButton.isEnabled = state.isReady && state.isPlaying
+}
 
 @Composable
 actual fun SignVideoPlayer(
     resourcePath: String,
-    modifier: Modifier
+    modifier: Modifier,
+    dimmed: Boolean
 ) {
-    var isReady by remember(resourcePath) { mutableStateOf(false) }
-    var loadFailed by remember(resourcePath) { mutableStateOf(false) }
+    var loadFailed by remember { mutableStateOf(false) }
+    val state = remember { DesktopFxVideoState() }
 
-    val jfxPanel = remember { JFXPanel() }
-    val mediaPlayerHolder = remember { mutableStateOf<MediaPlayer?>(null) }
-
-    DisposableEffect(resourcePath) {
-        Platform.runLater {
-            try {
-                isReady = false
-                loadFailed = false
-
-                // Dispose previous player first
-                mediaPlayerHolder.value?.let { oldPlayer ->
-                    runCatching {
-                        oldPlayer.stop()
-                        oldPlayer.dispose()
-                    }
-                }
-                mediaPlayerHolder.value = null
-
-                val mediaUri =
-                    when {
-                        resourcePath.startsWith("http://") ||
-                                resourcePath.startsWith("https://") ||
-                                resourcePath.startsWith("file:/") -> resourcePath
-                        else -> File(resourcePath).toURI().toString()
-                    }
-
-                val media = Media(mediaUri)
-                val mediaPlayer = MediaPlayer(media).apply {
-                    cycleCount = 1
-                }
-                mediaPlayerHolder.value = mediaPlayer
-
-                val mediaView = MediaView(mediaPlayer).apply {
-                    isPreserveRatio = true
-                    fitWidth = 800.0
-                    fitHeight = 450.0
-                }
-
-                val playButton = Button("Play")
-                val pauseButton = Button("Pause")
-
-                fun currentPlayer(): MediaPlayer? = mediaPlayerHolder.value
-
-                fun updateButtons() {
-                    val player = currentPlayer()
-                    val playing = player?.status == MediaPlayer.Status.PLAYING
-                    playButton.isDisable = player == null || playing || !isReady || loadFailed
-                    pauseButton.isDisable = player == null || !playing || !isReady || loadFailed
-                }
-
-                playButton.setOnAction {
-                    val player = currentPlayer() ?: return@setOnAction
-                    runCatching { player.play() }
-                    updateButtons()
-                }
-
-                pauseButton.setOnAction {
-                    val player = currentPlayer() ?: return@setOnAction
-                    runCatching { player.pause() }
-                    updateButtons()
-                }
-
-                mediaPlayer.setOnReady {
-                    if (mediaPlayerHolder.value !== mediaPlayer) return@setOnReady
-                    isReady = true
-                    loadFailed = false
-                    updateButtons()
-                }
-
-                mediaPlayer.setOnPlaying {
-                    if (mediaPlayerHolder.value !== mediaPlayer) return@setOnPlaying
-                    updateButtons()
-                }
-
-                mediaPlayer.setOnPaused {
-                    if (mediaPlayerHolder.value !== mediaPlayer) return@setOnPaused
-                    updateButtons()
-                }
-
-                mediaPlayer.setOnStopped {
-                    if (mediaPlayerHolder.value !== mediaPlayer) return@setOnStopped
-                    updateButtons()
-                }
-
-                mediaPlayer.setOnEndOfMedia {
-                    if (mediaPlayerHolder.value !== mediaPlayer) return@setOnEndOfMedia
-                    runCatching {
-                        mediaPlayer.pause()
-                        mediaPlayer.seek(Duration.ZERO)
-                    }
-                    updateButtons()
-                }
-
-                mediaPlayer.setOnError {
-                    if (mediaPlayerHolder.value !== mediaPlayer) return@setOnError
-                    loadFailed = true
-                    println("MediaPlayer error: ${mediaPlayer.error?.message}")
-                    updateButtons()
-                }
-
-                updateButtons()
-
-                val controls = HBox(12.0, playButton, pauseButton).apply {
-                    alignment = Pos.CENTER
-                    style = "-fx-padding: 8 0 0 0;"
-                }
-
-                val videoContainer = StackPane(mediaView).apply {
-                    alignment = Pos.CENTER
-                    style = "-fx-background-color: black;"
-                    minHeight = 260.0
-                    prefHeight = 450.0
-                    maxHeight = 450.0
-                }
-
-                val root = VBox(12.0, videoContainer, controls).apply {
-                    alignment = Pos.CENTER
-                    style = "-fx-background-color: transparent;"
-                    VBox.setVgrow(videoContainer, Priority.ALWAYS)
-                }
-
-                jfxPanel.scene = Scene(root)
-            } catch (e: MediaException) {
-                loadFailed = true
-                println("MediaException: ${e.message}")
-            } catch (e: Exception) {
-                loadFailed = true
-                println("Exception: ${e.message}")
-            }
-        }
+    DisposableEffect(Unit) {
+        Platform.setImplicitExit(false)
 
         onDispose {
+            logFx("dispose whole SignVideoPlayer")
             Platform.runLater {
-                mediaPlayerHolder.value?.let { player ->
-                    runCatching {
-                        player.stop()
-                        player.dispose()
-                    }
-                }
-                mediaPlayerHolder.value = null
+                state.mediaPlayer?.stop()
+                state.mediaPlayer?.dispose()
+                state.mediaPlayer = null
+                state.isReady = false
+                state.isPlaying = false
+                updateButtons(state)
+
+                state.jfxPanel?.scene = Scene(StackPane())
             }
         }
     }
 
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = 320.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            if (!loadFailed) {
-                SwingPanel(
-                    modifier = Modifier.fillMaxWidth(),
-                    factory = { jfxPanel }
-                )
-            }
+    LaunchedEffect(resourcePath) {
+        loadFailed = false
+        state.currentUrl = resourcePath
+        state.isReady = false
+        state.isPlaying = false
+        updateButtons(state)
 
-            when {
-                loadFailed -> {
-                    Text(
-                        text = "Video unavailable",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
+        logFx("resourcePath changed -> $resourcePath")
+
+        val panel = state.jfxPanel
+        if (panel == null) {
+            logFx("skip load because jfxPanel not ready yet")
+            return@LaunchedEffect
+        }
+
+        Platform.runLater {
+            try {
+                if (!state.initializedScene) {
+                    panel.scene = Scene(StackPane())
+                    state.initializedScene = true
+                    logFx("initialized empty scene")
                 }
-                !isReady -> {
-                    Text(
-                        text = "Loading video…",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
+
+                state.mediaPlayer?.stop()
+                state.mediaPlayer?.dispose()
+                state.mediaPlayer = null
+
+                val media = Media(resourcePath)
+                val player = MediaPlayer(media)
+                val mediaView = MediaView(player).apply {
+                    isPreserveRatio = true
+                    fitWidth = 720.0
+                    fitHeight = 405.0
                 }
+
+                media.setOnError {
+                    logFx("media error -> ${media.error?.message}")
+                    loadFailed = true
+                    state.isReady = false
+                    state.isPlaying = false
+                    updateButtons(state)
+                }
+
+                player.setOnError {
+                    logFx("media player error -> ${player.error?.message}")
+                    loadFailed = true
+                    state.isReady = false
+                    state.isPlaying = false
+                    updateButtons(state)
+                }
+
+                player.setOnReady {
+                    logFx("media ready -> $resourcePath")
+                    state.isReady = true
+                    state.isPlaying = false
+                    updateButtons(state)
+                }
+
+                player.setOnPlaying {
+                    logFx("playing -> $resourcePath")
+                    state.isPlaying = true
+                    updateButtons(state)
+                }
+
+                player.setOnPaused {
+                    logFx("paused -> $resourcePath")
+                    state.isPlaying = false
+                    updateButtons(state)
+                }
+
+                player.setOnEndOfMedia {
+                    logFx("ended -> $resourcePath")
+                    state.isPlaying = false
+                    player.pause()
+                    player.seek(javafx.util.Duration.ZERO)
+                    updateButtons(state)
+                }
+
+                panel.scene = Scene(StackPane(mediaView))
+                state.mediaPlayer = player
+                updateButtons(state)
+            } catch (e: Exception) {
+                logFx("failed to load media -> ${e.message}")
+                loadFailed = true
+                state.isReady = false
+                state.isPlaying = false
+                updateButtons(state)
+            }
+        }
+    }
+
+    Box(
+        modifier = modifier,
+        contentAlignment = Alignment.Center
+    ) {
+        if (loadFailed) {
+            Text(
+                text = "Video unavailable",
+                style = MaterialTheme.typography.bodyMedium
+            )
+        } else {
+            SwingPanel(
+                modifier = Modifier.fillMaxSize(),
+                factory = {
+                    val fxPanel = JFXPanel()
+
+                    val playButton = JButton("Play")
+                    val pauseButton = JButton("Pause")
+
+                    state.playButton = playButton
+                    state.pauseButton = pauseButton
+
+                    playButton.addActionListener {
+                        val player = state.mediaPlayer ?: return@addActionListener
+                        Platform.runLater {
+                            if (state.isReady && !state.isPlaying) {
+                                logFx("play clicked -> ${state.currentUrl}")
+                                player.play()
+                            }
+                        }
+                    }
+
+                    pauseButton.addActionListener {
+                        val player = state.mediaPlayer ?: return@addActionListener
+                        Platform.runLater {
+                            if (state.isReady && state.isPlaying) {
+                                logFx("pause clicked -> ${state.currentUrl}")
+                                player.pause()
+                            }
+                        }
+                    }
+
+                    pauseButton.isEnabled = false
+                    playButton.isEnabled = false
+
+                    val controls = JPanel(FlowLayout(FlowLayout.CENTER)).apply {
+                        add(playButton)
+                        add(pauseButton)
+                    }
+
+                    JPanel(BorderLayout()).apply {
+                        state.swingRoot = this
+                        state.jfxPanel = fxPanel
+                        add(fxPanel, BorderLayout.CENTER)
+                        add(controls, BorderLayout.SOUTH)
+                    }
+                },
+                update = {
+                    updateButtons(state)
+                }
+            )
+
+            if (dimmed) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.55f))
+                )
             }
         }
     }

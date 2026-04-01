@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
@@ -176,12 +177,14 @@ private fun EnToAslUI(
                 val videoUrl = result?.videoUrl1
 
                 if (!videoUrl.isNullOrBlank()) {
-                    SignVideoPlayer(
-                        resourcePath = videoUrl,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(220.dp)
-                    )
+                    key(videoUrl) {
+                        SignVideoPlayer(
+                            resourcePath = videoUrl,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(min = 300.dp, max = 420.dp)
+                        )
+                    }
                 }
             }
         }
