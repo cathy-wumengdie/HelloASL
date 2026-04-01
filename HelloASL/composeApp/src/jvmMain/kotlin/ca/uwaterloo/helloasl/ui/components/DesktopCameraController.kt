@@ -27,6 +27,12 @@ class DesktopCameraController {
     }
 
     private fun refreshHardwareState() {
+        if (!isMacOs()) {
+            selectedCameraIndex = null
+            hasCameraHardware = false
+            cameraErrorMessage = "Currently only support camera function on macOS"
+            return
+        }
         val index = findFirstWorkingCameraIndex()
         selectedCameraIndex = index
         hasCameraHardware = index != null
@@ -34,6 +40,13 @@ class DesktopCameraController {
     }
 
     fun requestCameraPermission() {
+        if (!isMacOs()) {
+            hasCameraHardware = false
+            cameraGranted = false
+            permissionDenied = false
+            cameraErrorMessage = "Currently only support camera function on macOS"
+            return
+        }
         val index = selectedCameraIndex ?: findFirstWorkingCameraIndex()
 
         if (index == null) {
@@ -82,5 +95,10 @@ class DesktopCameraController {
                 grabber?.release()
             } catch (_: Throwable) {}
         }
+    }
+
+    private fun isMacOs(): Boolean {
+        val os = System.getProperty("os.name") ?: return false
+        return os.lowercase().contains("mac")
     }
 }

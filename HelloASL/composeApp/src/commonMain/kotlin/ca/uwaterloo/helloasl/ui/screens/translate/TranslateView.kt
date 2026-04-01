@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import ca.uwaterloo.helloasl.getPlatform
 import ca.uwaterloo.helloasl.ui.components.VideoRecorder
 import ca.uwaterloo.helloasl.ui.components.ClickableSection
 import ca.uwaterloo.helloasl.ui.components.HelloASLCard
@@ -248,12 +249,19 @@ private fun AslToEnUI(
     onRecordingError: (String) -> Unit,
 ) {
     var showPreview by remember { mutableStateOf(false) }
+    val platform = getPlatform()
+    val isMacOs = platform.isDesktop && System.getProperty("os.name")?.lowercase()?.contains("mac") == true
 
     Spacer(Modifier.height(16.dp))
 
     if (!hasCameraHardware) {
+        val noCameraText = when {
+            platform.isAndroid -> "This device has no camera. ASL -> English is unavailable."
+            !isMacOs -> "Currently only support camera function on macOS"
+            else -> "This device has no camera. ASL -> English is unavailable."
+        }
         Text(
-            "This device has no camera. ASL -> English is unavailable.",
+            text = noCameraText,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Spacer(Modifier.height(16.dp))

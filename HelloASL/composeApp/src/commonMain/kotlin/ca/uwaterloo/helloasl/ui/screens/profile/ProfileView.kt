@@ -573,6 +573,7 @@ fun SettingsScreen(
     onDone: () -> Unit
 ) {
     val platform = getPlatform()
+    val isMacOs = platform.isDesktop && System.getProperty("os.name")?.lowercase()?.contains("mac") == true
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
@@ -603,14 +604,26 @@ fun SettingsScreen(
 
                 Spacer(Modifier.height(8.dp))
 
+                val noCameraText = when {
+                    platform.isAndroid -> "This device has no camera. ASL -> English will be disabled."
+                    !isMacOs -> "Currently only support camera function on macOS"
+                    else -> "This device has no camera. ASL -> English will be disabled."
+                }
+
+                val desktopOnlyMessage = if (!isMacOs && platform.isDesktop) {
+                    "Currently only support camera function on macOS"
+                } else {
+                    "Camera unavailable on this desktop build."
+                }
+
                 Text(
                     text = when {
                         cameraErrorMessage != null ->
-                            "Camera unavailable on this desktop build."
+                            desktopOnlyMessage
                         hasCameraHardware ->
                             "Needed for ASL -> English translation."
                         else ->
-                            "This device has no camera. ASL -> English will be disabled."
+                            noCameraText
                     },
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -720,4 +733,3 @@ private fun SettingsFooter(
         }
     }
 }
-
