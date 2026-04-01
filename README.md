@@ -13,12 +13,9 @@ Note:
 
 ### What the TA needs to do
 
-#### 1. Get the Firebase config file
-Ask the project owner for the `google-services.json` file.
+1. Ask the project owner for the `google-services.json` file.
 
-Place it here:
-
-`composeApp/google-services.json`
+2. Place it here: `composeApp/google-services.json`
 
 ## Team Members
 Name: Fangda Dai  Email: fdai@uwaterloo.ca
