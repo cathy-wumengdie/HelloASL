@@ -30,17 +30,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.toLowerCase
 import ca.uwaterloo.helloasl.getPlatform
 import ca.uwaterloo.helloasl.ui.components.ClickableSection
 import ca.uwaterloo.helloasl.ui.components.HelloASLCard
 import ca.uwaterloo.helloasl.ui.components.NumberWheelPicker
 import ca.uwaterloo.helloasl.ui.components.PasswordTextField
 import ca.uwaterloo.helloasl.ui.utils.cameraNoHardwareMessage
-import ca.uwaterloo.helloasl.ui.utils.cameraUnavailableMessage
-import com.russhwolf.settings.Settings
-import jdk.internal.net.http.common.Log
 import kotlinx.coroutines.launch
 
 @Composable
