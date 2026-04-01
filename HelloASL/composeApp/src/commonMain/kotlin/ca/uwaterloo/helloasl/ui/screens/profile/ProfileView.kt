@@ -63,9 +63,9 @@ fun ProfileView(vm: ProfileViewModel) {
                 )
                 Spacer(Modifier.height(16.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    ClickableSection(
-                        onClick = vm::onWordsLearned,
-                        modifier = Modifier.weight(1f)
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        horizontalAlignment = Alignment.Start
                     ) {
                         NumberedCircleBadge(state.wordsLearned)
                         Spacer(Modifier.height(8.dp))
