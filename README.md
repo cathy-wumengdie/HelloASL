@@ -13,11 +13,15 @@ Note:
 - Push notifications are supported on **Android only**.  
 - Desktop builds do **not** receive notifications.
 
-#### To-do:
+To-do:
 
 1. Ask the project owner for the `google-services.json` file.
 
 2. Place it here: `composeApp/google-services.json`
+
+### 2. Connect to Supabase
+To connect to the database, ask the project owner for `SUPABASE_URL` and `SUPABASE_ANON_KEY`, and add those to your local.properties file.
+
 
 ## Team Members
 Name: Fangda Dai  Email: fdai@uwaterloo.ca
