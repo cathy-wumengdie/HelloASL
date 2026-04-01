@@ -211,15 +211,3 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-private fun createSupabaseDependencyOrNull(
-    url: String,
-    anonKey: String,
-    videoRecognitionService: VideoRecognitionService? = null
-): SupabaseAppDependency? {
-    if (url.isBlank() || anonKey.isBlank()) return null
-    val client = SupabaseClientFactory.create(url, anonKey)
-    return SupabaseAppDependency(
-        client = client,
-        videoRecognitionService = videoRecognitionService
-    )
-}
