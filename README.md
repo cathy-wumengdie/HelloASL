@@ -3,7 +3,9 @@
 ## HelloASL
 The HelloASL app is a beginner-focused app that helps users recognize and practice common American Sign Language signs in real time using their camera. 
 
-## Firebase Notification Setup
+## Setup
+
+### 1. Firebase Notification Setup
 
 This app uses **Firebase Cloud Messaging (FCM)** to send push notifications on **Android**.
 
@@ -11,7 +13,7 @@ Note:
 - Push notifications are supported on **Android only**.  
 - Desktop builds do **not** receive notifications.
 
-### What the TA needs to do
+#### To-do:
 
 1. Ask the project owner for the `google-services.json` file.
 
