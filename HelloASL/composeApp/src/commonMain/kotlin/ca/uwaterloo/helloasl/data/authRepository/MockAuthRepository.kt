@@ -126,4 +126,20 @@ class MockAuthRepository(
     override fun isLoggedIn(): Boolean {
         return db.getUserSession() != null
     }
+    override suspend fun updatePassword(newPassword: String) {
+        val userId = db.requireCurrentUserId()
+
+        val credential = db.getCredential(userId)
+            ?: throw Exception("Credential not found")
+
+        if (newPassword.length < 4) {
+            throw Exception("Password too short")
+        }
+
+        db.putCredential(
+            credential.copy(
+                passwordHash = hash(newPassword)
+            )
+        )
+    }
 }

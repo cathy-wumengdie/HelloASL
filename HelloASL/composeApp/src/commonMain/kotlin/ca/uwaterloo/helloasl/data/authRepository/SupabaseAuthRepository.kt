@@ -64,4 +64,10 @@ class SupabaseAuthRepository(
     override fun isLoggedIn(): Boolean {
         return supabase.auth.currentUserOrNull() != null
     }
+
+    override suspend fun updatePassword(newPassword: String) {
+        supabase.auth.updateUser {
+            password = newPassword
+        }
+    }
 }

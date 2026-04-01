@@ -96,6 +96,11 @@ class MockUserRepository(private val db: MockDB) : UserRepository {
         return db.getCompletedLessonIdsForUser(userId)
     }
 
+    override suspend fun updateUserName(userId: String, newName: String) {
+        val currentUserId = db.requireCurrentUserId()
+        db.updateUserName(currentUserId, newName)
+    }
+
     private fun getLessonIdsForModule(moduleId: Long): List<Long> {
         return db.lessons
             .filter { it.moduleId == moduleId }

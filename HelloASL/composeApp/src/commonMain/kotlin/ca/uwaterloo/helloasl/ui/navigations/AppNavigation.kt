@@ -363,14 +363,17 @@ fun AppNavigation(
 
                 MainTab.PROFILE -> ProfileRoute(
                     vm = profileVm,
-                    onSettings = { /* later */ },
+                    hasCameraHardware = hasCameraHardware,
+                    cameraGranted = cameraGranted,
+                    cameraErrorMessage = cameraErrorMessage,
+                    notificationGranted = notificationGranted,
+                    requestCameraPermission = requestCameraPermission,
+                    requestNotificationPermission = requestNotificationPermission,
                     onWordsLearned = { /* later */ },
                     onStarredSigns = {
                         previousTab = selectedTab
                         selectedTab = MainTab.STAR
                     },
-                    onAccount = { /* later */ },
-                    onLicense = { /* later */ },
                     onSignOut = {
                         scope.launch {
                             val result = model.logout()

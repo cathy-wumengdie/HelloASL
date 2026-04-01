@@ -144,6 +144,7 @@ class MainActivity : ComponentActivity() {
                     }
                 } else {
                     cameraErrorMessage = null
+                    openAppSettings()
                 }
             }
 
@@ -163,6 +164,8 @@ class MainActivity : ComponentActivity() {
                     } else {
                         openAppSettings()
                     }
+                } else {
+                    openAppSettings()
                 }
             }
 

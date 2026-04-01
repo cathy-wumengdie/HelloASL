@@ -362,4 +362,9 @@ class MockDB {
 
         return true
     }
+
+    fun updateUserName(userId: String, newName: String) {
+        val user = getUserById(userId) ?: throw Exception("User not found")
+        users[userId] = user.copy(name = newName)
+    }
 }
