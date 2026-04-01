@@ -26,11 +26,13 @@ import ca.uwaterloo.helloasl.domain.starModel.StarItem
 import ca.uwaterloo.helloasl.getPlatform
 import ca.uwaterloo.helloasl.ui.components.HelloASLCard
 import ca.uwaterloo.helloasl.ui.components.SignVideoPlayer
+import ca.uwaterloo.helloasl.getPlatform
 
 @Composable
 fun StarView(vm: StarViewModel) {
     val state = vm.state
     var selectedItem by remember { mutableStateOf<StarItem?>(null) }
+    val showInlineVideo = !platform.isDesktop
     val platform = remember { getPlatform() }
 
     LaunchedEffect(Unit) {
@@ -69,7 +71,10 @@ fun StarView(vm: StarViewModel) {
             items(state.items) { item ->
                 StarItemCard(
                     item = item,
-                    onClick = { selectedItem = item },
+                    showInlineVideo = showInlineVideo,
+                    onClick = {
+                        selectedItem = item
+                    },
                     onRemove = { vm.onRemoveStar(item) }
                 )
             }
@@ -164,6 +169,7 @@ fun StarView(vm: StarViewModel) {
 @Composable
 private fun StarItemCard(
     item: StarItem,
+    showInlineVideo: Boolean,
     onClick: () -> Unit,
     onRemove: () -> Unit
 ) {
@@ -227,4 +233,3 @@ private fun StarItemCard(
         }
     }
 }
-
