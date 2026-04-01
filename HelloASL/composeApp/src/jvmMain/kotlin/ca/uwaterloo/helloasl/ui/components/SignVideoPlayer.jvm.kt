@@ -33,8 +33,10 @@ private class DesktopFxVideoState {
     var currentUrl: String? = null
     var isReady: Boolean = false
     var isPlaying: Boolean = false
+    var endReached: Boolean = false
     var playButton: JButton? = null
     var pauseButton: JButton? = null
+    var pendingPlay: Boolean = false
 }
 
 private fun updateButtons(state: DesktopFxVideoState) {
@@ -42,7 +44,7 @@ private fun updateButtons(state: DesktopFxVideoState) {
     val pauseButton = state.pauseButton ?: return
 
     playButton.isEnabled = state.isReady && !state.isPlaying
-    pauseButton.isEnabled = state.isReady && state.isPlaying
+    pauseButton.isEnabled = state.isReady
 }
 
 @Composable
@@ -65,6 +67,7 @@ actual fun SignVideoPlayer(
                 state.mediaPlayer = null
                 state.isReady = false
                 state.isPlaying = false
+                state.endReached = false
                 updateButtons(state)
 
                 state.jfxPanel?.scene = Scene(StackPane())
@@ -77,6 +80,8 @@ actual fun SignVideoPlayer(
         state.currentUrl = resourcePath
         state.isReady = false
         state.isPlaying = false
+        state.endReached = false
+        state.pendingPlay = false
         updateButtons(state)
 
         logFx("resourcePath changed -> $resourcePath")
@@ -100,18 +105,27 @@ actual fun SignVideoPlayer(
                 state.mediaPlayer = null
 
                 val media = Media(resourcePath)
-                val player = MediaPlayer(media)
+                val player = MediaPlayer(media).apply {
+                    cycleCount = MediaPlayer.INDEFINITE
+                }
                 val mediaView = MediaView(player).apply {
                     isPreserveRatio = true
-                    fitWidth = 720.0
-                    fitHeight = 405.0
                 }
+
+                val root = StackPane(mediaView).apply {
+                    prefWidth = 720.0
+                    prefHeight = 405.0
+                }
+
+                mediaView.fitWidthProperty().bind(root.widthProperty())
+                mediaView.fitHeightProperty().bind(root.heightProperty())
 
                 media.setOnError {
                     logFx("media error -> ${media.error?.message}")
                     loadFailed = true
                     state.isReady = false
                     state.isPlaying = false
+                    state.endReached = false
                     updateButtons(state)
                 }
 
@@ -120,6 +134,7 @@ actual fun SignVideoPlayer(
                     loadFailed = true
                     state.isReady = false
                     state.isPlaying = false
+                    state.endReached = false
                     updateButtons(state)
                 }
 
@@ -127,7 +142,12 @@ actual fun SignVideoPlayer(
                     logFx("media ready -> $resourcePath")
                     state.isReady = true
                     state.isPlaying = false
+                    state.endReached = false
                     updateButtons(state)
+                    if (state.pendingPlay) {
+                        state.pendingPlay = false
+                        player.play()
+                    }
                 }
 
                 player.setOnPlaying {
@@ -143,14 +163,10 @@ actual fun SignVideoPlayer(
                 }
 
                 player.setOnEndOfMedia {
-                    logFx("ended -> $resourcePath")
-                    state.isPlaying = false
-                    player.pause()
-                    player.seek(javafx.util.Duration.ZERO)
-                    updateButtons(state)
+                    // loop handled by cycleCount
                 }
 
-                panel.scene = Scene(StackPane(mediaView))
+                panel.scene = Scene(root)
                 state.mediaPlayer = player
                 updateButtons(state)
             } catch (e: Exception) {
@@ -158,6 +174,8 @@ actual fun SignVideoPlayer(
                 loadFailed = true
                 state.isReady = false
                 state.isPlaying = false
+                state.endReached = false
+                state.pendingPlay = false
                 updateButtons(state)
             }
         }
@@ -187,6 +205,11 @@ actual fun SignVideoPlayer(
                     playButton.addActionListener {
                         val player = state.mediaPlayer ?: return@addActionListener
                         Platform.runLater {
+                            if (!state.isReady) {
+                                state.pendingPlay = true
+                                updateButtons(state)
+                                return@runLater
+                            }
                             if (state.isReady && !state.isPlaying) {
                                 logFx("play clicked -> ${state.currentUrl}")
                                 player.play()
@@ -197,9 +220,12 @@ actual fun SignVideoPlayer(
                     pauseButton.addActionListener {
                         val player = state.mediaPlayer ?: return@addActionListener
                         Platform.runLater {
-                            if (state.isReady && state.isPlaying) {
+                            if (state.isReady) {
                                 logFx("pause clicked -> ${state.currentUrl}")
+                                state.pendingPlay = false
                                 player.pause()
+                                state.isPlaying = false
+                                updateButtons(state)
                             }
                         }
                     }

@@ -186,7 +186,12 @@ class LessonViewModel(private val model: Model) {
             videoIndex = 0
 
             val title = model.getLesson(lessonId).title
-            state = state.copy(title = title, phase = LessonPhase.VIEWING)
+            state = state.copy(
+                title = title,
+                phase = LessonPhase.VIEWING,
+                isStarPopupVisible = false,
+                pendingStarSignId = null
+            )
             rebuildViewing()
         }
     }
