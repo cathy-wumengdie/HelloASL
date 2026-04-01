@@ -14,5 +14,5 @@ class MockTranslateRepository(private val db: MockDB) : TranslateRepository {
 
     override suspend fun clearHistory() = db.clearTranslateHistory()
 
-    override suspend fun recognizeAsl(): AslRecognitionResult = db.recognizeAsl()
+    override suspend fun recognizeAslFromVideo(videoUri: String): AslRecognitionResult = db.recognizeAsl()
 }

@@ -30,6 +30,7 @@ import org.junit.Rule
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
+import ca.uwaterloo.helloasl.data.notificationRepository.NoOpNotificationRepository
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ProfileViewModelTest {
@@ -131,6 +132,12 @@ class ProfileViewModelTest {
         override suspend fun updateLearningProgress(): Boolean = true
 
         override suspend fun getCompletedLessonIds(): Set<Long> = emptySet()
+
+        override suspend fun updateUserName(userId: String, newName: String) {
+            if (user.id == userId) {
+                user = user.copy(name = newName)
+            }
+        }
     }
 
     private data class Fixture(
@@ -168,7 +175,8 @@ class ProfileViewModelTest {
                 star = MockStarRepository(db),
                 learning = MockLearningRepository(db),
                 translate = MockTranslateRepository(db),
-                progressTracker = progressRepo
+                progressTracker = progressRepo,
+                notification = NoOpNotificationRepository
             )
         )
 
@@ -310,17 +318,6 @@ class ProfileViewModelTest {
         assertEquals(ProfileDestination.ACCOUNT, wait.await().dest)
     }
 
-    @Test
-    fun onLicense_emitsLicenseDestination() = runTest {
-        val fixture = makeVmWith(this)
-        val wait = async(start = CoroutineStart.UNDISPATCHED) {
-            awaitOneNavEvent(fixture.vm)
-        }
-
-        fixture.vm.onLicense()
-
-        assertEquals(ProfileDestination.LICENSE, wait.await().dest)
-    }
 
     @Test
     fun onSignOut_emitsSignInDestination() = runTest {

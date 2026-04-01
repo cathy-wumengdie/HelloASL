@@ -32,6 +32,7 @@ fun StarView(vm: StarViewModel) {
     val state = vm.state
     var selectedItem by remember { mutableStateOf<StarItem?>(null) }
     val platform = remember { getPlatform() }
+    val showInlineVideo = !platform.isDesktop
 
     LaunchedEffect(Unit) {
         vm.refresh()
@@ -69,7 +70,10 @@ fun StarView(vm: StarViewModel) {
             items(state.items) { item ->
                 StarItemCard(
                     item = item,
-                    onClick = { selectedItem = item },
+                    showInlineVideo = showInlineVideo,
+                    onClick = {
+                        selectedItem = item
+                    },
                     onRemove = { vm.onRemoveStar(item) }
                 )
             }
@@ -164,6 +168,7 @@ fun StarView(vm: StarViewModel) {
 @Composable
 private fun StarItemCard(
     item: StarItem,
+    showInlineVideo: Boolean,
     onClick: () -> Unit,
     onRemove: () -> Unit
 ) {
@@ -227,4 +232,3 @@ private fun StarItemCard(
         }
     }
 }
-

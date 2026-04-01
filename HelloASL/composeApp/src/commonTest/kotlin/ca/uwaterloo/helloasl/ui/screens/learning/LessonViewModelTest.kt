@@ -4,6 +4,7 @@ import ca.uwaterloo.helloasl.MainDispatcherRule
 import ca.uwaterloo.helloasl.data.MockDB
 import ca.uwaterloo.helloasl.data.authRepository.MockAuthRepository
 import ca.uwaterloo.helloasl.data.learningRepository.MockLearningRepository
+import ca.uwaterloo.helloasl.data.notificationRepository.NoOpNotificationRepository
 import ca.uwaterloo.helloasl.data.progressTrackerRepository.MockProgressTrackerRepository
 import ca.uwaterloo.helloasl.data.starRepository.MockStarRepository
 import ca.uwaterloo.helloasl.data.translateRepository.MockTranslateRepository
@@ -31,7 +32,8 @@ class LessonViewModelTest {
             star = MockStarRepository(db),
             learning = MockLearningRepository(db),
             translate = MockTranslateRepository(db),
-            progressTracker = MockProgressTrackerRepository(db)
+            progressTracker = MockProgressTrackerRepository(db),
+            notification = NoOpNotificationRepository
         )
         val model = Model(repos, ioDispatcher = mainDispatcherRule.dispatcher)
         model.login("yanjin@gmail.com", "1234")

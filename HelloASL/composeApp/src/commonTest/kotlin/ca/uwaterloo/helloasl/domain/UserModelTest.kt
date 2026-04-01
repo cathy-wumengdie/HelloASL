@@ -14,6 +14,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import ca.uwaterloo.helloasl.data.notificationRepository.NoOpNotificationRepository
 
 class UserModelTest {
     private fun makeModel(): Pair<MockDB, Model> {
@@ -24,7 +25,8 @@ class UserModelTest {
             star = MockStarRepository(db),
             learning = MockLearningRepository(db),
             translate = MockTranslateRepository(db),
-            progressTracker = MockProgressTrackerRepository(db)
+            progressTracker = MockProgressTrackerRepository(db),
+            notification = NoOpNotificationRepository
         )
         return db to Model(repos)
     }

@@ -11,6 +11,10 @@
             android:name="android.hardware.camera"
             android:required="false" />
 
+    <!-- Video recording permission -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
     <!-- Notification permission -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 

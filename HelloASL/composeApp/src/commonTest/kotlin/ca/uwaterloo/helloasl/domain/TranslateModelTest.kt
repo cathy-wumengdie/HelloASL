@@ -7,6 +7,7 @@ import ca.uwaterloo.helloasl.data.progressTrackerRepository.MockProgressTrackerR
 import ca.uwaterloo.helloasl.data.starRepository.MockStarRepository
 import ca.uwaterloo.helloasl.data.translateRepository.MockTranslateRepository
 import ca.uwaterloo.helloasl.data.userRepository.MockUserRepository
+import ca.uwaterloo.helloasl.data.notificationRepository.NoOpNotificationRepository
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -22,7 +23,8 @@ internal class TranslateModelTest {
             star = MockStarRepository(db),
             learning = MockLearningRepository(db),
             translate = MockTranslateRepository(db),
-            progressTracker = MockProgressTrackerRepository(db)
+            progressTracker = MockProgressTrackerRepository(db),
+            notification = NoOpNotificationRepository
         )
         return Model(repos)
     }
@@ -51,10 +53,10 @@ internal class TranslateModelTest {
     }
 
     @Test
-    fun recognizeAsl_returns_text_and_confidence() = runTest {
+    fun recognizeAslFromVideo_returns_text_and_confidence() = runTest {
         val model = makeModel()
 
-        val reco = model.recognizeAsl()
+        val reco = model.recognizeAslFromVideo("file://demo.mp4")
         assertTrue(reco.recognizedText.isNotBlank())
         assertTrue(reco.confidence in 0f..1f)
     }

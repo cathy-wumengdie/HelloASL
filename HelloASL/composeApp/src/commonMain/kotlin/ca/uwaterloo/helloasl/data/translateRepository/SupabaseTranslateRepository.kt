@@ -9,8 +9,10 @@ import io.github.jan.supabase.postgrest.from
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
+
 class SupabaseTranslateRepository(
-    private val supabase: SupabaseClient
+    private val supabase: SupabaseClient,
+    private val videoRecognitionService: VideoRecognitionService? = null
 ) : TranslateRepository {
 
     companion object {
@@ -86,11 +88,11 @@ class SupabaseTranslateRepository(
             }
     }
 
-    override suspend fun recognizeAsl(): AslRecognitionResult {
-        return AslRecognitionResult(
-            recognizedText = "Hello",
-            confidence = 0.86f
-        )
+    override suspend fun recognizeAslFromVideo(videoUri: String): AslRecognitionResult {
+        val service = videoRecognitionService
+            ?: throw IllegalStateException("Video recognition is not available on this platform.")
+
+        return service.recognize(videoUri)
     }
 
     private suspend fun getSortedHistoryRowsForCurrentUser(): List<TranslateHistoryRow> {

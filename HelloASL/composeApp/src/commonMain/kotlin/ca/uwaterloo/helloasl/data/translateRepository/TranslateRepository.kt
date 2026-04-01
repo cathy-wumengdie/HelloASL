@@ -9,5 +9,5 @@ interface TranslateRepository {
     suspend fun getSearchHistory(): List<TranslateHistoryItem>
     suspend fun addHistory(word: String)
     suspend fun clearHistory()
-    suspend fun recognizeAsl(): AslRecognitionResult
+    suspend fun recognizeAslFromVideo(videoUri: String): AslRecognitionResult
 }

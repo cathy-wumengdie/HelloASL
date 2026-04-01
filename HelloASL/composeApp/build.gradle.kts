@@ -52,6 +52,10 @@ kotlin {
             implementation("androidx.media3:media3-exoplayer:1.2.1")
             implementation("androidx.media3:media3-ui:1.2.1")
             implementation("io.ktor:ktor-client-android:3.0.0")
+            implementation("com.squareup.retrofit2:retrofit:2.9.0")
+            implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+            implementation("com.squareup.okhttp3:okhttp:4.12.0")
+            implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
             implementation(project.dependencies.platform("com.google.firebase:firebase-bom:33.12.0"))
             implementation("com.google.firebase:firebase-messaging-ktx")
         }
@@ -76,8 +80,6 @@ kotlin {
             implementation("org.openjfx:javafx-media:21.0.2:$javafxPlatform")
             implementation("org.openjfx:javafx-swing:21.0.2:$javafxPlatform")
             implementation("org.bytedeco:javacv-platform:1.5.13")
-            implementation(compose.desktop.currentOs)
-            implementation("uk.co.caprica:vlcj:4.12.1")
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -145,6 +147,7 @@ dependencies {
     implementation("androidx.camera:camera-camera2:1.4.2")
     implementation("androidx.camera:camera-lifecycle:1.4.2")
     implementation("androidx.camera:camera-view:1.4.2")
+    implementation("androidx.camera:camera-video:1.4.2")
 }
 
 compose.desktop {

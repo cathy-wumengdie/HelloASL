@@ -34,6 +34,8 @@ import ca.uwaterloo.helloasl.ui.components.ClickableSection
 import ca.uwaterloo.helloasl.ui.components.HelloASLCard
 import ca.uwaterloo.helloasl.ui.components.NumberWheelPicker
 import ca.uwaterloo.helloasl.ui.components.PasswordTextField
+import ca.uwaterloo.helloasl.ui.utils.cameraNoHardwareMessage
+import ca.uwaterloo.helloasl.ui.utils.cameraUnavailableMessage
 import com.russhwolf.settings.Settings
 import kotlinx.coroutines.launch
 
@@ -61,9 +63,9 @@ fun ProfileView(vm: ProfileViewModel) {
                 )
                 Spacer(Modifier.height(16.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    ClickableSection(
-                        onClick = vm::onWordsLearned,
-                        modifier = Modifier.weight(1f)
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        horizontalAlignment = Alignment.Start
                     ) {
                         NumberedCircleBadge(state.wordsLearned)
                         Spacer(Modifier.height(8.dp))
@@ -573,6 +575,7 @@ fun SettingsScreen(
     onDone: () -> Unit
 ) {
     val platform = getPlatform()
+    val osName = System.getProperty("os.name")
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
@@ -603,14 +606,17 @@ fun SettingsScreen(
 
                 Spacer(Modifier.height(8.dp))
 
+                val noCameraText = cameraNoHardwareMessage(platform, osName)
+                val desktopOnlyMessage = cameraUnavailableMessage(platform, osName)
+
                 Text(
                     text = when {
                         cameraErrorMessage != null ->
-                            "Camera unavailable on this desktop build."
+                            desktopOnlyMessage
                         hasCameraHardware ->
                             "Needed for ASL -> English translation."
                         else ->
-                            "This device has no camera. ASL -> English will be disabled."
+                            noCameraText
                     },
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -720,4 +726,3 @@ private fun SettingsFooter(
         }
     }
 }
-

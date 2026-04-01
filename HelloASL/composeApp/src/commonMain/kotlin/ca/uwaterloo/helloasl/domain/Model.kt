@@ -211,8 +211,8 @@ class Model(
     suspend fun clearTranslateHistory() =
         repos.translate.clearHistory()
 
-    suspend fun recognizeAsl(): AslRecognitionResult =
-        repos.translate.recognizeAsl()
+    suspend fun recognizeAslFromVideo(videoUri: String): AslRecognitionResult =
+        repos.translate.recognizeAslFromVideo(videoUri)
 
     suspend fun removeStar(userId: String, signId: Long) {
         repos.star.removeStar(userId, signId)

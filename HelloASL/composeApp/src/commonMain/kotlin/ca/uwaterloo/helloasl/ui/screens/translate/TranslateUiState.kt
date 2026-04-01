@@ -18,7 +18,10 @@ data class TranslateUiState(
     val recoText: String = "",
     val confidence: Float = 0f,
     val errorMessage: String? = null,
-    val isCameraRunning: Boolean = false
+    val isPreviewActive: Boolean = false,
+    val isRecording: Boolean = false,
+    val recordedVideoUri: String? = null,
+    val isRecognizing: Boolean = false
 ) {
     val confidenceLabel: String
         get() = "${(confidence * 100).toInt()}%"

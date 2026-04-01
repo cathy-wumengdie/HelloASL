@@ -191,14 +191,6 @@ fun AppNavigation(
                 MainTab.HOME -> {
                     TopAppBar(
                         title = { Text("Hello, ${homeVm.state.userName}!") },
-                        actions = {
-                            IconButton(onClick = { /* later */ }) {
-                                Icon(Icons.Filled.Notifications, contentDescription = "Notifications")
-                            }
-                            IconButton(onClick = { /* later */ }) {
-                                Icon(Icons.Filled.Settings, contentDescription = "Settings")
-                            }
-                        },
                         colors = TopAppBarDefaults.topAppBarColors(
                             containerColor = selectedColor,
                             titleContentColor = MaterialTheme.colorScheme.onPrimary,
@@ -213,7 +205,7 @@ fun AppNavigation(
                             Text(
                                 when (learningRoute) {
                                     LearningInnerRoute.LEARNING_HOME -> "Learning"
-                                    LearningInnerRoute.LESSON -> lessonTitle
+                                    LearningInnerRoute.LESSON -> "Lesson"
                                 }
                             )
                         },
@@ -222,14 +214,6 @@ fun AppNavigation(
                                 IconButton(onClick = { learningRoute = LearningInnerRoute.LEARNING_HOME }) {
                                     Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                                 }
-                            }
-                        },
-                        actions = {
-                            IconButton(onClick = { /* later */ }) {
-                                Icon(Icons.Filled.Notifications, contentDescription = "Notifications")
-                            }
-                            IconButton(onClick = { /* later */ }) {
-                                Icon(Icons.Filled.Settings, contentDescription = "Settings")
                             }
                         },
                         colors = TopAppBarDefaults.topAppBarColors(
@@ -244,14 +228,6 @@ fun AppNavigation(
                 MainTab.TRANSLATE -> {
                     TopAppBar(
                         title = { Text("Translate ASL") },
-                        actions = {
-                            IconButton(onClick = { /* later */ }) {
-                                Icon(Icons.Filled.Notifications, contentDescription = "Notifications")
-                            }
-                            IconButton(onClick = { /* later */ }) {
-                                Icon(Icons.Filled.Settings, contentDescription = "Settings")
-                            }
-                        },
                         colors = TopAppBarDefaults.topAppBarColors(
                             containerColor = selectedColor,
                             titleContentColor = MaterialTheme.colorScheme.onPrimary,
@@ -263,14 +239,6 @@ fun AppNavigation(
                 MainTab.PROFILE -> {
                     TopAppBar(
                         title = { Text("Profile") },
-                        actions = {
-                            IconButton(onClick = { /* later */ }) {
-                                Icon(Icons.Filled.Notifications, contentDescription = "Notifications")
-                            }
-                            IconButton(onClick = { /* later */ }) {
-                                Icon(Icons.Filled.Settings, contentDescription = "Settings")
-                            }
-                        },
                         colors = TopAppBarDefaults.topAppBarColors(
                             containerColor = selectedColor,
                             titleContentColor = MaterialTheme.colorScheme.onPrimary,
