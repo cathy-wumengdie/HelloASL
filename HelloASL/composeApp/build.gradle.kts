@@ -80,8 +80,6 @@ kotlin {
             implementation("org.openjfx:javafx-media:21.0.2:$javafxPlatform")
             implementation("org.openjfx:javafx-swing:21.0.2:$javafxPlatform")
             implementation("org.bytedeco:javacv-platform:1.5.13")
-            implementation(compose.desktop.currentOs)
-            implementation("uk.co.caprica:vlcj:4.12.1")
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

@@ -26,14 +26,13 @@ import ca.uwaterloo.helloasl.domain.starModel.StarItem
 import ca.uwaterloo.helloasl.getPlatform
 import ca.uwaterloo.helloasl.ui.components.HelloASLCard
 import ca.uwaterloo.helloasl.ui.components.SignVideoPlayer
-import ca.uwaterloo.helloasl.getPlatform
 
 @Composable
 fun StarView(vm: StarViewModel) {
     val state = vm.state
     var selectedItem by remember { mutableStateOf<StarItem?>(null) }
-    val showInlineVideo = !platform.isDesktop
     val platform = remember { getPlatform() }
+    val showInlineVideo = !platform.isDesktop
 
     LaunchedEffect(Unit) {
         vm.refresh()

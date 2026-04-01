@@ -205,7 +205,7 @@ fun AppNavigation(
                             Text(
                                 when (learningRoute) {
                                     LearningInnerRoute.LEARNING_HOME -> "Learning"
-                                    LearningInnerRoute.LESSON -> lessonTitle
+                                    LearningInnerRoute.LESSON -> "Lesson"
                                 }
                             )
                         },
