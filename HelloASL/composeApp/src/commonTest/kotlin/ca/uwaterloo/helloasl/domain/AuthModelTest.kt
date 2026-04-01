@@ -7,6 +7,7 @@ import ca.uwaterloo.helloasl.data.progressTrackerRepository.MockProgressTrackerR
 import ca.uwaterloo.helloasl.data.starRepository.MockStarRepository
 import ca.uwaterloo.helloasl.data.translateRepository.MockTranslateRepository
 import ca.uwaterloo.helloasl.data.userRepository.MockUserRepository
+import ca.uwaterloo.helloasl.data.notificationRepository.NoOpNotificationRepository
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -24,7 +25,8 @@ class ModelAuthTest {
             star = MockStarRepository(db),
             learning = MockLearningRepository(db),
             translate = MockTranslateRepository(db),
-            progressTracker = MockProgressTrackerRepository(db)
+            progressTracker = MockProgressTrackerRepository(db),
+            notification = NoOpNotificationRepository
         )
         return db to Model(repos)
     }

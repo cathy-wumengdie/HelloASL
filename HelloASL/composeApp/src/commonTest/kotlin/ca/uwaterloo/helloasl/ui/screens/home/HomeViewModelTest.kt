@@ -7,6 +7,7 @@ import ca.uwaterloo.helloasl.data.progressTrackerRepository.MockProgressTrackerR
 import ca.uwaterloo.helloasl.data.starRepository.MockStarRepository
 import ca.uwaterloo.helloasl.data.translateRepository.MockTranslateRepository
 import ca.uwaterloo.helloasl.data.userRepository.MockUserRepository
+import ca.uwaterloo.helloasl.data.notificationRepository.NoOpNotificationRepository
 import ca.uwaterloo.helloasl.domain.Model
 import ca.uwaterloo.helloasl.domain.Repositories
 import ca.uwaterloo.helloasl.domain.trackingModel.DailyProgress
@@ -237,7 +238,8 @@ class HomeViewModelTest {
             user = MockUserRepository(db),
             learning = MockLearningRepository(db),
             translate = MockTranslateRepository(db),
-            progressTracker = MockProgressTrackerRepository(db)
+            progressTracker = MockProgressTrackerRepository(db),
+            notification = NoOpNotificationRepository
         )
 
         val model = Model(

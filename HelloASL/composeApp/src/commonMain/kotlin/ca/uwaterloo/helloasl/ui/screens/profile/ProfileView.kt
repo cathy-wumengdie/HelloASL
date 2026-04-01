@@ -34,6 +34,8 @@ import ca.uwaterloo.helloasl.ui.components.ClickableSection
 import ca.uwaterloo.helloasl.ui.components.HelloASLCard
 import ca.uwaterloo.helloasl.ui.components.NumberWheelPicker
 import ca.uwaterloo.helloasl.ui.components.PasswordTextField
+import ca.uwaterloo.helloasl.ui.utils.cameraNoHardwareMessage
+import ca.uwaterloo.helloasl.ui.utils.cameraUnavailableMessage
 import com.russhwolf.settings.Settings
 import kotlinx.coroutines.launch
 
@@ -573,7 +575,7 @@ fun SettingsScreen(
     onDone: () -> Unit
 ) {
     val platform = getPlatform()
-    val isMacOs = platform.isDesktop && System.getProperty("os.name")?.lowercase()?.contains("mac") == true
+    val osName = System.getProperty("os.name")
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
@@ -604,17 +606,8 @@ fun SettingsScreen(
 
                 Spacer(Modifier.height(8.dp))
 
-                val noCameraText = when {
-                    platform.isAndroid -> "This device has no camera. ASL -> English will be disabled."
-                    !isMacOs -> "Currently only support camera function on macOS"
-                    else -> "This device has no camera. ASL -> English will be disabled."
-                }
-
-                val desktopOnlyMessage = if (!isMacOs && platform.isDesktop) {
-                    "Currently only support camera function on macOS"
-                } else {
-                    "Camera unavailable on this desktop build."
-                }
+                val noCameraText = cameraNoHardwareMessage(platform, osName)
+                val desktopOnlyMessage = cameraUnavailableMessage(platform, osName)
 
                 Text(
                     text = when {

@@ -11,6 +11,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import ca.uwaterloo.helloasl.getPlatform
 import ca.uwaterloo.helloasl.ui.components.HelloASLCard
+import ca.uwaterloo.helloasl.ui.utils.cameraNoHardwareMessage
+import ca.uwaterloo.helloasl.ui.utils.cameraUnavailableMessage
 
 @Composable
 fun PermissionsGateScreen(
@@ -23,7 +25,7 @@ fun PermissionsGateScreen(
     onContinue: () -> Unit
 ) {
     val platform = getPlatform()
-    val isMacOs = platform.isDesktop && System.getProperty("os.name")?.lowercase()?.contains("mac") == true
+    val osName = System.getProperty("os.name")
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
@@ -60,17 +62,8 @@ fun PermissionsGateScreen(
 
                 Spacer(Modifier.height(8.dp))
 
-                val noCameraText = when {
-                    platform.isAndroid -> "This device has no camera. ASL -> English will be disabled."
-                    !isMacOs -> "Currently only support camera function on macOS"
-                    else -> "This device has no camera. ASL -> English will be disabled."
-                }
-
-                val desktopOnlyMessage = if (!isMacOs && platform.isDesktop) {
-                    "Currently only support camera function on macOS"
-                } else {
-                    "Camera unavailable on this desktop build."
-                }
+                val noCameraText = cameraNoHardwareMessage(platform, osName)
+                val desktopOnlyMessage = cameraUnavailableMessage(platform, osName)
 
                 Text(
                     text = when {

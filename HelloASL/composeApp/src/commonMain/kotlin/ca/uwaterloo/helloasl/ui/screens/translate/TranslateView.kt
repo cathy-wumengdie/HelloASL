@@ -27,6 +27,7 @@ import ca.uwaterloo.helloasl.ui.components.VideoRecorder
 import ca.uwaterloo.helloasl.ui.components.ClickableSection
 import ca.uwaterloo.helloasl.ui.components.HelloASLCard
 import ca.uwaterloo.helloasl.ui.components.SignVideoPlayer
+import ca.uwaterloo.helloasl.ui.utils.cameraNoHardwareMessage
 
 @Composable
 fun TranslateView(
@@ -250,18 +251,13 @@ private fun AslToEnUI(
 ) {
     var showPreview by remember { mutableStateOf(false) }
     val platform = getPlatform()
-    val isMacOs = platform.isDesktop && System.getProperty("os.name")?.lowercase()?.contains("mac") == true
+    val osName = System.getProperty("os.name")
 
     Spacer(Modifier.height(16.dp))
 
     if (!hasCameraHardware) {
-        val noCameraText = when {
-            platform.isAndroid -> "This device has no camera. ASL -> English is unavailable."
-            !isMacOs -> "Currently only support camera function on macOS"
-            else -> "This device has no camera. ASL -> English is unavailable."
-        }
         Text(
-            text = noCameraText,
+            text = cameraNoHardwareMessage(platform, osName),
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Spacer(Modifier.height(16.dp))
