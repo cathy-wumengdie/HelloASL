@@ -7,18 +7,23 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.Color
 import ca.uwaterloo.helloasl.domain.starModel.StarItem
+import ca.uwaterloo.helloasl.getPlatform
 import ca.uwaterloo.helloasl.ui.components.HelloASLCard
 import ca.uwaterloo.helloasl.ui.components.SignVideoPlayer
 
@@ -26,13 +31,13 @@ import ca.uwaterloo.helloasl.ui.components.SignVideoPlayer
 fun StarView(vm: StarViewModel) {
     val state = vm.state
     var selectedItem by remember { mutableStateOf<StarItem?>(null) }
+    val platform = remember { getPlatform() }
 
     LaunchedEffect(Unit) {
         vm.refresh()
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -64,60 +69,91 @@ fun StarView(vm: StarViewModel) {
             items(state.items) { item ->
                 StarItemCard(
                     item = item,
-                    onClick = {
-                        selectedItem = item
-                    },
+                    onClick = { selectedItem = item },
                     onRemove = { vm.onRemoveStar(item) }
                 )
             }
         }
 
-        if (selectedItem != null) {
-            Box(
+        selectedItem?.let { item ->
+            val popupModifier =
+                if (platform.isDesktop) {
+                    Modifier
+                        .fillMaxWidth(0.42f)
+                        .widthIn(min = 420.dp, max = 560.dp)
+                } else {
+                    Modifier
+                        .fillMaxWidth(0.92f)
+                }
+
+            BoxWithConstraints(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(MaterialTheme.colorScheme.background.copy(alpha = 0.95f))
-                    .clickable { selectedItem = null },
-                contentAlignment = Alignment.Center
+                    .clickable(
+                        indication = null,
+                        interactionSource = remember { MutableInteractionSource() }
+                    ) { selectedItem = null }
+                    .padding(horizontal = 16.dp, vertical = 16.dp),
+                contentAlignment = Alignment.TopCenter
             ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
+                Surface(
+                    color = MaterialTheme.colorScheme.secondaryContainer,
+                    shape = RoundedCornerShape(24.dp),
+                    tonalElevation = 0.dp,
+                    shadowElevation = 6.dp,
+                    modifier = popupModifier
+                        .heightIn(max = maxHeight * 0.9f)
+                        .clickable(
+                            enabled = false,
+                            indication = null,
+                            interactionSource = remember { MutableInteractionSource() }
+                        ) {}
                 ) {
-                    selectedItem?.videoUrl?.let {
-                        SignVideoPlayer(
-                            resourcePath = it,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .aspectRatio(1f)
-                                .clickable(enabled = false) {}
-                        )
-                    }
-
-                    Spacer(Modifier.height(16.dp))
-
-                    Text(
-                        text = selectedItem!!.label,
-                        style = MaterialTheme.typography.headlineMedium
-                    )
-
-                    Spacer(Modifier.height(8.dp))
-
-                    Text(
-                        text = selectedItem!!.tagName,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color(0xFF0D47A1)
-                    )
-
-                    Spacer(Modifier.height(16.dp))
-
-                    Button(
-                        onClick = { selectedItem = null },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF0D47A1),
-                            contentColor = Color.White
-                        )
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .verticalScroll(rememberScrollState())
+                            .padding(horizontal = 20.dp, vertical = 20.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text("Close")
+                        item.videoUrl?.let { videoUrl ->
+                            key(videoUrl) {
+                                SignVideoPlayer(
+                                    resourcePath = videoUrl,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .heightIn(min = 220.dp, max = 420.dp)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(18.dp))
+
+                        Text(
+                            text = item.label,
+                            style = MaterialTheme.typography.headlineMedium
+                        )
+
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        Text(
+                            text = item.tagName,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color(0xFF0D47A1)
+                        )
+
+                        Spacer(modifier = Modifier.height(18.dp))
+
+                        Button(
+                            onClick = { selectedItem = null },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF0D47A1),
+                                contentColor = Color.White
+                            )
+                        ) {
+                            Text("Close")
+                        }
                     }
                 }
             }
@@ -140,32 +176,22 @@ private fun StarItemCard(
                 .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            if (item.videoUrl != null) {
-                Box(
-                    modifier = Modifier.size(64.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    SignVideoPlayer(
-                        resourcePath = item.videoUrl,
-                        modifier = Modifier.matchParentSize()
-                    )
-
-                    Box(
-                        modifier = Modifier
-                            .matchParentSize()
-                            .clickable {
-                                onClick()
-                            }
+            Surface(
+                modifier = Modifier
+                    .size(64.dp)
+                    .clickable { onClick() },
+                shape = RoundedCornerShape(8.dp),
+                color = MaterialTheme.colorScheme.surfaceVariant
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(
+                        text = "▶",
+                        style = MaterialTheme.typography.titleMedium
                     )
                 }
-            } else {
-                Surface(
-                    modifier = Modifier.size(64.dp),
-                    color = MaterialTheme.colorScheme.surfaceVariant
-                ) {}
             }
 
-            Spacer(Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(12.dp))
 
             Column(
                 modifier = Modifier.weight(1f)
@@ -176,7 +202,7 @@ private fun StarItemCard(
                 )
             }
 
-            Spacer(Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(12.dp))
 
             Surface(
                 shape = RoundedCornerShape(16.dp),
@@ -188,7 +214,7 @@ private fun StarItemCard(
                 )
             }
 
-            Spacer(Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(8.dp))
 
             TextButton(
                 onClick = onRemove,

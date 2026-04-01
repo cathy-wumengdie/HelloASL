@@ -4,5 +4,5 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 
 @Composable
-expect fun SignVideoPlayer(resourcePath: String, modifier: Modifier = Modifier)
+expect fun SignVideoPlayer(resourcePath: String, modifier: Modifier = Modifier, dimmed: Boolean = false)
 

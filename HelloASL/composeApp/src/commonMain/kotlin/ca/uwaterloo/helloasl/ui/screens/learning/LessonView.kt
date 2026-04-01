@@ -1,6 +1,7 @@
 package ca.uwaterloo.helloasl.ui.screens.learning
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -9,27 +10,23 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import ca.uwaterloo.helloasl.ui.components.HelloASLCard
 import ca.uwaterloo.helloasl.ui.components.SignVideoPlayer
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.StarBorder
 import kotlinx.coroutines.delay
-import androidx.compose.ui.graphics.Color
 
 @Composable
 fun LessonView(
     vm: LessonViewModel
 ) {
-    // Start timer when entering lesson screen
     LaunchedEffect(Unit) { vm.onEnterLesson() }
-    // Stop timer + commit minutes when leaving lesson screen
     DisposableEffect(Unit) { onDispose { vm.onExitLesson() } }
 
     val state = vm.state
@@ -55,8 +52,8 @@ fun LessonView(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-
         Text(state.title, style = MaterialTheme.typography.titleMedium)
+
         if (state.progress.isNotBlank()) {
             Text(state.progress, style = MaterialTheme.typography.bodySmall)
         }
@@ -67,6 +64,7 @@ fun LessonView(
             elevationDp = 0.dp
         ) {
             val videoUrl = state.videoUrl
+
             Box(
                 modifier = Modifier.fillMaxWidth(),
                 contentAlignment = Alignment.Center
@@ -77,23 +75,46 @@ fun LessonView(
                         .fillMaxWidth()
                         .aspectRatio(4f / 3f)
                 ) {
-                    if (videoUrl != null) {
-                        SignVideoPlayer(
-                            resourcePath = videoUrl,
-                            modifier = Modifier.fillMaxSize()
-                        )
+                    if (videoUrl != null && !state.isStarPopupVisible) {
+                        key(videoUrl) {
+                            SignVideoPlayer(
+                                resourcePath = videoUrl,
+                                modifier = Modifier.fillMaxSize(),
+                                dimmed = false
+                            )
+                        }
                     } else {
                         Box(
-                            modifier = Modifier.fillMaxSize(),
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(MaterialTheme.colorScheme.secondaryContainer)
+                                .then(
+                                    if (state.isStarPopupVisible) {
+                                        Modifier.clickable { vm.dismissStarPopup() }
+                                    } else {
+                                        Modifier
+                                    }
+                                ),
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(Icons.Filled.PlayArrow, contentDescription = null)
+                            Icon(
+                                Icons.Filled.PlayArrow,
+                                contentDescription = if (state.isStarPopupVisible) {
+                                    "Tap to restore video"
+                                } else {
+                                    null
+                                },
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
                     }
 
                     if (state.canPrevVideo) {
                         IconButton(
-                            onClick = { vm.onPrevVideo() },
+                            onClick = {
+                                if (state.isStarPopupVisible) vm.dismissStarPopup()
+                                vm.onPrevVideo()
+                            },
                             modifier = Modifier.align(Alignment.CenterStart)
                         ) {
                             Icon(Icons.Filled.ChevronLeft, contentDescription = "Previous video")
@@ -102,7 +123,10 @@ fun LessonView(
 
                     if (state.canNextVideo) {
                         IconButton(
-                            onClick = { vm.onNextVideo() },
+                            onClick = {
+                                if (state.isStarPopupVisible) vm.dismissStarPopup()
+                                vm.onNextVideo()
+                            },
                             modifier = Modifier.align(Alignment.CenterEnd)
                         ) {
                             Icon(Icons.Filled.ChevronRight, contentDescription = "Next video")
@@ -125,12 +149,15 @@ fun LessonView(
                             style = MaterialTheme.typography.titleMedium
                         )
 
-                        IconButton(onClick = { vm.onStar() }) {
+                        IconButton(
+                            onClick = { vm.onStar() }
+                        ) {
                             Icon(
-                                imageVector = if (state.isStarred)
+                                imageVector = if (state.isStarred) {
                                     Icons.Filled.Star
-                                else
-                                    Icons.Filled.StarBorder,
+                                } else {
+                                    Icons.Filled.StarBorder
+                                },
                                 contentDescription = "Star",
                                 tint = if (state.isStarred) Color(0xFFFFC107) else Color.Gray
                             )
@@ -143,14 +170,21 @@ fun LessonView(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     OutlinedButton(
-                        onClick = { vm.onPrevSign() },
+                        onClick = {
+                            if (state.isStarPopupVisible) vm.dismissStarPopup()
+                            vm.onPrevSign()
+                        },
                         enabled = state.canPrevSign,
                         shape = RoundedCornerShape(24.dp)
                     ) {
                         Text("Previous")
                     }
+
                     OutlinedButton(
-                        onClick = { vm.onNextSign() },
+                        onClick = {
+                            if (state.isStarPopupVisible) vm.dismissStarPopup()
+                            vm.onNextSign()
+                        },
                         enabled = state.canNextSign,
                         shape = RoundedCornerShape(24.dp)
                     ) {
@@ -160,7 +194,10 @@ fun LessonView(
 
                 if (state.showStartQuiz) {
                     Button(
-                        onClick = { vm.onStartQuiz() },
+                        onClick = {
+                            if (state.isStarPopupVisible) vm.dismissStarPopup()
+                            vm.onStartQuiz()
+                        },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(24.dp),
                         colors = ButtonDefaults.buttonColors(solidBg)
@@ -177,6 +214,7 @@ fun LessonView(
                     val isChosen = state.selected == opt
                     val correctChoice = state.isCorrect == true && isChosen
                     val wrongChoice = state.isCorrect == false && isChosen
+
                     OutlinedButton(
                         onClick = { vm.onChoose(opt) },
                         modifier = Modifier.fillMaxWidth(),
