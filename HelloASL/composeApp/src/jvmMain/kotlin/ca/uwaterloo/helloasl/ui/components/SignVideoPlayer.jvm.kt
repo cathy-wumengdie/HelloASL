@@ -1,207 +1,262 @@
 package ca.uwaterloo.helloasl.ui.components
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
-import androidx.compose.ui.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.SwingPanel
-import androidx.compose.ui.unit.dp
 import javafx.application.Platform
 import javafx.embed.swing.JFXPanel
 import javafx.geometry.Pos
 import javafx.scene.Scene
 import javafx.scene.control.Button
-import javafx.scene.layout.*
-import javafx.scene.media.*
+import javafx.scene.layout.HBox
+import javafx.scene.layout.Priority
+import javafx.scene.layout.StackPane
+import javafx.scene.layout.VBox
+import javafx.scene.media.Media
+import javafx.scene.media.MediaException
+import javafx.scene.media.MediaPlayer
+import javafx.scene.media.MediaView
 import javafx.util.Duration
+import java.awt.EventQueue
 import java.io.File
+import java.util.concurrent.atomic.AtomicLong
+
+private object DesktopVideoDebugIds {
+    val composableId = AtomicLong(0L)
+    val playerId = AtomicLong(0L)
+}
+
+private fun logDesktopVideo(message: String) {
+    println("[DesktopSignVideoPlayer] $message")
+}
 
 @Composable
 actual fun SignVideoPlayer(
     resourcePath: String,
     modifier: Modifier
 ) {
+    val ownerId = remember(resourcePath) {
+        DesktopVideoDebugIds.composableId.incrementAndGet()
+    }
+
     var isReady by remember(resourcePath) { mutableStateOf(false) }
+    var isPlaying by remember(resourcePath) { mutableStateOf(false) }
     var loadFailed by remember(resourcePath) { mutableStateOf(false) }
 
-    val jfxPanel = remember { JFXPanel() }
-    val mediaPlayerHolder = remember { mutableStateOf<MediaPlayer?>(null) }
+    val jfxPanel = remember(resourcePath) { JFXPanel() }
+    val mediaView = remember(resourcePath) {
+        MediaView().apply {
+            isPreserveRatio = true
+        }
+    }
 
     DisposableEffect(resourcePath) {
+        logDesktopVideo("Composable start owner=$ownerId resourcePath=$resourcePath")
+
+        var mediaPlayer: MediaPlayer? = null
+
         Platform.runLater {
+            val playButton = Button("Play")
+            val pauseButton = Button("Pause")
+
+            fun updateButtons() {
+                val status = mediaPlayer?.status
+                val ready = mediaPlayer != null &&
+                        status != null &&
+                        status != MediaPlayer.Status.UNKNOWN &&
+                        status != MediaPlayer.Status.DISPOSED
+                val playing = ready && status == MediaPlayer.Status.PLAYING
+
+                playButton.isDisable = !ready || playing
+                pauseButton.isDisable = !ready || !playing
+
+                logDesktopVideo(
+                    "updateButtons owner=$ownerId status=$status ready=$ready playing=$playing " +
+                            "playDisabled=${playButton.isDisable} pauseDisabled=${pauseButton.isDisable}"
+                )
+            }
+
+            playButton.setOnAction {
+                logDesktopVideo("Play clicked owner=$ownerId status=${mediaPlayer?.status}")
+                mediaPlayer?.play()
+                updateButtons()
+            }
+
+            pauseButton.setOnAction {
+                logDesktopVideo("Pause clicked owner=$ownerId status=${mediaPlayer?.status}")
+                mediaPlayer?.pause()
+                updateButtons()
+            }
+
+            val controls = HBox(12.0, playButton, pauseButton).apply {
+                alignment = Pos.CENTER
+                style = "-fx-padding: 8 0 0 0;"
+            }
+
+            val videoContainer = StackPane(mediaView).apply {
+                alignment = Pos.CENTER
+                style = "-fx-background-color: transparent;"
+                minHeight = 180.0
+            }
+
+            mediaView.fitWidthProperty().bind(videoContainer.widthProperty())
+            mediaView.fitHeightProperty().bind(videoContainer.heightProperty())
+
+            val root = VBox(12.0, videoContainer, controls).apply {
+                alignment = Pos.CENTER
+                style = "-fx-background-color: transparent;"
+                VBox.setVgrow(videoContainer, Priority.ALWAYS)
+            }
+
+            jfxPanel.scene = Scene(root)
+
             try {
-                isReady = false
-                loadFailed = false
-
-                // Dispose previous player first
-                mediaPlayerHolder.value?.let { oldPlayer ->
-                    runCatching {
-                        oldPlayer.stop()
-                        oldPlayer.dispose()
-                    }
+                val mediaUri = when {
+                    resourcePath.startsWith("http://") ||
+                            resourcePath.startsWith("https://") ||
+                            resourcePath.startsWith("file:/") -> resourcePath
+                    else -> File(resourcePath).toURI().toString()
                 }
-                mediaPlayerHolder.value = null
 
-                val mediaUri =
-                    when {
-                        resourcePath.startsWith("http://") ||
-                                resourcePath.startsWith("https://") ||
-                                resourcePath.startsWith("file:/") -> resourcePath
-                        else -> File(resourcePath).toURI().toString()
-                    }
+                val playerId = DesktopVideoDebugIds.playerId.incrementAndGet()
+                logDesktopVideo("creating player playerId=$playerId owner=$ownerId uri=$mediaUri")
 
-                val media = Media(mediaUri)
-                val mediaPlayer = MediaPlayer(media).apply {
+                mediaPlayer = MediaPlayer(Media(mediaUri)).apply {
                     cycleCount = 1
-                }
-                mediaPlayerHolder.value = mediaPlayer
-
-                val mediaView = MediaView(mediaPlayer).apply {
-                    isPreserveRatio = true
-                    fitWidth = 800.0
-                    fitHeight = 450.0
+                    isAutoPlay = false
                 }
 
-                val playButton = Button("Play")
-                val pauseButton = Button("Pause")
+                mediaView.mediaPlayer = mediaPlayer
 
-                fun currentPlayer(): MediaPlayer? = mediaPlayerHolder.value
-
-                fun updateButtons() {
-                    val player = currentPlayer()
-                    val playing = player?.status == MediaPlayer.Status.PLAYING
-                    playButton.isDisable = player == null || playing || !isReady || loadFailed
-                    pauseButton.isDisable = player == null || !playing || !isReady || loadFailed
-                }
-
-                playButton.setOnAction {
-                    val player = currentPlayer() ?: return@setOnAction
-                    runCatching { player.play() }
+                mediaPlayer?.setOnReady {
+                    logDesktopVideo("onReady playerId=$playerId owner=$ownerId status=${mediaPlayer?.status}")
                     updateButtons()
-                }
-
-                pauseButton.setOnAction {
-                    val player = currentPlayer() ?: return@setOnAction
-                    runCatching { player.pause() }
-                    updateButtons()
-                }
-
-                mediaPlayer.setOnReady {
-                    if (mediaPlayerHolder.value !== mediaPlayer) return@setOnReady
-                    isReady = true
-                    loadFailed = false
-                    updateButtons()
-                }
-
-                mediaPlayer.setOnPlaying {
-                    if (mediaPlayerHolder.value !== mediaPlayer) return@setOnPlaying
-                    updateButtons()
-                }
-
-                mediaPlayer.setOnPaused {
-                    if (mediaPlayerHolder.value !== mediaPlayer) return@setOnPaused
-                    updateButtons()
-                }
-
-                mediaPlayer.setOnStopped {
-                    if (mediaPlayerHolder.value !== mediaPlayer) return@setOnStopped
-                    updateButtons()
-                }
-
-                mediaPlayer.setOnEndOfMedia {
-                    if (mediaPlayerHolder.value !== mediaPlayer) return@setOnEndOfMedia
-                    runCatching {
-                        mediaPlayer.pause()
-                        mediaPlayer.seek(Duration.ZERO)
+                    EventQueue.invokeLater {
+                        isReady = true
+                        isPlaying = false
+                        loadFailed = false
                     }
-                    updateButtons()
                 }
 
-                mediaPlayer.setOnError {
-                    if (mediaPlayerHolder.value !== mediaPlayer) return@setOnError
-                    loadFailed = true
-                    println("MediaPlayer error: ${mediaPlayer.error?.message}")
+                mediaPlayer?.setOnPlaying {
+                    logDesktopVideo("onPlaying playerId=$playerId owner=$ownerId status=${mediaPlayer?.status}")
                     updateButtons()
+                    EventQueue.invokeLater {
+                        isReady = true
+                        isPlaying = true
+                        loadFailed = false
+                    }
+                }
+
+                mediaPlayer?.setOnPaused {
+                    logDesktopVideo("onPaused playerId=$playerId owner=$ownerId status=${mediaPlayer?.status}")
+                    updateButtons()
+                    EventQueue.invokeLater {
+                        isReady = true
+                        isPlaying = false
+                        loadFailed = false
+                    }
+                }
+
+                mediaPlayer?.setOnStopped {
+                    logDesktopVideo("onStopped playerId=$playerId owner=$ownerId status=${mediaPlayer?.status}")
+                    updateButtons()
+                    EventQueue.invokeLater {
+                        isReady = true
+                        isPlaying = false
+                        loadFailed = false
+                    }
+                }
+
+                mediaPlayer?.setOnEndOfMedia {
+                    logDesktopVideo("onEndOfMedia playerId=$playerId owner=$ownerId status=${mediaPlayer?.status}")
+                    mediaPlayer?.pause()
+                    mediaPlayer?.seek(Duration.ZERO)
+                    updateButtons()
+                    EventQueue.invokeLater {
+                        isReady = true
+                        isPlaying = false
+                        loadFailed = false
+                    }
+                }
+
+                mediaPlayer?.setOnError {
+                    val errorMessage = mediaPlayer?.error?.message
+                    logDesktopVideo("onError playerId=$playerId owner=$ownerId error=$errorMessage")
+                    updateButtons()
+                    EventQueue.invokeLater {
+                        isReady = false
+                        isPlaying = false
+                        loadFailed = true
+                    }
                 }
 
                 updateButtons()
-
-                val controls = HBox(12.0, playButton, pauseButton).apply {
-                    alignment = Pos.CENTER
-                    style = "-fx-padding: 8 0 0 0;"
-                }
-
-                val videoContainer = StackPane(mediaView).apply {
-                    alignment = Pos.CENTER
-                    style = "-fx-background-color: black;"
-                    minHeight = 260.0
-                    prefHeight = 450.0
-                    maxHeight = 450.0
-                }
-
-                val root = VBox(12.0, videoContainer, controls).apply {
-                    alignment = Pos.CENTER
-                    style = "-fx-background-color: transparent;"
-                    VBox.setVgrow(videoContainer, Priority.ALWAYS)
-                }
-
-                jfxPanel.scene = Scene(root)
             } catch (e: MediaException) {
-                loadFailed = true
-                println("MediaException: ${e.message}")
+                logDesktopVideo("MediaException owner=$ownerId error=${e.message}")
+                updateButtons()
+                EventQueue.invokeLater {
+                    isReady = false
+                    isPlaying = false
+                    loadFailed = true
+                }
             } catch (e: Exception) {
-                loadFailed = true
-                println("Exception: ${e.message}")
+                logDesktopVideo("Exception owner=$ownerId error=${e.message}")
+                updateButtons()
+                EventQueue.invokeLater {
+                    isReady = false
+                    isPlaying = false
+                    loadFailed = true
+                }
             }
         }
 
         onDispose {
+            logDesktopVideo(
+                "Composable dispose owner=$ownerId resourcePath=$resourcePath " +
+                        "isReady=$isReady isPlaying=$isPlaying loadFailed=$loadFailed"
+            )
+
             Platform.runLater {
-                mediaPlayerHolder.value?.let { player ->
-                    runCatching {
-                        player.stop()
-                        player.dispose()
-                    }
+                runCatching {
+                    mediaPlayer?.stop()
+                    mediaPlayer?.dispose()
+                }.onFailure {
+                    logDesktopVideo("dispose failed owner=$ownerId error=${it.message}")
                 }
-                mediaPlayerHolder.value = null
+
+                mediaView.mediaPlayer = null
+                jfxPanel.scene = null
+                mediaPlayer = null
             }
         }
     }
 
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+    Box(
+        modifier = modifier,
+        contentAlignment = Alignment.Center
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = 320.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            if (!loadFailed) {
-                SwingPanel(
-                    modifier = Modifier.fillMaxWidth(),
-                    factory = { jfxPanel }
-                )
-            }
+        if (!loadFailed) {
+            SwingPanel(
+                modifier = Modifier.fillMaxSize(),
+                factory = {
+                    logDesktopVideo("SwingPanel factory owner=$ownerId resourcePath=$resourcePath")
+                    jfxPanel
+                }
+            )
+        }
 
-            when {
-                loadFailed -> {
-                    Text(
-                        text = "Video unavailable",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
-                !isReady -> {
-                    Text(
-                        text = "Loading video…",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
+        when {
+            loadFailed -> {
+                Text("Video unavailable", style = MaterialTheme.typography.bodyMedium)
+            }
+            !isReady -> {
+                Text("Loading video…", style = MaterialTheme.typography.bodyMedium)
             }
         }
     }
