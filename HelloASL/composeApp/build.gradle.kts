@@ -157,6 +157,11 @@ compose.desktop {
     application {
         mainClass = "ca.uwaterloo.helloasl.MainKt"
 
+        jvmArgs += listOf(
+            "-DSUPABASE_URL=${localProps.getProperty("SUPABASE_URL", "")}",
+            "-DSUPABASE_ANON_KEY=${localProps.getProperty("SUPABASE_ANON_KEY", "")}"
+        )
+
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "ca.uwaterloo.helloasl"
