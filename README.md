@@ -32,6 +32,8 @@ Name: Mengdie Wu  Email: m283wu@uwaterloo.ca
 <img src="images/login.png" width="200"/>
 <img src="images/signup.png" width="200"/>
 
+## Video Walkthrough
+https://youtu.be/rP3z5ErjmKo
 
 
 ## Acknowledgements
