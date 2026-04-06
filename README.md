@@ -113,4 +113,6 @@ If you prefer to host the AI backend on your own machine, please follow these st
 4. Change the `BASE_URL` to your local machine's IP address or your own Ngrok domain.
 5. Rebuild and run the Android application.
 
+### 4. UI Test instruction
+`.\gradlew.bat :composeApp:connectedDebugAndroidTest`
 
