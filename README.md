@@ -71,8 +71,6 @@ The https://git.uwaterloo.ca/m283wu/cs-346-group-project/-/wikis/Team-Reflection
 
 This is our https://git.uwaterloo.ca/m283wu/cs-346-group-project/-/wikis/UML-ER-Diagram.
 
-[Link to UML]
-
 # Grading Instructions
 
 ### 1. Firebase Notification Setup
