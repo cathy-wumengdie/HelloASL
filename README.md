@@ -14,6 +14,25 @@ Name: Mengdie Wu  Email: m283wu@uwaterloo.ca
 
 ## App Screens
 
+### Home
+<img src="images/home.png" width="200"/>
+
+### Learn
+<img src="images/learn.png" width="200"/>
+<img src="images/lesson.png" width="200"/>
+<img src="images/star_detail.png" width="200"/>
+
+### Translate
+<img src="images/translate.png" width="200"/>
+
+### Profile
+<img src="images/profile.png" width="200"/>
+
+### Login
+<img src="images/login.png" width="200"/>
+<img src="images/signup.png" width="200"/>
+
+
 
 ## Acknowledgements
 
