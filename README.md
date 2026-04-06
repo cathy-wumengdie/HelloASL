@@ -96,12 +96,12 @@ Our application uses a **Client-Server Architecture**. The sign language recogni
 #### **Option 1: Use Our Live Server (Recommended)**
 We will try our best to keep the server running during the grading period. However, due to potential hardware sleep modes, ISP network resets, or Ngrok session timeouts, continuous uptime cannot be 100% guaranteed. 
 
-**👉 Step 1: Check Server Status**
+**Step 1: Check Server Status**
 Before testing the app, please click the link below to verify if our server is online:
 [https://honeyless-militaristically-jeanett.ngrok-free.dev/docs](https://honeyless-militaristically-jeanett.ngrok-free.dev/docs)
 *(If the server is online, you will see the FastAPI Swagger UI page.)*
 
-**👉 Step 2: What to do if it's offline?**
+**Step 2: What to do if it's offline?**
 If the link above fails to load or the app shows a connection timeout, **please contact Donghui Yu** (phone: 437-999-6783, email: d9yu@uwaterloo.ca) before proceeding with grading. We will restart the server immediately.
 
 #### **Option 2: Self-Deployment (Manual Fallback)**
