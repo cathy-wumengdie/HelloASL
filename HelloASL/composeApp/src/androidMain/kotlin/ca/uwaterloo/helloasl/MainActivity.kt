@@ -34,12 +34,15 @@ class MainActivity : ComponentActivity() {
             BuildConfig.SUPABASE_ANON_KEY
         )
 
+        val supabaseDependency = SupabaseAppDependency(
+            client = supabase,
+            anonKey = BuildConfig.SUPABASE_ANON_KEY,
+            videoRecognitionService = AndroidVideoRecognitionService(applicationContext)
+        )
+
         setContent {
             val context = LocalContext.current
             val scope = rememberCoroutineScope()
-            val supabaseDependency = remember {
-                SupabaseAppDependency(supabase, BuildConfig.SUPABASE_ANON_KEY, videoRecognitionService = AndroidVideoRecognitionService(context.applicationContext))
-            }
 
             // ---- DataStore ----
             val store = remember { HelloAslDataStore(context) }
