@@ -90,4 +90,27 @@ To-do:
 ### 2. Connect to Supabase
 To connect to the database, ask the project owner for `SUPABASE_URL` and `SUPABASE_ANON_KEY`, and add those to your local.properties file.
 
+### 3. AI Model & Backend Server Setup
+Our application uses a **Client-Server Architecture**. The sign language recognition is powered by a heavy VideoMAE model running on a local GPU server (NVIDIA 4060 Ti) to ensure fast inference. The Android app connects to this local server via an Ngrok secure tunnel.
+
+#### **Option 1: Use Our Live Server (Recommended)**
+We will try our best to keep the server running during the grading period. However, due to potential hardware sleep modes, ISP network resets, or Ngrok session timeouts, continuous uptime cannot be 100% guaranteed. 
+
+**👉 Step 1: Check Server Status**
+Before testing the app, please click the link below to verify if our server is online:
+[https://honeyless-militaristically-jeanett.ngrok-free.dev/docs](https://honeyless-militaristically-jeanett.ngrok-free.dev/docs)
+*(If the server is online, you will see the FastAPI Swagger UI page.)*
+
+**👉 Step 2: What to do if it's offline?**
+If the link above fails to load or the app shows a connection timeout, **please contact Donghui Yu** (phone: 437-999-6783, email: d9yu@uwaterloo.ca) before proceeding with grading. We will restart the server immediately.
+
+#### **Option 2: Self-Deployment (Manual Fallback)**
+If you prefer to host the AI backend on your own machine, please follow these steps:
+1. **Clone the Backend Repository:** [https://github.com/DongYangYuWHJ/asl-api](https://github.com/DongYangYuWHJ/asl-api)
+2. **Deploy the Server:** Follow the `README.md` in the backend repository to set up the Python environment, download the model weights, and start the Uvicorn server.
+3. **Update Android Config:** Open the Android project and navigate to:
+   `ca/uwaterloo/helloasl/data/translateRepository/ApiConfig.kt`
+4. Change the `BASE_URL` to your local machine's IP address or your own Ngrok domain.
+5. Rebuild and run the Android application.
+
 
